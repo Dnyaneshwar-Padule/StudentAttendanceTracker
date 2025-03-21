@@ -1,22 +1,38 @@
 package com.attendance.models;
 
+import java.sql.Timestamp;
+
 /**
- * Subject model class representing Subject table
+ * Model class for Subject
  */
 public class Subject {
     private String subjectCode;
     private String subjectName;
+    private String description;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
     
-    // Constructors
-    public Subject() {
-    }
-    
+    // Constructor with required fields
     public Subject(String subjectCode, String subjectName) {
         this.subjectCode = subjectCode;
         this.subjectName = subjectName;
     }
     
-    // Getters and setters
+    // Full constructor
+    public Subject(String subjectCode, String subjectName, String description, 
+                 Timestamp createdAt, Timestamp updatedAt) {
+        this.subjectCode = subjectCode;
+        this.subjectName = subjectName;
+        this.description = description;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+    
+    // Default constructor
+    public Subject() {
+    }
+    
+    // Getters and Setters
     public String getSubjectCode() {
         return subjectCode;
     }
@@ -31,6 +47,30 @@ public class Subject {
     
     public void setSubjectName(String subjectName) {
         this.subjectName = subjectName;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
     @Override

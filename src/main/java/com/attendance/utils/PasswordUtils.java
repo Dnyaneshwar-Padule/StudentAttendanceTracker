@@ -8,84 +8,70 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Utility class for handling password hashing and verification
+ * Utility class for password hashing and verification
  */
 public class PasswordUtils {
     private static final Logger LOGGER = Logger.getLogger(PasswordUtils.class.getName());
-    private static final String HASH_ALGORITHM = "SHA-256";
+    
+    // Constants for salt generation
     private static final int SALT_LENGTH = 16;
+    private static final SecureRandom RANDOM = new SecureRandom();
     
     /**
-     * Generates a random salt for password hashing
-     * @return Base64 encoded salt
+     * Generate a secure random salt
+     * 
+     * @return the generated salt as a Base64 encoded string
      */
     public static String generateSalt() {
-        SecureRandom random = new SecureRandom();
         byte[] salt = new byte[SALT_LENGTH];
-        random.nextBytes(salt);
+        RANDOM.nextBytes(salt);
         return Base64.getEncoder().encodeToString(salt);
     }
     
     /**
-     * Hashes a password with a given salt using SHA-256
-     * @param password The plain text password
-     * @param salt The salt value (Base64 encoded)
-     * @return The hashed password (Base64 encoded)
+     * Hash a password with the provided salt using SHA-256
+     * 
+     * @param password the password to hash
+     * @param salt the salt to use
+     * @return the hashed password
      */
     public static String hashPassword(String password, String salt) {
         try {
-            MessageDigest md = MessageDigest.getInstance(HASH_ALGORITHM);
             byte[] saltBytes = Base64.getDecoder().decode(salt);
             
-            // Update digest with salt first
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(saltBytes);
+            byte[] hashedPassword = md.digest(password.getBytes());
             
-            // Then with password bytes
-            byte[] hashedBytes = md.digest(password.getBytes());
-            
-            return Base64.getEncoder().encodeToString(hashedBytes);
+            return Base64.getEncoder().encodeToString(hashedPassword);
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.log(Level.SEVERE, "Hashing algorithm not available", e);
-            throw new RuntimeException("Failed to hash password", e);
+            LOGGER.log(Level.SEVERE, "Error hashing password", e);
+            throw new RuntimeException("Error hashing password", e);
         }
     }
     
     /**
-     * Verifies a password against a stored hash and salt
-     * @param inputPassword The password to verify
-     * @param storedHash The stored hash to compare against
-     * @param storedSalt The stored salt used for hashing
-     * @return true if password matches, false otherwise
+     * Verify a password against a hashed password and salt
+     * 
+     * @param password the password to verify
+     * @param hashedPassword the stored hashed password
+     * @param salt the salt used for hashing
+     * @return true if the password matches
      */
-    public static boolean verifyPassword(String inputPassword, String storedHash, String storedSalt) {
-        String hashedInput = hashPassword(inputPassword, storedSalt);
-        return hashedInput.equals(storedHash);
+    public static boolean verifyPassword(String password, String hashedPassword, String salt) {
+        String hashedInput = hashPassword(password, salt);
+        return hashedInput.equals(hashedPassword);
     }
     
     /**
-     * Convenience method to generate a complete password hash with salt
-     * @param password The plain text password
-     * @return A string containing the salt and hash, separated by a colon
+     * For development/testing only - verify a password without using salt/hash
+     * This should NOT be used in production
+     * 
+     * @param inputPassword the password to verify
+     * @param storedPassword the stored password (in plain text)
+     * @return true if the password matches
      */
-    public static String generateSecurePassword(String password) {
-        String salt = generateSalt();
-        String hash = hashPassword(password, salt);
-        return salt + ":" + hash;
-    }
-    
-    /**
-     * Verifies a password against a complete stored hash (salt:hash)
-     * @param inputPassword The password to verify
-     * @param storedSecurePassword The stored secure password (salt:hash)
-     * @return true if password matches, false otherwise
-     */
-    public static boolean verifySecurePassword(String inputPassword, String storedSecurePassword) {
-        String[] parts = storedSecurePassword.split(":");
-        if (parts.length != 2) {
-            return false;
-        }
-        String salt = parts[0];
-        String hash = parts[1];
-        return verifyPassword(inputPassword, hash, salt);
+    public static boolean verifyPlainTextPassword(String inputPassword, String storedPassword) {
+        return inputPassword.equals(storedPassword);
     }
 }

@@ -106,14 +106,64 @@ public class DepartmentSubjectDaoImpl implements DepartmentSubjectDao {
     }
 
     @Override
+    public List<DepartmentSubject> findBySemester(String semester) throws SQLException {
+        List<DepartmentSubject> departmentSubjects = new ArrayList<>();
+        String sql = "SELECT * FROM DepartmentSubjects WHERE semester = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, semester);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    departmentSubjects.add(mapResultSetToDepartmentSubject(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding department subjects by semester: " + semester, e);
+            throw e;
+        }
+        
+        return departmentSubjects;
+    }
+
+    @Override
+    public List<DepartmentSubject> findByDepartmentAndSemester(int departmentId, String semester) throws SQLException {
+        List<DepartmentSubject> departmentSubjects = new ArrayList<>();
+        String sql = "SELECT * FROM DepartmentSubjects WHERE department_id = ? AND semester = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, departmentId);
+            stmt.setString(2, semester);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    departmentSubjects.add(mapResultSetToDepartmentSubject(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding department subjects by department and semester", e);
+            throw e;
+        }
+        
+        return departmentSubjects;
+    }
+
+    @Override
     public DepartmentSubject save(DepartmentSubject departmentSubject) throws SQLException {
-        String sql = "INSERT INTO DepartmentSubjects (department_id, subject_code) VALUES (?, ?)";
+        String sql = "INSERT INTO DepartmentSubjects (department_id, subject_code, semester, credits) " +
+                     "VALUES (?, ?, ?, ?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setInt(1, departmentSubject.getDepartmentId());
             stmt.setString(2, departmentSubject.getSubjectCode());
+            stmt.setString(3, departmentSubject.getSemester());
+            stmt.setInt(4, departmentSubject.getCredits());
             
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -121,6 +171,31 @@ public class DepartmentSubjectDaoImpl implements DepartmentSubjectDao {
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error saving department subject: " + departmentSubject, e);
+            throw e;
+        }
+        
+        return null;
+    }
+
+    @Override
+    public DepartmentSubject update(DepartmentSubject departmentSubject) throws SQLException {
+        String sql = "UPDATE DepartmentSubjects SET semester = ?, credits = ? " +
+                     "WHERE department_id = ? AND subject_code = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, departmentSubject.getSemester());
+            stmt.setInt(2, departmentSubject.getCredits());
+            stmt.setInt(3, departmentSubject.getDepartmentId());
+            stmt.setString(4, departmentSubject.getSubjectCode());
+            
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                return departmentSubject;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error updating department subject: " + departmentSubject, e);
             throw e;
         }
         
@@ -155,6 +230,8 @@ public class DepartmentSubjectDaoImpl implements DepartmentSubjectDao {
         DepartmentSubject departmentSubject = new DepartmentSubject();
         departmentSubject.setDepartmentId(rs.getInt("department_id"));
         departmentSubject.setSubjectCode(rs.getString("subject_code"));
+        departmentSubject.setSemester(rs.getString("semester"));
+        departmentSubject.setCredits(rs.getInt("credits"));
         return departmentSubject;
     }
 }

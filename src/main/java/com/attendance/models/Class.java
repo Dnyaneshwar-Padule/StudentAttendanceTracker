@@ -1,25 +1,44 @@
 package com.attendance.models;
 
+import java.sql.Timestamp;
+
 /**
- * Class model representing Classes table
+ * Model class for Class
  */
 public class Class {
     private int classId;
     private String className;
     private int departmentId;
-    private Department department; // For joining with Department
+    private int classTeacherId;
+    private int maxStudents;
+    private String description;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
     
-    // Constructors
-    public Class() {
-    }
-    
-    public Class(int classId, String className, int departmentId) {
-        this.classId = classId;
+    // Constructor with required fields
+    public Class(String className, int departmentId) {
         this.className = className;
         this.departmentId = departmentId;
     }
     
-    // Getters and setters
+    // Full constructor
+    public Class(int classId, String className, int departmentId, int classTeacherId,
+               int maxStudents, String description, Timestamp createdAt, Timestamp updatedAt) {
+        this.classId = classId;
+        this.className = className;
+        this.departmentId = departmentId;
+        this.classTeacherId = classTeacherId;
+        this.maxStudents = maxStudents;
+        this.description = description;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+    
+    // Default constructor
+    public Class() {
+    }
+    
+    // Getters and Setters
     public int getClassId() {
         return classId;
     }
@@ -44,15 +63,44 @@ public class Class {
         this.departmentId = departmentId;
     }
     
-    public Department getDepartment() {
-        return department;
+    public int getClassTeacherId() {
+        return classTeacherId;
     }
     
-    public void setDepartment(Department department) {
-        this.department = department;
-        if (department != null) {
-            this.departmentId = department.getDepartmentId();
-        }
+    public void setClassTeacherId(int classTeacherId) {
+        this.classTeacherId = classTeacherId;
+    }
+    
+    public int getMaxStudents() {
+        return maxStudents;
+    }
+    
+    public void setMaxStudents(int maxStudents) {
+        this.maxStudents = maxStudents;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
     @Override
@@ -61,6 +109,7 @@ public class Class {
                 "classId=" + classId +
                 ", className='" + className + '\'' +
                 ", departmentId=" + departmentId +
+                ", classTeacherId=" + classTeacherId +
                 '}';
     }
 }

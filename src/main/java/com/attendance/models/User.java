@@ -1,95 +1,332 @@
 package com.attendance.models;
 
+import java.sql.Timestamp;
+
 /**
- * User model class representing Users table
+ * Model class for User
  */
 public class User {
     private int userId;
-    private String name;
-    private String phoneNo;
-    private String email;
+    private String username;
     private String password;
-    private String role;
-    private int departmentId;
+    private String fullName;
+    private String email;
+    private String phoneNumber;
+    private String role; // Student, Teacher, HOD, Principal, Admin
+    private String department;
+    private String classRoom; // FY, SY, TY
+    private String rollNo;
+    private String profileImagePath;
+    private boolean isActive;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
     
-    // Constructors
+    /**
+     * Default constructor
+     */
     public User() {
     }
     
-    public User(int userId, String name, String phoneNo, String email, String password, String role, int departmentId) {
-        this.userId = userId;
-        this.name = name;
-        this.phoneNo = phoneNo;
-        this.email = email;
+    /**
+     * Constructor with basic details
+     * 
+     * @param username the username
+     * @param password the password
+     * @param fullName the full name
+     * @param email the email
+     * @param role the role
+     */
+    public User(String username, String password, String fullName, String email, String role) {
+        this.username = username;
         this.password = password;
+        this.fullName = fullName;
+        this.email = email;
         this.role = role;
-        this.departmentId = departmentId;
+        this.isActive = true;
     }
-    
-    // Getters and setters
+
+    /**
+     * Full constructor
+     * 
+     * @param userId the user ID
+     * @param username the username
+     * @param password the password
+     * @param fullName the full name
+     * @param email the email
+     * @param phoneNumber the phone number
+     * @param role the role
+     * @param department the department
+     * @param classRoom the class
+     * @param rollNo the roll number
+     * @param profileImagePath the profile image path
+     * @param isActive whether the user is active
+     * @param createdAt when the user was created
+     * @param updatedAt when the user was last updated
+     */
+    public User(int userId, String username, String password, String fullName, String email, 
+              String phoneNumber, String role, String department, String classRoom, String rollNo, 
+              String profileImagePath, boolean isActive, Timestamp createdAt, Timestamp updatedAt) {
+        this.userId = userId;
+        this.username = username;
+        this.password = password;
+        this.fullName = fullName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.role = role;
+        this.department = department;
+        this.classRoom = classRoom;
+        this.rollNo = rollNo;
+        this.profileImagePath = profileImagePath;
+        this.isActive = isActive;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    /**
+     * @return the userId
+     */
     public int getUserId() {
         return userId;
     }
-    
+
+    /**
+     * @param userId the userId to set
+     */
     public void setUserId(int userId) {
         this.userId = userId;
     }
-    
-    public String getName() {
-        return name;
+
+    /**
+     * @return the username
+     */
+    public String getUsername() {
+        return username;
     }
-    
-    public void setName(String name) {
-        this.name = name;
+
+    /**
+     * @param username the username to set
+     */
+    public void setUsername(String username) {
+        this.username = username;
     }
-    
-    public String getPhoneNo() {
-        return phoneNo;
-    }
-    
-    public void setPhoneNo(String phoneNo) {
-        this.phoneNo = phoneNo;
-    }
-    
-    public String getEmail() {
-        return email;
-    }
-    
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    
+
+    /**
+     * @return the password
+     */
     public String getPassword() {
         return password;
     }
-    
+
+    /**
+     * @param password the password to set
+     */
     public void setPassword(String password) {
         this.password = password;
     }
-    
+
+    /**
+     * @return the fullName
+     */
+    public String getFullName() {
+        return fullName;
+    }
+
+    /**
+     * @param fullName the fullName to set
+     */
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    /**
+     * @return the email
+     */
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * @param email the email to set
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * @return the phoneNumber
+     */
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    /**
+     * @param phoneNumber the phoneNumber to set
+     */
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    /**
+     * @return the role
+     */
     public String getRole() {
         return role;
     }
-    
+
+    /**
+     * @param role the role to set
+     */
     public void setRole(String role) {
         this.role = role;
     }
-    
-    public int getDepartmentId() {
-        return departmentId;
+
+    /**
+     * @return the department
+     */
+    public String getDepartment() {
+        return department;
+    }
+
+    /**
+     * @param department the department to set
+     */
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    /**
+     * @return the classRoom
+     */
+    public String getClassRoom() {
+        return classRoom;
+    }
+
+    /**
+     * @param classRoom the classRoom to set
+     */
+    public void setClassRoom(String classRoom) {
+        this.classRoom = classRoom;
+    }
+
+    /**
+     * @return the rollNo
+     */
+    public String getRollNo() {
+        return rollNo;
+    }
+
+    /**
+     * @param rollNo the rollNo to set
+     */
+    public void setRollNo(String rollNo) {
+        this.rollNo = rollNo;
+    }
+
+    /**
+     * @return the profileImagePath
+     */
+    public String getProfileImagePath() {
+        return profileImagePath;
+    }
+
+    /**
+     * @param profileImagePath the profileImagePath to set
+     */
+    public void setProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
+    }
+
+    /**
+     * @return whether the user is active
+     */
+    public boolean isActive() {
+        return isActive;
+    }
+
+    /**
+     * @param isActive set whether the user is active
+     */
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    /**
+     * @return the createdAt
+     */
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * @param createdAt the createdAt to set
+     */
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * @return the updatedAt
+     */
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+
+    /**
+     * @param updatedAt the updatedAt to set
+     */
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
-    public void setDepartmentId(int departmentId) {
-        this.departmentId = departmentId;
+    /**
+     * Check if user is a Student
+     * 
+     * @return true if the user is a Student
+     */
+    public boolean isStudent() {
+        return "Student".equalsIgnoreCase(role);
     }
     
+    /**
+     * Check if user is a Teacher
+     * 
+     * @return true if the user is a Teacher
+     */
+    public boolean isTeacher() {
+        return "Teacher".equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Check if user is a Head of Department
+     * 
+     * @return true if the user is a HOD
+     */
+    public boolean isHOD() {
+        return "HOD".equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Check if user is a Principal
+     * 
+     * @return true if the user is a Principal
+     */
+    public boolean isPrincipal() {
+        return "Principal".equalsIgnoreCase(role);
+    }
+    
+    /**
+     * Check if user is an Admin
+     * 
+     * @return true if the user is an Admin
+     */
+    public boolean isAdmin() {
+        return "Admin".equalsIgnoreCase(role);
+    }
+
     @Override
     public String toString() {
-        return "User{" +
-                "userId=" + userId +
-                ", name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", role='" + role + '\'' +
-                '}';
+        return "User{" + "userId=" + userId + ", username=" + username + ", fullName=" + fullName + 
+               ", email=" + email + ", role=" + role + ", department=" + department + 
+               ", classRoom=" + classRoom + ", isActive=" + isActive + '}';
     }
 }
