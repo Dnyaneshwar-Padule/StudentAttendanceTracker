@@ -75,6 +75,16 @@ public interface AttendanceDao extends BaseDao<Attendance, Integer> {
      * @throws SQLException If a database error occurs
      */
     List<Attendance> findBySubjectDateAndSemester(String subjectCode, Date date, String semester) throws SQLException;
+
+    /**
+     * Find attendance records by class, subject, and date
+     * @param classId The class ID
+     * @param subjectCode The subject code
+     * @param date The attendance date
+     * @return List of attendance records
+     * @throws SQLException If a database error occurs
+     */
+    List<Attendance> findByClassAndSubjectAndDate(int classId, String subjectCode, Date date) throws SQLException;
     
     /**
      * Calculate attendance percentage for a student in a subject
@@ -86,6 +96,94 @@ public interface AttendanceDao extends BaseDao<Attendance, Integer> {
      * @throws SQLException If a database error occurs
      */
     double calculateAttendancePercentage(int studentId, String subjectCode, String semester, String academicYear) throws SQLException;
+
+    /**
+     * Calculate attendance percentage for a specific subject for a student
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    double calculateSubjectAttendancePercentage(int studentId, String subjectCode, String academicYear, String semester) throws SQLException;
+
+    /**
+     * Calculate overall attendance percentage for a subject across all students
+     * @param subjectCode The subject code
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    double calculateSubjectOverallAttendancePercentage(String subjectCode, String academicYear, String semester) throws SQLException;
+
+    /**
+     * Calculate attendance percentage for a class
+     * @param classId The class ID
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @param month The month (null for all months)
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    double calculateClassAttendancePercentage(int classId, String academicYear, String semester, String month) throws SQLException;
+
+    /**
+     * Calculate subject attendance percentage for a specific class
+     * @param classId The class ID
+     * @param subjectCode The subject code
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    double calculateSubjectClassAttendancePercentage(int classId, String subjectCode, String academicYear, String semester) throws SQLException;
+
+    /**
+     * Calculate attendance percentage for a department
+     * @param departmentId The department ID
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @param month The month (null for all months)
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    double calculateDepartmentAttendancePercentage(int departmentId, String academicYear, String semester, String month) throws SQLException;
+
+    /**
+     * Get monthly attendance trend for the institution
+     * @param academicYear The academic year
+     * @return Map of month to attendance percentage
+     * @throws SQLException If a database error occurs
+     */
+    Map<String, Double> getMonthlyAttendanceTrend(String academicYear) throws SQLException;
+
+    /**
+     * Get semester attendance trend for the institution
+     * @param academicYear The academic year
+     * @return Map of semester to attendance percentage
+     * @throws SQLException If a database error occurs
+     */
+    Map<String, Double> getSemesterAttendanceTrend(String academicYear) throws SQLException;
+
+    /**
+     * Get monthly attendance trend for a department
+     * @param departmentId The department ID
+     * @param academicYear The academic year
+     * @return Map of month to attendance percentage
+     * @throws SQLException If a database error occurs
+     */
+    Map<String, Double> getMonthlyDepartmentAttendanceTrend(int departmentId, String academicYear) throws SQLException;
+
+    /**
+     * Get semester attendance trend for a department
+     * @param departmentId The department ID
+     * @param academicYear The academic year
+     * @return Map of semester to attendance percentage
+     * @throws SQLException If a database error occurs
+     */
+    Map<String, Double> getSemesterDepartmentAttendanceTrend(int departmentId, String academicYear) throws SQLException;
     
     /**
      * Get attendance summary for a student across all subjects

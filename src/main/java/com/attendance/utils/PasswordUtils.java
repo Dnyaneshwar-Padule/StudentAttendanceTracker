@@ -106,4 +106,16 @@ public class PasswordUtils {
         
         return verifyPassword(password, hash, salt);
     }
+    
+    /**
+     * Check if a password matches a stored password
+     * This is an alias for verifySecurePassword to maintain API consistency
+     * 
+     * @param password the password to check
+     * @param storedPassword the stored password (expected to be in format salt:hash)
+     * @return true if the password matches
+     */
+    public static boolean checkPassword(String password, String storedPassword) {
+        return verifySecurePassword(password, storedPassword);
+    }
 }

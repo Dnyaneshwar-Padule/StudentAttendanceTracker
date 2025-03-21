@@ -5,6 +5,7 @@ import com.attendance.models.User;
 import com.attendance.models.Subject;
 import com.attendance.models.Class;
 import com.attendance.utils.DatabaseConnection;
+import com.attendance.dao.impl.UserDaoImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public class TeacherAssignmentDAO {
 
-    private UserDAO userDAO = new UserDAO();
+    private UserDao userDAO = new UserDaoImpl();
     private SubjectDAO subjectDAO = new SubjectDAO();
     private ClassDAO classDAO = new ClassDAO();
 
@@ -64,9 +65,13 @@ public class TeacherAssignmentDAO {
                 assignment.setAssignmentType(rs.getString("assignment_type"));
                 
                 // Load related objects
-                assignment.setTeacher(userDAO.getUserById(assignment.getTeacherId()));
-                assignment.setSubject(subjectDAO.getSubjectByCode(assignment.getSubjectCode()));
-                assignment.setClassObj(classDAO.getClassById(assignment.getClassId()));
+                try {
+                    assignment.setTeacher(userDAO.findById(assignment.getTeacherId()));
+                    assignment.setSubject(subjectDAO.getSubjectByCode(assignment.getSubjectCode()));
+                    assignment.setClassObj(classDAO.getClassById(assignment.getClassId()));
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
                 
                 assignments.add(assignment);
             }
@@ -136,8 +141,12 @@ public class TeacherAssignmentDAO {
                     assignment.setAssignmentType(rs.getString("assignment_type"));
                     
                     // Load related objects
-                    assignment.setTeacher(userDAO.getUserById(assignment.getTeacherId()));
-                    assignment.setSubject(subjectDAO.getSubjectByCode(assignment.getSubjectCode()));
+                    try {
+                        assignment.setTeacher(userDAO.findById(assignment.getTeacherId()));
+                        assignment.setSubject(subjectDAO.getSubjectByCode(assignment.getSubjectCode()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     assignments.add(assignment);
                 }
@@ -172,8 +181,12 @@ public class TeacherAssignmentDAO {
                     assignment.setAssignmentType(rs.getString("assignment_type"));
                     
                     // Load related objects
-                    assignment.setTeacher(userDAO.getUserById(assignment.getTeacherId()));
-                    assignment.setClassObj(classDAO.getClassById(assignment.getClassId()));
+                    try {
+                        assignment.setTeacher(userDAO.findById(assignment.getTeacherId()));
+                        assignment.setClassObj(classDAO.getClassById(assignment.getClassId()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     assignments.add(assignment);
                 }
@@ -278,7 +291,11 @@ public class TeacherAssignmentDAO {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     int teacherId = rs.getInt("teacher_id");
-                    return userDAO.getUserById(teacherId);
+                    try {
+                        return userDAO.findById(teacherId);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         } catch (SQLException e) {

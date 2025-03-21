@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
@@ -77,7 +78,7 @@ public class DatabaseInitializer implements ServletContextListener {
             // Check if any users exist
             boolean usersExist = false;
             try (Statement stmt = conn.createStatement()) {
-                var rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
+                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
                 if (rs.next() && rs.getInt(1) > 0) {
                     usersExist = true;
                 }
@@ -88,7 +89,7 @@ public class DatabaseInitializer implements ServletContextListener {
                 LOGGER.info("Creating default admin user...");
                 
                 // Insert admin user with hashed password for "admin123"
-                String hashedPassword = PasswordUtils.hashPassword("admin123");
+                String hashedPassword = PasswordUtils.generateSecurePassword("admin123");
                 String sql = "INSERT INTO Users (full_name, email, password, role, status) " +
                            "VALUES ('System Admin', 'admin@example.com', '" + hashedPassword + "', 'Admin', 'Active')";
                 

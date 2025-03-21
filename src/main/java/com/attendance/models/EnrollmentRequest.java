@@ -27,6 +27,8 @@ public class EnrollmentRequest {
     
     // Additional fields for joining
     private User user;
+    private User verifier;
+    private com.attendance.models.Class classObj;
     
     // Constructors
     public EnrollmentRequest() {
@@ -176,6 +178,28 @@ public class EnrollmentRequest {
     
     public void setComments(String comments) {
         this.comments = comments;
+    }
+    
+    public User getVerifier() {
+        return verifier;
+    }
+    
+    public void setVerifier(User verifier) {
+        this.verifier = verifier;
+        if (verifier != null) {
+            this.verifiedBy = verifier.getUserId();
+        }
+    }
+    
+    public com.attendance.models.Class getClassObj() {
+        return classObj;
+    }
+    
+    public void setClassObj(com.attendance.models.Class classObj) {
+        this.classObj = classObj;
+        if (classObj != null) {
+            this.classId = classObj.getClassId();
+        }
     }
     
     @Override

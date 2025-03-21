@@ -4,6 +4,7 @@ import com.attendance.models.EnrollmentRequest;
 import com.attendance.models.User;
 import com.attendance.models.Class;
 import com.attendance.utils.DatabaseConnection;
+import com.attendance.dao.impl.UserDaoImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.List;
  */
 public class EnrollmentRequestDAO {
 
-    private UserDAO userDAO = new UserDAO();
+    private UserDao userDAO = new UserDaoImpl();
     private ClassDAO classDAO = new ClassDAO();
 
     /**
@@ -94,14 +95,18 @@ public class EnrollmentRequestDAO {
                     request.setVerifiedOn(rs.getTimestamp("verified_on"));
                     
                     // Load related objects
-                    request.setUser(userDAO.getUserById(request.getUserId()));
-                    
-                    if (request.getVerifiedBy() != null) {
-                        request.setVerifier(userDAO.getUserById(request.getVerifiedBy()));
-                    }
-                    
-                    if (request.getClassId() > 0) {
-                        request.setClassObj(classDAO.getClassById(request.getClassId()));
+                    try {
+                        request.setUser(userDAO.findById(request.getUserId()));
+                        
+                        if (request.getVerifiedBy() != null) {
+                            request.setVerifier(userDAO.findById(request.getVerifiedBy()));
+                        }
+                        
+                        if (request.getClassId() > 0) {
+                            request.setClassObj(classDAO.getClassById(request.getClassId()));
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
                     }
                     
                     return request;
@@ -153,7 +158,11 @@ public class EnrollmentRequestDAO {
                     request.setVerifiedOn(rs.getTimestamp("verified_on"));
                     
                     // Load user info
-                    request.setUser(userDAO.getUserById(request.getUserId()));
+                    try {
+                        request.setUser(userDAO.findById(request.getUserId()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     requests.add(request);
                 }
@@ -216,7 +225,11 @@ public class EnrollmentRequestDAO {
                     request.setVerifiedOn(rs.getTimestamp("verified_on"));
                     
                     // Load user info
-                    request.setUser(userDAO.getUserById(request.getUserId()));
+                    try {
+                        request.setUser(userDAO.findById(request.getUserId()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     requests.add(request);
                 }
@@ -302,10 +315,14 @@ public class EnrollmentRequestDAO {
                     request.setStatus(rs.getString("status"));
                     
                     // Load user info
-                    request.setUser(userDAO.getUserById(request.getUserId()));
-                    
-                    if (request.getClassId() > 0) {
-                        request.setClassObj(classDAO.getClassById(request.getClassId()));
+                    try {
+                        request.setUser(userDAO.findById(request.getUserId()));
+                        
+                        if (request.getClassId() > 0) {
+                            request.setClassObj(classDAO.getClassById(request.getClassId()));
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
                     }
                     
                     requests.add(request);

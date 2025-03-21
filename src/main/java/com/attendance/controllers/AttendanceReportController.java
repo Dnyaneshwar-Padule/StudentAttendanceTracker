@@ -30,8 +30,8 @@ import java.util.logging.Logger;
     "/hod/reports/*",
     "/principal/reports/*"
 })
-public class FixedAttendanceReportController extends HttpServlet {
-    private static final Logger LOGGER = Logger.getLogger(FixedAttendanceReportController.class.getName());
+public class AttendanceReportController extends HttpServlet {
+    private static final Logger LOGGER = Logger.getLogger(AttendanceReportController.class.getName());
     
     private AttendanceDao attendanceDao;
     private UserDao userDao;

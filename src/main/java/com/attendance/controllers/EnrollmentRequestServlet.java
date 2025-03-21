@@ -1,10 +1,12 @@
 package com.attendance.controllers;
 
 import com.attendance.dao.*;
+import com.attendance.dao.impl.UserDaoImpl;
 import com.attendance.models.*;
 import com.attendance.utils.SessionUtil;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -22,7 +24,7 @@ public class EnrollmentRequestServlet extends HttpServlet {
     
     private EnrollmentRequestDAO enrollmentRequestDAO = new EnrollmentRequestDAO();
     private StudentEnrollmentDAO studentEnrollmentDAO = new StudentEnrollmentDAO();
-    private UserDAO userDAO = new UserDAO();
+    private UserDao userDAO = new UserDaoImpl();
     private ClassDAO classDAO = new ClassDAO();
     private DepartmentDAO departmentDAO = new DepartmentDAO();
     
@@ -176,9 +178,14 @@ public class EnrollmentRequestServlet extends HttpServlet {
             try {
                 int departmentId = Integer.parseInt(departmentIdStr);
                 currentUser.setDepartmentId(departmentId);
-                userDAO.updateUser(currentUser);
+                userDAO.update(currentUser);
             } catch (NumberFormatException e) {
                 request.setAttribute("error", "Invalid department selected");
+                showEnrollmentRequestForm(request, response);
+                return;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                request.setAttribute("error", "Database error when updating user information");
                 showEnrollmentRequestForm(request, response);
                 return;
             }
@@ -248,8 +255,14 @@ public class EnrollmentRequestServlet extends HttpServlet {
                   ("Teacher".equals(enrollmentRequest.getRequestedRole()) || 
                    "Class Teacher".equals(enrollmentRequest.getRequestedRole()))) {
             // Check if HOD belongs to the same department as the requester
-            User requester = userDAO.getUserById(enrollmentRequest.getUserId());
-            authorized = (requester.getDepartmentId() == currentUser.getDepartmentId());
+            try {
+                User requester = userDAO.findById(enrollmentRequest.getUserId());
+                authorized = (requester.getDepartmentId() == currentUser.getDepartmentId());
+            } catch (SQLException e) {
+                e.printStackTrace();
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error when checking authorization");
+                return;
+            }
         } else if ("Class Teacher".equals(userRole) && "Student".equals(enrollmentRequest.getRequestedRole())) {
             // Check if class teacher is assigned to the requested class
             authorized = teacherAssignmentDAO.isClassTeacher(currentUser.getUserId(), enrollmentRequest.getClassId());
@@ -264,12 +277,18 @@ public class EnrollmentRequestServlet extends HttpServlet {
         request.setAttribute("enrollmentRequest", enrollmentRequest);
         
         // Load user details
-        User requester = userDAO.getUserById(enrollmentRequest.getUserId());
-        request.setAttribute("requester", requester);
+        try {
+            User requester = userDAO.findById(enrollmentRequest.getUserId());
+            request.setAttribute("requester", requester);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error when loading user details");
+            return;
+        }
         
         // If request is for a student, load class details
         if ("Student".equals(enrollmentRequest.getRequestedRole())) {
-            Class classObj = classDAO.getClassById(enrollmentRequest.getClassId());
+            com.attendance.models.Class classObj = classDAO.getClassById(enrollmentRequest.getClassId());
             request.setAttribute("classObj", classObj);
             
             Department department = departmentDAO.getDepartmentById(classObj.getDepartmentId());
@@ -313,26 +332,33 @@ public class EnrollmentRequestServlet extends HttpServlet {
         
         // If request is approved, additional steps are needed
         if (decision.equals("Approved")) {
-            User requester = userDAO.getUserById(enrollmentRequest.getUserId());
-            
-            // Update user role
-            requester.setRole(enrollmentRequest.getRequestedRole());
-            userDAO.updateUser(requester);
-            
-            // If student, create enrollment record
-            if ("Student".equals(enrollmentRequest.getRequestedRole())) {
-                StudentEnrollment enrollment = new StudentEnrollment();
-                enrollment.setEnrollmentId(enrollmentRequest.getEnrollmentNumber());
-                enrollment.setUserId(requester.getUserId());
-                enrollment.setClassId(enrollmentRequest.getClassId());
+            try {
+                User requester = userDAO.findById(enrollmentRequest.getUserId());
                 
-                // Set academic year to current year
-                String academicYear = String.valueOf(java.time.Year.now().getValue());
-                enrollment.setAcademicYear(academicYear);
+                // Update user role
+                requester.setRole(enrollmentRequest.getRequestedRole());
+                userDAO.update(requester);
                 
-                enrollment.setEnrollmentStatus("Active");
-                
-                studentEnrollmentDAO.createEnrollment(enrollment);
+                // If student, create enrollment record
+                if ("Student".equals(enrollmentRequest.getRequestedRole())) {
+                    StudentEnrollment enrollment = new StudentEnrollment();
+                    enrollment.setEnrollmentId(enrollmentRequest.getEnrollmentNumber());
+                    enrollment.setUserId(requester.getUserId());
+                    enrollment.setClassId(enrollmentRequest.getClassId());
+                    
+                    // Set academic year to current year
+                    String academicYear = String.valueOf(java.time.Year.now().getValue());
+                    enrollment.setAcademicYear(academicYear);
+                    
+                    enrollment.setEnrollmentStatus("Active");
+                    
+                    studentEnrollmentDAO.createEnrollment(enrollment);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                request.setAttribute("error", "Database error when processing approval. Please try again.");
+                showApprovalForm(request, response, requestId);
+                return;
             }
         }
         

@@ -4,6 +4,7 @@ import com.attendance.models.StudentEnrollment;
 import com.attendance.models.User;
 import com.attendance.models.Class;
 import com.attendance.utils.DatabaseConnection;
+import com.attendance.dao.impl.UserDaoImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -66,8 +67,12 @@ public class StudentEnrollmentDAO {
                     enrollment.setEnrollmentStatus(rs.getString("enrollment_status"));
                     
                     // Load related objects
-                    enrollment.setUser(userDAO.getUserById(enrollment.getUserId()));
-                    enrollment.setClassObj(classDAO.getClassById(enrollment.getClassId()));
+                    try {
+                        enrollment.setUser(userDAO.findById(enrollment.getUserId()));
+                        enrollment.setClassObj(classDAO.getClassById(enrollment.getClassId()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     return enrollment;
                 }
@@ -102,8 +107,12 @@ public class StudentEnrollmentDAO {
                     enrollment.setEnrollmentStatus(rs.getString("enrollment_status"));
                     
                     // Load related objects
-                    enrollment.setUser(userDAO.getUserById(enrollment.getUserId()));
-                    enrollment.setClassObj(classDAO.getClassById(enrollment.getClassId()));
+                    try {
+                        enrollment.setUser(userDAO.findById(enrollment.getUserId()));
+                        enrollment.setClassObj(classDAO.getClassById(enrollment.getClassId()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     return enrollment;
                 }
@@ -151,7 +160,11 @@ public class StudentEnrollmentDAO {
                     enrollment.setEnrollmentStatus(rs.getString("enrollment_status"));
                     
                     // Load user info
-                    enrollment.setUser(userDAO.getUserById(enrollment.getUserId()));
+                    try {
+                        enrollment.setUser(userDAO.findById(enrollment.getUserId()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     enrollments.add(enrollment);
                 }
@@ -247,8 +260,12 @@ public class StudentEnrollmentDAO {
                     enrollment.setEnrollmentStatus(rs.getString("enrollment_status"));
                     
                     // Load related objects
-                    enrollment.setUser(userDAO.getUserById(enrollment.getUserId()));
-                    enrollment.setClassObj(classDAO.getClassById(enrollment.getClassId()));
+                    try {
+                        enrollment.setUser(userDAO.findById(enrollment.getUserId()));
+                        enrollment.setClassObj(classDAO.getClassById(enrollment.getClassId()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                     
                     enrollments.add(enrollment);
                 }
