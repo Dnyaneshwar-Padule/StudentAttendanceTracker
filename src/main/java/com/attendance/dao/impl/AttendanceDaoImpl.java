@@ -1,6 +1,7 @@
 package com.attendance.dao.impl;
 
 import com.attendance.dao.AttendanceDao;
+import com.attendance.dao.LeaveApplicationDao;
 import com.attendance.models.Attendance;
 import com.attendance.utils.DatabaseConnection;
 
@@ -17,6 +18,23 @@ import java.util.logging.Logger;
  */
 public class AttendanceDaoImpl implements AttendanceDao {
     private static final Logger LOGGER = Logger.getLogger(AttendanceDaoImpl.class.getName());
+    
+    private LeaveApplicationDao leaveApplicationDao;
+    
+    /**
+     * Default constructor
+     */
+    public AttendanceDaoImpl() {
+        leaveApplicationDao = new LeaveApplicationDaoImpl();
+    }
+    
+    /**
+     * Constructor with LeaveApplicationDao dependency
+     * @param leaveApplicationDao The LeaveApplicationDao implementation
+     */
+    public AttendanceDaoImpl(LeaveApplicationDao leaveApplicationDao) {
+        this.leaveApplicationDao = leaveApplicationDao;
+    }
 
     @Override
     public Attendance findById(Integer id) throws SQLException {
@@ -307,7 +325,8 @@ public class AttendanceDaoImpl implements AttendanceDao {
     @Override
     public double calculateAttendancePercentage(int studentId, String subjectCode, String semester, String academicYear) throws SQLException {
         String sql = "SELECT COUNT(*) AS total, " +
-                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present " +
+                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present, " +
+                     "SUM(CASE WHEN status = 'On Leave' THEN 1 ELSE 0 END) AS on_leave " +
                      "FROM Attendance " +
                      "WHERE student_id = ? AND subject_code = ? AND semester = ? AND academic_year = ?";
         
@@ -323,9 +342,16 @@ public class AttendanceDaoImpl implements AttendanceDao {
                 if (rs.next()) {
                     int total = rs.getInt("total");
                     int present = rs.getInt("present");
+                    int onLeave = rs.getInt("on_leave");
                     
-                    if (total > 0) {
-                        return (double) present / total * 100;
+                    // Don't count "On Leave" days in the total when calculating attendance percentage
+                    int effectiveTotal = total - onLeave;
+                    
+                    if (effectiveTotal > 0) {
+                        return (double) present / effectiveTotal * 100;
+                    } else if (total > 0 && effectiveTotal == 0) {
+                        // If all days are marked as "On Leave"
+                        return 100.0;
                     }
                 }
             }
@@ -342,7 +368,8 @@ public class AttendanceDaoImpl implements AttendanceDao {
         Map<String, Double> summary = new HashMap<>();
         
         String sql = "SELECT subject_code, COUNT(*) AS total, " +
-                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present " +
+                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present, " +
+                     "SUM(CASE WHEN status = 'On Leave' THEN 1 ELSE 0 END) AS on_leave " +
                      "FROM Attendance " +
                      "WHERE student_id = ? AND semester = ? AND academic_year = ? " +
                      "GROUP BY subject_code";
@@ -359,10 +386,17 @@ public class AttendanceDaoImpl implements AttendanceDao {
                     String subjectCode = rs.getString("subject_code");
                     int total = rs.getInt("total");
                     int present = rs.getInt("present");
+                    int onLeave = rs.getInt("on_leave");
                     
-                    if (total > 0) {
-                        double percentage = (double) present / total * 100;
+                    // Don't count "On Leave" days in the total when calculating attendance percentage
+                    int effectiveTotal = total - onLeave;
+                    
+                    if (effectiveTotal > 0) {
+                        double percentage = (double) present / effectiveTotal * 100;
                         summary.put(subjectCode, percentage);
+                    } else if (total > 0 && effectiveTotal == 0) {
+                        // If all days are marked as "On Leave"
+                        summary.put(subjectCode, 100.0);
                     } else {
                         summary.put(subjectCode, 0.0);
                     }
@@ -394,9 +428,21 @@ public class AttendanceDaoImpl implements AttendanceDao {
             conn.setAutoCommit(false);
             stmt = conn.prepareStatement(sql);
             
+            // Check for students on approved leave
+            Map<Integer, Boolean> studentsOnLeave = new HashMap<>();
+            for (int studentId : studentAttendance.keySet()) {
+                boolean onLeave = leaveApplicationDao.hasActiveLeave(studentId, date);
+                studentsOnLeave.put(studentId, onLeave);
+            }
+            
             for (Map.Entry<Integer, String> entry : studentAttendance.entrySet()) {
                 int studentId = entry.getKey();
                 String status = entry.getValue();
+                
+                // If student has an approved leave, mark as "On Leave" regardless of the provided status
+                if (studentsOnLeave.getOrDefault(studentId, false)) {
+                    status = "On Leave";
+                }
                 
                 stmt.setDate(1, date);
                 stmt.setString(2, subjectCode);

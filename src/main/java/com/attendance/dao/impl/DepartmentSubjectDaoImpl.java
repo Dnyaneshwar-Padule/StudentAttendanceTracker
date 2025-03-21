@@ -154,7 +154,7 @@ public class DepartmentSubjectDaoImpl implements DepartmentSubjectDao {
 
     @Override
     public DepartmentSubject save(DepartmentSubject departmentSubject) throws SQLException {
-        String sql = "INSERT INTO DepartmentSubjects (department_id, subject_code, semester, credits) " +
+        String sql = "INSERT INTO DepartmentSubjects (department_id, subject_code, semester, year_of_study) " +
                      "VALUES (?, ?, ?, ?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
@@ -163,7 +163,7 @@ public class DepartmentSubjectDaoImpl implements DepartmentSubjectDao {
             stmt.setInt(1, departmentSubject.getDepartmentId());
             stmt.setString(2, departmentSubject.getSubjectCode());
             stmt.setString(3, departmentSubject.getSemester());
-            stmt.setInt(4, departmentSubject.getCredits());
+            stmt.setString(4, departmentSubject.getYearOfStudy());
             
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -179,14 +179,14 @@ public class DepartmentSubjectDaoImpl implements DepartmentSubjectDao {
 
     @Override
     public DepartmentSubject update(DepartmentSubject departmentSubject) throws SQLException {
-        String sql = "UPDATE DepartmentSubjects SET semester = ?, credits = ? " +
+        String sql = "UPDATE DepartmentSubjects SET semester = ?, year_of_study = ? " +
                      "WHERE department_id = ? AND subject_code = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, departmentSubject.getSemester());
-            stmt.setInt(2, departmentSubject.getCredits());
+            stmt.setString(2, departmentSubject.getYearOfStudy());
             stmt.setInt(3, departmentSubject.getDepartmentId());
             stmt.setString(4, departmentSubject.getSubjectCode());
             
@@ -231,7 +231,7 @@ public class DepartmentSubjectDaoImpl implements DepartmentSubjectDao {
         departmentSubject.setDepartmentId(rs.getInt("department_id"));
         departmentSubject.setSubjectCode(rs.getString("subject_code"));
         departmentSubject.setSemester(rs.getString("semester"));
-        departmentSubject.setCredits(rs.getInt("credits"));
+        departmentSubject.setYearOfStudy(rs.getString("year_of_study"));
         return departmentSubject;
     }
 }

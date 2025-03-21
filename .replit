@@ -2,3 +2,19 @@ modules = ["postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
+
+[workflows]
+runButton = "Run Java Web App"
+
+[[workflows.workflow]]
+name = "Run Java Web App"
+author = 40738262
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mvn clean package"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "java -jar target/attendance-management.jar"
