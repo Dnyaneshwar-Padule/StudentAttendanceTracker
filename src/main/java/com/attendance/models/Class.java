@@ -14,6 +14,8 @@ public class Class {
     private String description;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private String course;
+    private String year;
     
     // Constructor with required fields
     public Class(String className, int departmentId) {
@@ -103,6 +105,38 @@ public class Class {
         this.updatedAt = updatedAt;
     }
     
+    /**
+     * Get the course name
+     * @return The course name
+     */
+    public String getCourse() {
+        return course;
+    }
+    
+    /**
+     * Set the course name
+     * @param course The course name to set
+     */
+    public void setCourse(String course) {
+        this.course = course;
+    }
+    
+    /**
+     * Get the class year (e.g., "FY", "SY", "TY")
+     * @return The class year
+     */
+    public String getYear() {
+        return year;
+    }
+    
+    /**
+     * Set the class year
+     * @param year The class year to set
+     */
+    public void setYear(String year) {
+        this.year = year;
+    }
+    
     @Override
     public String toString() {
         return "Class{" +
@@ -110,6 +144,8 @@ public class Class {
                 ", className='" + className + '\'' +
                 ", departmentId=" + departmentId +
                 ", classTeacherId=" + classTeacherId +
+                ", course='" + course + '\'' +
+                ", year='" + year + '\'' +
                 '}';
     }
 }

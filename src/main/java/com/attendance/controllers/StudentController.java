@@ -1787,7 +1787,8 @@ public class StudentController extends HttpServlet {
     private void listHodStudents(HttpServletRequest request, HttpServletResponse response, User user) throws ServletException, IOException {
         try {
             // Get HOD's department
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departmentList = departmentDao.findByHod(user.getUserId());
+            Department department = departmentList.isEmpty() ? null : departmentList.get(0);
             
             if (department == null) {
                 request.setAttribute("error", "You are not assigned as HOD to any department.");
@@ -1900,7 +1901,8 @@ public class StudentController extends HttpServlet {
     private void viewHodStudentDetails(HttpServletRequest request, HttpServletResponse response, User user, String pathInfo) throws ServletException, IOException {
         try {
             // Get HOD's department
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departmentList = departmentDao.findByHod(user.getUserId());
+            Department department = departmentList.isEmpty() ? null : departmentList.get(0);
             
             if (department == null) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "You are not assigned as HOD to any department");
@@ -2039,7 +2041,8 @@ public class StudentController extends HttpServlet {
     private void viewHodStudentAttendance(HttpServletRequest request, HttpServletResponse response, User user, String pathInfo) throws ServletException, IOException {
         try {
             // Get HOD's department
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departmentList = departmentDao.findByHod(user.getUserId());
+            Department department = departmentList.isEmpty() ? null : departmentList.get(0);
             
             if (department == null) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "You are not assigned as HOD to any department");

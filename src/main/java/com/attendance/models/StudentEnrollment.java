@@ -1,5 +1,7 @@
 package com.attendance.models;
 
+import java.sql.Date;
+
 /**
  * StudentEnrollment model class representing StudentEnrollment table
  */
@@ -9,6 +11,8 @@ public class StudentEnrollment {
     private int classId;
     private String academicYear;
     private String enrollmentStatus;
+    private Date enrollmentDate;
+    private String semester;
     
     // Additional fields for joining
     private User user;
@@ -24,6 +28,25 @@ public class StudentEnrollment {
         this.classId = classId;
         this.academicYear = academicYear;
         this.enrollmentStatus = enrollmentStatus;
+    }
+    
+    public StudentEnrollment(String enrollmentId, int userId, int classId, String academicYear, String enrollmentStatus, Date enrollmentDate) {
+        this.enrollmentId = enrollmentId;
+        this.userId = userId;
+        this.classId = classId;
+        this.academicYear = academicYear;
+        this.enrollmentStatus = enrollmentStatus;
+        this.enrollmentDate = enrollmentDate;
+    }
+    
+    public StudentEnrollment(String enrollmentId, int userId, int classId, String academicYear, String enrollmentStatus, Date enrollmentDate, String semester) {
+        this.enrollmentId = enrollmentId;
+        this.userId = userId;
+        this.classId = classId;
+        this.academicYear = academicYear;
+        this.enrollmentStatus = enrollmentStatus;
+        this.enrollmentDate = enrollmentDate;
+        this.semester = semester;
     }
     
     // Getters and setters
@@ -75,6 +98,62 @@ public class StudentEnrollment {
         this.enrollmentStatus = enrollmentStatus;
     }
     
+    /**
+     * Get enrollment date
+     * @return the enrollment date
+     */
+    public Date getEnrollmentDate() {
+        return enrollmentDate;
+    }
+    
+    /**
+     * Set enrollment date
+     * @param enrollmentDate the enrollment date to set
+     */
+    public void setEnrollmentDate(Date enrollmentDate) {
+        this.enrollmentDate = enrollmentDate;
+    }
+    
+    /**
+     * Get status (alias for getEnrollmentStatus)
+     * @return the enrollment status
+     */
+    public String getStatus() {
+        return enrollmentStatus;
+    }
+    
+    /**
+     * Set status (alias for setEnrollmentStatus)
+     * @param status the status to set
+     */
+    public void setStatus(String status) {
+        this.enrollmentStatus = status;
+    }
+    
+    /**
+     * Set student ID (alias for setUserId)
+     * @param studentId the student ID to set
+     */
+    public void setStudentId(int studentId) {
+        this.userId = studentId;
+    }
+    
+    /**
+     * Get semester
+     * @return the semester
+     */
+    public String getSemester() {
+        return semester;
+    }
+    
+    /**
+     * Set semester
+     * @param semester the semester to set
+     */
+    public void setSemester(String semester) {
+        this.semester = semester;
+    }
+    
     public User getUser() {
         return user;
     }
@@ -105,6 +184,8 @@ public class StudentEnrollment {
                 ", classId=" + classId +
                 ", academicYear='" + academicYear + '\'' +
                 ", enrollmentStatus='" + enrollmentStatus + '\'' +
+                ", enrollmentDate=" + enrollmentDate +
+                ", semester='" + semester + '\'' +
                 '}';
     }
 }

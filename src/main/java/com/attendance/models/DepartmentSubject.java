@@ -8,6 +8,8 @@ public class DepartmentSubject {
     private int departmentId;
     private int classId;
     private String subjectCode;
+    private String semester;
+    private String yearOfStudy;
     
     // Additional fields for joining
     private Department department;
@@ -58,6 +60,22 @@ public class DepartmentSubject {
         this.subjectCode = subjectCode;
     }
     
+    public String getSemester() {
+        return semester;
+    }
+    
+    public void setSemester(String semester) {
+        this.semester = semester;
+    }
+    
+    public String getYearOfStudy() {
+        return yearOfStudy;
+    }
+    
+    public void setYearOfStudy(String yearOfStudy) {
+        this.yearOfStudy = yearOfStudy;
+    }
+    
     public Department getDepartment() {
         return department;
     }
@@ -98,6 +116,8 @@ public class DepartmentSubject {
                 ", departmentId=" + departmentId +
                 ", classId=" + classId +
                 ", subjectCode='" + subjectCode + '\'' +
+                ", semester='" + semester + '\'' +
+                ", yearOfStudy='" + yearOfStudy + '\'' +
                 '}';
     }
 }

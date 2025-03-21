@@ -74,4 +74,36 @@ public class PasswordUtils {
     public static boolean verifyPlainTextPassword(String inputPassword, String storedPassword) {
         return inputPassword.equals(storedPassword);
     }
+    
+    /**
+     * Generate a secure password hash (with auto-generated salt)
+     * This is a simplified version that generates salt internally and returns a formatted string
+     * 
+     * @param password the password to hash
+     * @return a formatted string containing both the salt and hash, separated by ':'
+     */
+    public static String generateSecurePassword(String password) {
+        String salt = generateSalt();
+        String hash = hashPassword(password, salt);
+        return salt + ":" + hash;
+    }
+    
+    /**
+     * Verify a password against a secure formatted password string (salt:hash)
+     * 
+     * @param password the password to verify
+     * @param securePassword the stored secure password string (salt:hash)
+     * @return true if the password matches
+     */
+    public static boolean verifySecurePassword(String password, String securePassword) {
+        String[] parts = securePassword.split(":");
+        if (parts.length != 2) {
+            return false;
+        }
+        
+        String salt = parts[0];
+        String hash = parts[1];
+        
+        return verifyPassword(password, hash, salt);
+    }
 }

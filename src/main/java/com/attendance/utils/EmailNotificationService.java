@@ -188,4 +188,44 @@ public class EmailNotificationService {
         
         return sendEmail(user.getEmail(), subject, body);
     }
+    
+    /**
+     * Send biometric registration notification
+     * @param user The user
+     * @param success Whether the registration was successful
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendBiometricRegistrationNotification(User user, boolean success) {
+        String subject = "Biometric Registration " + (success ? "Successful" : "Failed");
+        String body = "Dear " + user.getName() + ",\n\n";
+        
+        if (success) {
+            body += "Your biometric face registration was successful. You can now use face recognition for attendance.\n\n";
+        } else {
+            body += "Your biometric face registration was not successful. Please try again or contact support.\n\n";
+        }
+        
+        body += "Regards,\nStudent Attendance Management System";
+        
+        return sendEmail(user.getEmail(), subject, body);
+    }
+    
+    /**
+     * Send attendance notification
+     * @param user The user
+     * @param attendance The attendance record
+     * @param status The attendance status
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendAttendanceNotification(User user, com.attendance.models.Attendance attendance, String status) {
+        String subject = "Attendance Marked - " + status;
+        String body = "Dear " + user.getName() + ",\n\n"
+                + "Your attendance has been marked as '" + status + "' for today's session.\n\n"
+                + "Date: " + attendance.getAttendanceDate() + "\n"
+                + "Time: " + attendance.getTimeIn() + "\n\n"
+                + "If this was not you or you believe there is an error, please contact your teacher or administrator.\n\n"
+                + "Regards,\nStudent Attendance Management System";
+        
+        return sendEmail(user.getEmail(), subject, body);
+    }
 }

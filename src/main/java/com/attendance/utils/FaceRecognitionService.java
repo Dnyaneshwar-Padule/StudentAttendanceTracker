@@ -67,4 +67,37 @@ public class FaceRecognitionService {
         LOGGER.info("Recognizing face from image: " + imageFile.getName() + " (Placeholder)");
         return -1;
     }
+    
+    /**
+     * Check if a user has their face registered
+     * @param userId The user ID
+     * @return True if registered, false otherwise
+     */
+    public boolean isFaceRegistered(int userId) {
+        LOGGER.info("Checking if face is registered for user: " + userId + " (Placeholder)");
+        // In a real implementation, this would check if the user's face data exists
+        return true;
+    }
+    
+    /**
+     * Register a user's face
+     * @param userId The user ID
+     * @return True if successful, false otherwise
+     */
+    public boolean registerFace(int userId) {
+        LOGGER.info("Registering face for user: " + userId + " (Placeholder)");
+        // In a real implementation, this would capture facial data and store it
+        return true;
+    }
+    
+    /**
+     * Verify a user's face for authentication
+     * @param userId The user ID
+     * @return True if verified, false otherwise
+     */
+    public boolean verifyFace(int userId) {
+        LOGGER.info("Verifying face for user: " + userId + " (Placeholder)");
+        // In a real implementation, this would capture a face and compare it to stored data
+        return true;
+    }
 }

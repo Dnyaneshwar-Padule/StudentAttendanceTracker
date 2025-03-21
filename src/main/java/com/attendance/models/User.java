@@ -159,6 +159,14 @@ public class User {
     }
 
     /**
+     * Set user name (alias for setFullName for better semantic meaning)
+     * @param name the user's full name
+     */
+    public void setName(String name) {
+        this.fullName = name;
+    }
+
+    /**
      * @param fullName the fullName to set
      */
     public void setFullName(String fullName) {
@@ -210,6 +218,22 @@ public class User {
     }
     
     /**
+     * Alias for getPhoneNumber() for seamless compatibility
+     * @return the phone number
+     */
+    public String getPhoneNo() {
+        return phoneNumber;
+    }
+    
+    /**
+     * Alias for setPhoneNumber() for seamless compatibility
+     * @param phoneNo the phone number to set
+     */
+    public void setPhoneNo(String phoneNo) {
+        this.phoneNumber = phoneNo;
+    }
+    
+    /**
      * @return the address
      */
     public String getAddress() {
@@ -249,6 +273,42 @@ public class User {
      */
     public void setDepartment(String department) {
         this.department = department;
+    }
+    
+    /**
+     * Get the department ID from the department
+     * This is a compatibility method for cases where department is stored as "ID:Name"
+     * 
+     * @return the department ID as an integer, or 0 if not available
+     */
+    public int getDepartmentId() {
+        if (department == null || department.isEmpty()) {
+            return 0;
+        }
+        
+        // If department is stored in format "ID:Name", extract the ID
+        if (department.contains(":")) {
+            try {
+                return Integer.parseInt(department.split(":")[0]);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        
+        // If just a number is stored
+        try {
+            return Integer.parseInt(department);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+    
+    /**
+     * Set the department ID 
+     * @param departmentId the department ID to set
+     */
+    public void setDepartmentId(int departmentId) {
+        this.department = String.valueOf(departmentId);
     }
 
     /**

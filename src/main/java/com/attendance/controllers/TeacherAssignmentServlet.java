@@ -1,6 +1,7 @@
 package com.attendance.controllers;
 
 import com.attendance.dao.*;
+import com.attendance.dao.impl.*;
 import com.attendance.models.*;
 import com.attendance.utils.SessionUtil;
 
@@ -19,11 +20,11 @@ import javax.servlet.http.HttpServletResponse;
 public class TeacherAssignmentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDAO();
-    private UserDAO userDAO = new UserDAO();
-    private SubjectDAO subjectDAO = new SubjectDAO();
-    private ClassDAO classDAO = new ClassDAO();
-    private DepartmentDAO departmentDAO = new DepartmentDAO();
+    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDaoImpl();
+    private UserDAO userDAO = new UserDaoImpl();
+    private SubjectDAO subjectDAO = new SubjectDaoImpl();
+    private ClassDAO classDAO = new ClassDaoImpl();
+    private DepartmentDAO departmentDAO = new DepartmentDaoImpl();
     
     // Use a fully qualified name for model.Class to avoid conflicts with java.lang.Class
     private final java.lang.Class<?> CLASS_TYPE = com.attendance.models.Class.class;

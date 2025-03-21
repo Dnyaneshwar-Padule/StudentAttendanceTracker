@@ -4,6 +4,8 @@ import com.attendance.dao.UserDao;
 import com.attendance.models.User;
 import com.attendance.utils.DatabaseConnection;
 import com.attendance.utils.PasswordUtils;
+import com.attendance.dao.StudentEnrollmentDao;
+import com.attendance.dao.impl.StudentEnrollmentDaoImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -315,5 +317,133 @@ public class UserDaoImpl implements UserDao {
         }
         
         return user;
+    }
+    
+    @Override
+    public List<User> findStudentsByDepartment(int departmentId) throws SQLException {
+        List<User> students = new ArrayList<>();
+        String sql = "SELECT u.* FROM Users u WHERE u.role = 'Student' AND u.department_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, departmentId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    students.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding students by department ID: " + departmentId, e);
+            throw e;
+        }
+        
+        return students;
+    }
+    
+    @Override
+    public List<User> findStudentsByClass(int classId) throws SQLException {
+        List<User> students = new ArrayList<>();
+        String sql = "SELECT u.* FROM Users u " +
+                     "JOIN StudentEnrollments se ON u.user_id = se.user_id " +
+                     "WHERE u.role = 'Student' AND se.class_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    students.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding students by class ID: " + classId, e);
+            throw e;
+        }
+        
+        return students;
+    }
+    
+    @Override
+    public List<User> findStudentsByAcademicYear(String academicYear) throws SQLException {
+        List<User> students = new ArrayList<>();
+        String sql = "SELECT u.* FROM Users u " +
+                     "JOIN StudentEnrollments se ON u.user_id = se.user_id " +
+                     "WHERE u.role = 'Student' AND se.academic_year = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, academicYear);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    students.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding students by academic year: " + academicYear, e);
+            throw e;
+        }
+        
+        return students;
+    }
+    
+    @Override
+    public List<User> findUsersByRoleAndStatus(String role, String status) throws SQLException {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT u.* FROM Users u " +
+                     "JOIN StudentEnrollments se ON u.user_id = se.user_id " +
+                     "WHERE u.role = ? AND se.enrollment_status = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, role);
+            stmt.setString(2, status);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding users by role and status: " + role + ", " + status, e);
+            throw e;
+        }
+        
+        return users;
+    }
+    
+    @Override
+    public List<User> searchStudents(String query) throws SQLException {
+        List<User> students = new ArrayList<>();
+        String sql = "SELECT * FROM Users WHERE role = 'Student' AND " +
+                     "(LOWER(name) LIKE LOWER(?) OR " +
+                     "LOWER(email) LIKE LOWER(?) OR " +
+                     "CAST(user_id AS VARCHAR) LIKE ?)";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            String searchParam = "%" + query + "%";
+            stmt.setString(1, searchParam);
+            stmt.setString(2, searchParam);
+            stmt.setString(3, searchParam);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    students.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error searching for students with query: " + query, e);
+            throw e;
+        }
+        
+        return students;
     }
 }

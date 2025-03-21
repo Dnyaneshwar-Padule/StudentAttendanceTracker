@@ -24,4 +24,12 @@ public interface DepartmentDao extends BaseDao<Department, Integer> {
      * @throws SQLException If a database error occurs
      */
     List<Department> findByHod(int hodId) throws SQLException;
+    
+    /**
+     * Find department by department code
+     * @param code The department code
+     * @return The department or null if not found
+     * @throws SQLException If a database error occurs
+     */
+    Department findByCode(String code) throws SQLException;
 }

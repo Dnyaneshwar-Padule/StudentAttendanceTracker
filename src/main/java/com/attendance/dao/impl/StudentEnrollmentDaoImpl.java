@@ -74,7 +74,7 @@ public class StudentEnrollmentDaoImpl implements StudentEnrollmentDao {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    enrollment.setEnrollmentId(rs.getInt(1));
+                    enrollment.setEnrollmentId(String.valueOf(rs.getInt(1)));
                     return enrollment;
                 }
             }
@@ -99,7 +99,7 @@ public class StudentEnrollmentDaoImpl implements StudentEnrollmentDao {
             stmt.setString(3, enrollment.getAcademicYear());
             stmt.setDate(4, enrollment.getEnrollmentDate());
             stmt.setString(5, enrollment.getStatus());
-            stmt.setInt(6, enrollment.getEnrollmentId());
+            stmt.setInt(6, Integer.parseInt(enrollment.getEnrollmentId()));
             
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -254,7 +254,7 @@ public class StudentEnrollmentDaoImpl implements StudentEnrollmentDao {
      */
     private StudentEnrollment mapResultSetToStudentEnrollment(ResultSet rs) throws SQLException {
         StudentEnrollment enrollment = new StudentEnrollment();
-        enrollment.setEnrollmentId(rs.getInt("enrollment_id"));
+        enrollment.setEnrollmentId(String.valueOf(rs.getInt("enrollment_id")));
         enrollment.setStudentId(rs.getInt("student_id"));
         enrollment.setClassId(rs.getInt("class_id"));
         enrollment.setAcademicYear(rs.getString("academic_year"));

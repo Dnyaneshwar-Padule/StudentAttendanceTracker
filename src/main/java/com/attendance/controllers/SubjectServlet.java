@@ -83,7 +83,7 @@ public class SubjectServlet extends HttpServlet {
             if (departmentIdStr != null && !departmentIdStr.isEmpty()) {
                 try {
                     int departmentId = Integer.parseInt(departmentIdStr);
-                    List<Class> classes = classDAO.getClassesByDepartment(departmentId);
+                    List<com.attendance.models.Class> classes = classDAO.getClassesByDepartment(departmentId);
                     request.setAttribute("classes", classes);
                     request.setAttribute("selectedDepartmentId", departmentId);
                 } catch (NumberFormatException e) {
@@ -239,7 +239,7 @@ public class SubjectServlet extends HttpServlet {
             
             // Verify that department and class exist
             Department department = departmentDAO.getDepartmentById(departmentId);
-            Class classObj = classDAO.getClassById(classId);
+            com.attendance.models.Class classObj = classDAO.getClassById(classId);
             
             if (department == null || classObj == null) {
                 request.setAttribute("error", "Invalid department or class");
