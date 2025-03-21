@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS Attendance (
     student_id INTEGER NOT NULL REFERENCES Users(user_id),
     subject_code VARCHAR(20) NOT NULL REFERENCES Subjects(subject_code),
     attendance_date DATE NOT NULL,
-    status VARCHAR(20) NOT NULL CHECK (status IN ('Present', 'Absent', 'On Leave')),
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Present', 'Absent', 'Leave')),
     semester VARCHAR(10) NOT NULL,
     academic_year VARCHAR(20) NOT NULL,
     marked_by VARCHAR(100),
@@ -127,22 +127,6 @@ CREATE TABLE IF NOT EXISTS BiometricData (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     UNIQUE (student_id)
-);
-
--- LeaveApplications table (for student leave requests)
-CREATE TABLE IF NOT EXISTS LeaveApplications (
-    leave_id SERIAL PRIMARY KEY,
-    student_id INTEGER NOT NULL REFERENCES Users(user_id),
-    class_id INTEGER NOT NULL REFERENCES Classes(class_id),
-    reason TEXT NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
-    approved_by INTEGER REFERENCES Users(user_id),
-    approval_date TIMESTAMP,
-    remarks TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP
 );
 
 -- Add audit triggers here if needed

@@ -13,7 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import com.attendance.dao.impl.DatabaseConnection;
+import com.attendance.utils.DatabaseConnection;
+import com.attendance.utils.PasswordUtils;
 
 /**
  * Database initializer that runs when the application starts
@@ -86,9 +87,10 @@ public class DatabaseInitializer implements ServletContextListener {
             if (!usersExist) {
                 LOGGER.info("Creating default admin user...");
                 
-                // Insert admin user with password "admin123" (would be hashed in production)
+                // Insert admin user with hashed password for "admin123"
+                String hashedPassword = PasswordUtils.hashPassword("admin123");
                 String sql = "INSERT INTO Users (full_name, email, password, role, status) " +
-                           "VALUES ('System Admin', 'admin@example.com', 'admin123', 'Admin', 'Active')";
+                           "VALUES ('System Admin', 'admin@example.com', '" + hashedPassword + "', 'Admin', 'Active')";
                 
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute(sql);
