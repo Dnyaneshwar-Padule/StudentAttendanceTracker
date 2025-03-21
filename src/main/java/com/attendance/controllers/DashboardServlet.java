@@ -1,274 +1,152 @@
 package com.attendance.controllers;
 
-import com.attendance.dao.*;
-import com.attendance.models.*;
-import com.attendance.utils.SessionUtil;
+import com.attendance.dao.AttendanceDao;
+import com.attendance.dao.LeaveApplicationDao;
+import com.attendance.dao.UserDao;
+import com.attendance.dao.impl.AttendanceDaoImpl;
+import com.attendance.dao.impl.LeaveApplicationDaoImpl;
+import com.attendance.dao.impl.UserDaoImpl;
+import com.attendance.models.User;
 
-import java.io.IOException;
-import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Servlet for handling dashboard requests for different user roles
+ * Servlet handling the dashboard for different user roles
  */
 @WebServlet("/dashboard")
 public class DashboardServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = Logger.getLogger(DashboardServlet.class.getName());
+    private UserDao userDao;
+    private AttendanceDao attendanceDao;
+    private LeaveApplicationDao leaveApplicationDao;
     
-    private UserDAO userDAO = new UserDAO();
-    private DepartmentDAO departmentDAO = new DepartmentDAO();
-    private ClassDAO classDAO = new ClassDAO();
-    private EnrollmentRequestDAO enrollmentRequestDAO = new EnrollmentRequestDAO();
-    private StudentEnrollmentDAO studentEnrollmentDAO = new StudentEnrollmentDAO();
-    private SubjectDAO subjectDAO = new SubjectDAO();
-    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDAO();
-    private AttendanceDAO attendanceDAO = new AttendanceDAO();
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        userDao = new UserDaoImpl();
+        attendanceDao = new AttendanceDaoImpl();
+        leaveApplicationDao = new LeaveApplicationDaoImpl();
+    }
     
     /**
-     * Handles the HTTP GET request - displays the appropriate dashboard based on user role
+     * Handles GET requests to show the appropriate dashboard based on user role
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
         
         // Check if user is logged in
-        if (!SessionUtil.isLoggedIn(request)) {
+        if (session == null || session.getAttribute("user") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
         
-        // Get current user from session
-        User user = SessionUtil.getUser(request);
+        // Get user information from session
+        User user = (User) session.getAttribute("user");
         String role = user.getRole();
         
-        // Prepare dashboard data based on user role
-        switch (role) {
-            case "Student":
-                prepareStudentDashboard(request, user);
-                request.getRequestDispatcher("/views/student/dashboard.jsp").forward(request, response);
-                break;
-                
-            case "Teacher":
-                prepareTeacherDashboard(request, user);
-                request.getRequestDispatcher("/views/teacher/dashboard.jsp").forward(request, response);
-                break;
-                
-            case "Class Teacher":
-                prepareClassTeacherDashboard(request, user);
-                request.getRequestDispatcher("/views/classteacher/dashboard.jsp").forward(request, response);
-                break;
-                
-            case "HOD":
-                prepareHODDashboard(request, user);
-                request.getRequestDispatcher("/views/hod/dashboard.jsp").forward(request, response);
-                break;
-                
-            case "Principal":
-                preparePrincipalDashboard(request, user);
-                request.getRequestDispatcher("/views/principal/dashboard.jsp").forward(request, response);
-                break;
-                
-            default:
-                response.sendRedirect(request.getContextPath() + "/login");
-                break;
-        }
-    }
-    
-    /**
-     * Prepares data for the student dashboard
-     */
-    private void prepareStudentDashboard(HttpServletRequest request, User student) {
-        // Get student enrollment details
-        StudentEnrollment enrollment = studentEnrollmentDAO.getEnrollmentByUserId(student.getUserId());
-        request.setAttribute("enrollment", enrollment);
-        
-        if (enrollment != null) {
-            // Get class and department details
-            Class classObj = classDAO.getClassById(enrollment.getClassId());
-            request.setAttribute("classObj", classObj);
+        try {
+            // Set common dashboard attributes
+            request.setAttribute("user", user);
             
-            Department department = departmentDAO.getDepartmentById(classObj.getDepartmentId());
-            request.setAttribute("department", department);
-            
-            // Calculate semester based on class name
-            String semester = getSemesterFromClass(classObj.getClassName());
-            request.setAttribute("semester", semester);
-            
-            // Get subjects for this class
-            List<Subject> subjects = subjectDAO.getSubjectsByDepartmentAndClass(
-                classObj.getDepartmentId(), classObj.getClassId());
-            request.setAttribute("subjects", subjects);
-            
-            // Get attendance statistics
-            for (Subject subject : subjects) {
-                double attendancePercentage = attendanceDAO.getOverallAttendancePercentage(
-                    student.getUserId(), semester, enrollment.getAcademicYear());
-                request.setAttribute("attendancePercentage", attendancePercentage);
+            // Different dashboard views based on user role
+            String dashboardPage;
+            switch (role) {
+                case "Admin":
+                    prepareDashboardAdmin(request);
+                    dashboardPage = "/views/admin/dashboard.jsp";
+                    break;
+                    
+                case "Principal":
+                    prepareDashboardPrincipal(request);
+                    dashboardPage = "/views/principal/dashboard.jsp";
+                    break;
+                    
+                case "HOD":
+                    prepareDashboardHOD(request);
+                    dashboardPage = "/views/hod/dashboard.jsp";
+                    break;
+                    
+                case "Teacher":
+                    prepareDashboardTeacher(request, user.getUserId());
+                    dashboardPage = "/views/teacher/dashboard.jsp";
+                    break;
+                    
+                case "Student":
+                    prepareDashboardStudent(request, user.getUserId());
+                    dashboardPage = "/views/student/dashboard.jsp";
+                    break;
+                    
+                default:
+                    // Unknown role, redirect to login
+                    session.invalidate();
+                    response.sendRedirect(request.getContextPath() + "/login");
+                    return;
             }
-        } else {
-            // If student is not enrolled, show enrollment request form
-            request.setAttribute("needsEnrollment", true);
-            List<Department> departments = departmentDAO.getAllDepartments();
-            request.setAttribute("departments", departments);
-        }
-    }
-    
-    /**
-     * Prepares data for the teacher dashboard
-     */
-    private void prepareTeacherDashboard(HttpServletRequest request, User teacher) {
-        // Get teacher's department
-        Department department = departmentDAO.getDepartmentById(teacher.getDepartmentId());
-        request.setAttribute("department", department);
-        
-        // Get teacher's class assignments
-        List<TeacherAssignment> assignments = teacherAssignmentDAO.getAssignmentsByTeacher(teacher.getUserId());
-        request.setAttribute("assignments", assignments);
-        
-        // Check if this teacher is a class teacher for any class
-        boolean isClassTeacher = false;
-        for (TeacherAssignment assignment : assignments) {
-            if ("Class Teacher".equals(assignment.getAssignmentType())) {
-                isClassTeacher = true;
-                break;
-            }
-        }
-        request.setAttribute("isClassTeacher", isClassTeacher);
-    }
-    
-    /**
-     * Prepares data for the class teacher dashboard
-     */
-    private void prepareClassTeacherDashboard(HttpServletRequest request, User classTeacher) {
-        // Get class teacher's department
-        Department department = departmentDAO.getDepartmentById(classTeacher.getDepartmentId());
-        request.setAttribute("department", department);
-        
-        // Get classes assigned to this class teacher
-        List<TeacherAssignment> assignments = teacherAssignmentDAO.getAssignmentsByTeacher(classTeacher.getUserId());
-        request.setAttribute("assignments", assignments);
-        
-        // Filter to find classes where user is assigned as class teacher
-        TeacherAssignment classAssignment = null;
-        for (TeacherAssignment assignment : assignments) {
-            if ("Class Teacher".equals(assignment.getAssignmentType())) {
-                classAssignment = assignment;
-                break;
-            }
-        }
-        
-        if (classAssignment != null) {
-            // Get pending enrollment requests for this class teacher's class
-            List<EnrollmentRequest> pendingRequests = enrollmentRequestDAO.getPendingRequestsForVerifier(
-                "Class Teacher", classTeacher.getDepartmentId());
-            request.setAttribute("pendingRequests", pendingRequests);
             
-            // Get all students enrolled in this class teacher's class
-            List<StudentEnrollment> enrollments = studentEnrollmentDAO.getEnrollmentsByClass(
-                classAssignment.getClassId(), null);
-            request.setAttribute("enrollments", enrollments);
+            // Forward to the appropriate dashboard page
+            // For this initial version, we'll use a simple dashboard page
+            request.getRequestDispatcher("/views/dashboard.jsp").forward(request, response);
             
-            // Get current class object
-            Class classObj = classDAO.getClassById(classAssignment.getClassId());
-            request.setAttribute("classObj", classObj);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error loading dashboard data", e);
+            request.setAttribute("errorMessage", "Failed to load dashboard data: " + e.getMessage());
+            request.getRequestDispatcher("/views/error/500.jsp").forward(request, response);
         }
     }
     
     /**
-     * Prepares data for the HOD dashboard
+     * Prepare dashboard data for Admin
      */
-    private void prepareHODDashboard(HttpServletRequest request, User hod) {
-        // Get HOD's department
-        Department department = departmentDAO.getDepartmentById(hod.getDepartmentId());
-        request.setAttribute("department", department);
-        
-        // Get classes in this department
-        List<Class> classes = classDAO.getClassesByDepartment(department.getDepartmentId());
-        request.setAttribute("classes", classes);
-        
-        // Get teachers in this department
-        List<User> teachers = userDAO.getUsersByRoleAndDepartment("Teacher", department.getDepartmentId());
-        List<User> classTeachers = userDAO.getUsersByRoleAndDepartment("Class Teacher", department.getDepartmentId());
-        teachers.addAll(classTeachers);
-        request.setAttribute("teachers", teachers);
-        
-        // Get pending enrollment requests for teachers and class teachers
-        List<EnrollmentRequest> pendingRequests = enrollmentRequestDAO.getPendingRequestsForVerifier(
-            "HOD", hod.getDepartmentId());
-        request.setAttribute("pendingRequests", pendingRequests);
-        
-        // Get all subjects for this department
-        List<Subject> subjects = new ArrayList<>();
-        for (Class classObj : classes) {
-            List<Subject> classSubjects = subjectDAO.getSubjectsByDepartmentAndClass(
-                department.getDepartmentId(), classObj.getClassId());
-            
-            for (Subject subject : classSubjects) {
-                if (!subjects.contains(subject)) {
-                    subjects.add(subject);
-                }
-            }
-        }
-        request.setAttribute("subjects", subjects);
+    private void prepareDashboardAdmin(HttpServletRequest request) throws SQLException {
+        // For now, just a placeholder method
+        // In a full implementation, we would add statistics and admin-specific data
+        request.setAttribute("totalUsers", userDao.countUsers());
+        request.setAttribute("pendingUsers", userDao.countUsersByStatus("Pending"));
     }
     
     /**
-     * Prepares data for the principal dashboard
+     * Prepare dashboard data for Principal
      */
-    private void preparePrincipalDashboard(HttpServletRequest request, User principal) {
-        // Get all departments
-        List<Department> departments = departmentDAO.getAllDepartments();
-        request.setAttribute("departments", departments);
-        
-        // Get all HODs
-        List<User> hods = userDAO.getUsersByRole("HOD");
-        request.setAttribute("hods", hods);
-        
-        // Get pending enrollment requests for HODs
-        List<EnrollmentRequest> pendingRequests = enrollmentRequestDAO.getPendingRequestsForVerifier(
-            "Principal", null);
-        request.setAttribute("pendingRequests", pendingRequests);
-        
-        // Get student statistics
-        int totalStudents = 0;
-        for (Department department : departments) {
-            List<StudentEnrollment> enrollments = studentEnrollmentDAO.getEnrollmentsByDepartment(
-                department.getDepartmentId(), null);
-            totalStudents += enrollments.size();
-        }
-        request.setAttribute("totalStudents", totalStudents);
-        
-        // Get teacher statistics
-        int totalTeachers = 0;
-        int totalClassTeachers = 0;
-        for (Department department : departments) {
-            List<User> teachers = userDAO.getUsersByRoleAndDepartment("Teacher", department.getDepartmentId());
-            totalTeachers += teachers.size();
-            
-            List<User> classTeachers = userDAO.getUsersByRoleAndDepartment("Class Teacher", department.getDepartmentId());
-            totalClassTeachers += classTeachers.size();
-        }
-        request.setAttribute("totalTeachers", totalTeachers);
-        request.setAttribute("totalClassTeachers", totalClassTeachers);
+    private void prepareDashboardPrincipal(HttpServletRequest request) throws SQLException {
+        // For now, just a placeholder method
+        // In a full implementation, we would add school-wide statistics for the principal
     }
     
     /**
-     * Helper method to calculate semester from class name
+     * Prepare dashboard data for HOD
      */
-    private String getSemesterFromClass(String className) {
-        switch (className) {
-            case "FY":
-                return "1"; // Default to first semester of FY
-            case "SY":
-                return "3"; // Default to first semester of SY
-            case "TY":
-                return "5"; // Default to first semester of TY
-            default:
-                return "1";
-        }
+    private void prepareDashboardHOD(HttpServletRequest request) throws SQLException {
+        // For now, just a placeholder method
+        // In a full implementation, we would add department-specific data
+    }
+    
+    /**
+     * Prepare dashboard data for Teacher
+     */
+    private void prepareDashboardTeacher(HttpServletRequest request, int teacherId) throws SQLException {
+        // For now, just a placeholder method
+        // In a full implementation, we would add teacher-specific data like classes, subjects, etc.
+        request.setAttribute("pendingLeaveApplications", leaveApplicationDao.findByTeacher(teacherId));
+    }
+    
+    /**
+     * Prepare dashboard data for Student
+     */
+    private void prepareDashboardStudent(HttpServletRequest request, int studentId) throws SQLException {
+        // For now, just a placeholder method
+        // In a full implementation, we would add student attendance statistics, etc.
+        request.setAttribute("attendancePercentage", attendanceDao.calculateAttendancePercentage(studentId));
+        request.setAttribute("leaveApplications", leaveApplicationDao.findByStudent(studentId));
     }
 }

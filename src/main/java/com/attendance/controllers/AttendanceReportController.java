@@ -1601,13 +1601,16 @@ public class AttendanceReportController extends HttpServlet {
     private void showHodReportsDashboard(HttpServletRequest request, HttpServletResponse response, User user) throws ServletException, IOException {
         try {
             // Get HOD's department
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departments = departmentDao.findByHod(user.getUserId());
             
-            if (department == null) {
+            if (departments == null || departments.isEmpty()) {
                 request.setAttribute("error", "You are not assigned to any department");
                 request.getRequestDispatcher("/WEB-INF/views/hod/reports/dashboard.jsp").forward(request, response);
                 return;
             }
+            
+            // Use the first department
+            Department department = departments.get(0);
             
             // Get classes in the department
             List<com.attendance.models.Class> classes = classDao.findByDepartment(department.getDepartmentId());

@@ -10,6 +10,14 @@ import java.util.List;
 public interface SubjectDao extends BaseDao<Subject, String> {
     
     /**
+     * Find a subject by its code
+     * @param code The subject code
+     * @return The subject with the given code, or null if not found
+     * @throws SQLException If a database error occurs
+     */
+    Subject findByCode(String code) throws SQLException;
+    
+    /**
      * Find subjects by department
      * @param departmentId The department ID
      * @return List of subjects in the specified department

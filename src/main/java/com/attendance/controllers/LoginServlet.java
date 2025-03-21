@@ -1,71 +1,104 @@
 package com.attendance.controllers;
 
-import com.attendance.dao.UserDAO;
+import com.attendance.dao.UserDao;
+import com.attendance.dao.impl.UserDaoImpl;
 import com.attendance.models.User;
-import com.attendance.utils.SessionUtil;
+import com.attendance.utils.PasswordUtils;
 
-import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Servlet for handling user login
+ * Servlet handling user login
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
-    private UserDAO userDAO = new UserDAO();
+    private static final Logger LOGGER = Logger.getLogger(LoginServlet.class.getName());
+    private UserDao userDao;
+    
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        userDao = new UserDaoImpl();
+    }
     
     /**
-     * Handles the HTTP GET request - displays the login form
+     * Handles GET requests to show the login page
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        
         // Check if user is already logged in
-        if (SessionUtil.isLoggedIn(request)) {
-            SessionUtil.redirectToDashboard(request, response);
+        HttpSession session = request.getSession(false);
+        if (session != null && session.getAttribute("user") != null) {
+            // User is already logged in, redirect to dashboard
+            response.sendRedirect(request.getContextPath() + "/dashboard");
             return;
         }
         
-        // Show login page
-        request.getRequestDispatcher("/login.jsp").forward(request, response);
+        // Forward to login page
+        request.getRequestDispatcher("/views/login.jsp").forward(request, response);
     }
     
     /**
-     * Handles the HTTP POST request - processes the login form submission
+     * Handles POST requests to process login form submission
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         
-        // Basic validation
-        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            request.setAttribute("error", "Email and password are required");
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+        // Validate inputs
+        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
+            request.setAttribute("errorMessage", "Email and password are required");
+            request.getRequestDispatcher("/views/login.jsp").forward(request, response);
             return;
         }
         
-        // Authenticate user
-        User user = userDAO.authenticateUser(email, password);
-        
-        if (user != null) {
-            // Set user in session
-            SessionUtil.setUser(request, user);
+        try {
+            // Attempt to authenticate user
+            User user = userDao.findByEmail(email);
             
-            // Redirect to appropriate dashboard based on role
-            SessionUtil.redirectToDashboard(request, response);
-        } else {
-            // Login failed
-            request.setAttribute("error", "Invalid email or password");
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            if (user != null && PasswordUtils.checkPassword(password, user.getPassword())) {
+                // User authenticated successfully
+                
+                // Check if account is active
+                if (!"Active".equals(user.getStatus())) {
+                    request.setAttribute("errorMessage", "Your account is not active. Please contact administrator.");
+                    request.getRequestDispatcher("/views/login.jsp").forward(request, response);
+                    return;
+                }
+                
+                // Create session for authenticated user
+                HttpSession session = request.getSession();
+                session.setAttribute("user", user);
+                session.setAttribute("userId", user.getUserId());
+                session.setAttribute("userRole", user.getRole());
+                session.setAttribute("userName", user.getFullName());
+                
+                // Log successful login
+                LOGGER.info("User logged in: " + user.getEmail());
+                
+                // Redirect to dashboard
+                response.sendRedirect(request.getContextPath() + "/dashboard");
+            } else {
+                // Authentication failed
+                request.setAttribute("errorMessage", "Invalid email or password");
+                request.getRequestDispatcher("/views/login.jsp").forward(request, response);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during login", e);
+            request.setAttribute("errorMessage", "A system error occurred. Please try again later.");
+            request.getRequestDispatcher("/views/login.jsp").forward(request, response);
         }
     }
 }

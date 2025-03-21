@@ -1,7 +1,13 @@
 package com.attendance.controllers;
 
 import com.attendance.dao.*;
-import com.attendance.models.*;
+import com.attendance.dao.impl.*;
+import com.attendance.models.Attendance;
+import com.attendance.models.Class;
+import com.attendance.models.StudentEnrollment;
+import com.attendance.models.Subject;
+import com.attendance.models.TeacherAssignment;
+import com.attendance.models.User;
 import com.attendance.utils.SessionUtil;
 
 import java.io.IOException;
@@ -25,12 +31,12 @@ import javax.servlet.http.HttpServletResponse;
 public class AttendanceServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private AttendanceDAO attendanceDAO = new AttendanceDAO();
-    private StudentEnrollmentDAO studentEnrollmentDAO = new StudentEnrollmentDAO();
-    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDAO();
-    private UserDAO userDAO = new UserDAO();
-    private ClassDAO classDAO = new ClassDAO();
-    private SubjectDAO subjectDAO = new SubjectDAO();
+    private AttendanceDAO attendanceDAO = new AttendanceDAOImpl();
+    private StudentEnrollmentDAO studentEnrollmentDAO = new StudentEnrollmentDAOImpl();
+    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDAOImpl();
+    private UserDAO userDAO = new UserDAOImpl();
+    private ClassDAO classDAO = new ClassDAOImpl();
+    private SubjectDAO subjectDAO = new SubjectDAOImpl();
     
     /**
      * Handles the HTTP GET request

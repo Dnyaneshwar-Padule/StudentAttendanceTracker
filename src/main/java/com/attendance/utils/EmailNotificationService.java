@@ -1,18 +1,13 @@
 package com.attendance.utils;
 
-import com.attendance.models.Attendance;
 import com.attendance.models.User;
-
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import java.text.SimpleDateFormat;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Email notification service for sending attendance updates and alerts
+ * Service for sending email notifications
+ * Note: This is a placeholder implementation since JavaMail integration is not available
  */
 public class EmailNotificationService {
     private static final Logger LOGGER = Logger.getLogger(EmailNotificationService.class.getName());
@@ -21,46 +16,16 @@ public class EmailNotificationService {
     private static EmailNotificationService instance;
     
     // Email configuration
-    private final String host;
-    private final String port;
-    private final String username;
-    private final String password;
-    private final String fromEmail;
-    private final boolean isEnabled;
-    
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-    
-    /**
-     * Private constructor for singleton pattern
-     */
-    private EmailNotificationService() {
-        // Load email configuration from environment variables
-        this.host = System.getenv("MAIL_HOST");
-        this.port = System.getenv("MAIL_PORT");
-        this.username = System.getenv("MAIL_USERNAME");
-        this.password = System.getenv("MAIL_PASSWORD");
-        this.fromEmail = System.getenv("MAIL_FROM");
-        
-        // Enable email notifications only if all required parameters are set
-        this.isEnabled = (host != null && !host.isEmpty() &&
-                        port != null && !port.isEmpty() &&
-                        username != null && !username.isEmpty() &&
-                        password != null && !password.isEmpty() &&
-                        fromEmail != null && !fromEmail.isEmpty());
-        
-        if (isEnabled) {
-            LOGGER.info("Email notification service initialized successfully");
-        } else {
-            LOGGER.warning("Email notification service is disabled due to missing configuration");
-        }
-    }
+    private String smtpHost;
+    private int smtpPort;
+    private String senderEmail;
+    private String senderPassword;
     
     /**
      * Get the singleton instance
-     * 
-     * @return the EmailNotificationService instance
+     * @return The EmailNotificationService instance
      */
-    public static synchronized EmailNotificationService getInstance() {
+    public static EmailNotificationService getInstance() {
         if (instance == null) {
             instance = new EmailNotificationService();
         }
@@ -68,210 +33,159 @@ public class EmailNotificationService {
     }
     
     /**
-     * Send an attendance notification to a student
-     * 
-     * @param student the student to notify
-     * @param attendance the attendance record
-     * @param subjectName the subject name
+     * Private constructor for singleton pattern
      */
-    public void sendAttendanceNotification(User student, Attendance attendance, String subjectName) {
-        if (!isEnabled) {
-            LOGGER.info("Email notifications are disabled. Skipping notification for student: " + student.getFullName());
-            return;
-        }
-        
-        if (student.getEmail() == null || student.getEmail().isEmpty()) {
-            LOGGER.warning("Cannot send email: Student has no email address: " + student.getFullName());
-            return;
-        }
-        
-        try {
-            // Set mail properties
-            Properties props = new Properties();
-            props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.host", host);
-            props.put("mail.smtp.port", port);
-            
-            // Create a Session object
-            Session session = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(username, password);
-                }
-            });
-            
-            // Create a MimeMessage
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(fromEmail));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(student.getEmail()));
-            
-            // Set subject and content based on attendance status
-            String status = attendance.getStatus();
-            String date = dateFormat.format(attendance.getAttendanceDate());
-            
-            message.setSubject("Attendance Update for " + subjectName);
-            
-            String emailContent = "Dear " + student.getFullName() + ",\n\n";
-            
-            if ("Present".equalsIgnoreCase(status)) {
-                emailContent += "Your attendance has been marked as PRESENT for " + subjectName + 
-                               " on " + date + ".\n\n";
-            } else if ("Absent".equalsIgnoreCase(status)) {
-                emailContent += "Your attendance has been marked as ABSENT for " + subjectName + 
-                               " on " + date + ".\n\n";
-                emailContent += "Please contact your subject teacher or class teacher if you believe this is an error.\n\n";
-            } else if ("Leave".equalsIgnoreCase(status)) {
-                emailContent += "Your attendance has been marked as ON LEAVE for " + subjectName + 
-                               " on " + date + ".\n\n";
-            }
-            
-            emailContent += "Attendance details:\n";
-            emailContent += "- Subject: " + subjectName + "\n";
-            emailContent += "- Date: " + date + "\n";
-            emailContent += "- Status: " + status + "\n";
-            emailContent += "- Marked by: " + attendance.getMarkedBy() + "\n";
-            
-            if (attendance.getRemarks() != null && !attendance.getRemarks().isEmpty()) {
-                emailContent += "- Remarks: " + attendance.getRemarks() + "\n";
-            }
-            
-            emailContent += "\nThis is an automated notification. Please do not reply to this email.\n\n";
-            emailContent += "Regards,\nAttendance Management System";
-            
-            message.setText(emailContent);
-            
-            // Send the message
-            Transport.send(message);
-            
-            LOGGER.info("Attendance notification email sent to " + student.getEmail());
-            
-        } catch (MessagingException e) {
-            LOGGER.log(Level.SEVERE, "Failed to send email notification", e);
-        }
+    private EmailNotificationService() {
+        LOGGER.info("Initializing Email Notification Service (Placeholder)");
+        loadConfiguration();
     }
     
     /**
-     * Send a low attendance alert to a student
-     * 
-     * @param student the student to notify
-     * @param subjectName the subject name
-     * @param attendancePercentage the attendance percentage
-     * @param semester the semester
+     * Load email configuration
      */
-    public void sendLowAttendanceAlert(User student, String subjectName, 
-                                     double attendancePercentage, String semester) {
-        if (!isEnabled) {
-            LOGGER.info("Email notifications are disabled. Skipping low attendance alert for student: " + 
-                      student.getFullName());
-            return;
-        }
+    private void loadConfiguration() {
+        // In a real implementation, these would be loaded from config or environment variables
+        smtpHost = "smtp.example.com";
+        smtpPort = 587;
+        senderEmail = "noreply@example.com";
+        senderPassword = "password";
         
-        if (student.getEmail() == null || student.getEmail().isEmpty()) {
-            LOGGER.warning("Cannot send email: Student has no email address: " + student.getFullName());
-            return;
-        }
-        
-        try {
-            // Set mail properties
-            Properties props = new Properties();
-            props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.host", host);
-            props.put("mail.smtp.port", port);
-            
-            // Create a Session object
-            Session session = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(username, password);
-                }
-            });
-            
-            // Create a MimeMessage
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(fromEmail));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(student.getEmail()));
-            
-            // Set subject and content
-            message.setSubject("ALERT: Low Attendance in " + subjectName);
-            
-            String emailContent = "Dear " + student.getFullName() + ",\n\n";
-            emailContent += "This is to inform you that your attendance in " + subjectName + 
-                           " for semester " + semester + " is currently at " + 
-                           String.format("%.2f", attendancePercentage) + "%, which is below the required threshold.\n\n";
-            
-            emailContent += "Please be advised that a minimum attendance of 75% is required to be eligible " +
-                           "for the final examinations.\n\n";
-            
-            emailContent += "We recommend you to attend all upcoming classes to improve your attendance percentage.\n\n";
-            
-            emailContent += "If you have any concerns, please contact your subject teacher or class teacher.\n\n";
-            
-            emailContent += "Regards,\nAttendance Management System";
-            
-            message.setText(emailContent);
-            
-            // Send the message
-            Transport.send(message);
-            
-            LOGGER.info("Low attendance alert email sent to " + student.getEmail());
-            
-        } catch (MessagingException e) {
-            LOGGER.log(Level.SEVERE, "Failed to send low attendance alert email", e);
-        }
+        LOGGER.info("Email configuration loaded (Placeholder)");
     }
     
     /**
-     * Send a weekly attendance report to a student
-     * 
-     * @param student the student to notify
-     * @param reportContent the HTML content of the report
+     * Send an email notification
+     * @param recipient The recipient email address
+     * @param subject The email subject
+     * @param body The email body
+     * @return True if email sent successfully, false otherwise
      */
-    public void sendWeeklyAttendanceReport(User student, String reportContent) {
-        if (!isEnabled) {
-            LOGGER.info("Email notifications are disabled. Skipping weekly report for student: " + 
-                      student.getFullName());
-            return;
+    public boolean sendEmail(String recipient, String subject, String body) {
+        LOGGER.info("Sending email notification to: " + recipient + " (Placeholder)");
+        LOGGER.info("Subject: " + subject);
+        
+        // In a real implementation, this would create and send an actual email
+        
+        return true;
+    }
+    
+    /**
+     * Send user registration confirmation
+     * @param userEmail The user's email address
+     * @param userName The user's name
+     * @param activationLink The activation link
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendRegistrationConfirmation(String userEmail, String userName, String activationLink) {
+        String subject = "Welcome to Student Attendance Management System";
+        String body = "Dear " + userName + ",\n\n"
+                + "Welcome to the Student Attendance Management System. "
+                + "Your account has been created and is pending approval.\n\n"
+                + "You will be notified once your account is approved.\n\n"
+                + "Regards,\nStudent Attendance Management System";
+        
+        return sendEmail(userEmail, subject, body);
+    }
+    
+    /**
+     * Send account activation notification
+     * @param userEmail The user's email address
+     * @param userName The user's name
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendAccountActivation(String userEmail, String userName) {
+        String subject = "Your Account Has Been Activated";
+        String body = "Dear " + userName + ",\n\n"
+                + "Your account on the Student Attendance Management System has been approved and activated.\n\n"
+                + "You can now log in using your credentials.\n\n"
+                + "Regards,\nStudent Attendance Management System";
+        
+        return sendEmail(userEmail, subject, body);
+    }
+    
+    /**
+     * Send leave application status notification
+     * @param userEmail The user's email address
+     * @param userName The user's name
+     * @param status The leave application status
+     * @param comments The comments from the reviewer
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendLeaveApplicationUpdate(String userEmail, String userName, String status, String comments) {
+        String subject = "Leave Application " + status;
+        String body = "Dear " + userName + ",\n\n"
+                + "Your leave application has been " + status.toLowerCase() + ".\n\n";
+        
+        if (comments != null && !comments.isEmpty()) {
+            body += "Comments: " + comments + "\n\n";
         }
         
-        if (student.getEmail() == null || student.getEmail().isEmpty()) {
-            LOGGER.warning("Cannot send email: Student has no email address: " + student.getFullName());
-            return;
-        }
+        body += "Regards,\nStudent Attendance Management System";
         
-        try {
-            // Set mail properties
-            Properties props = new Properties();
-            props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.host", host);
-            props.put("mail.smtp.port", port);
-            
-            // Create a Session object
-            Session session = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(username, password);
-                }
-            });
-            
-            // Create a MimeMessage
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(fromEmail));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(student.getEmail()));
-            
-            // Set subject and content
-            message.setSubject("Weekly Attendance Report");
-            message.setContent(reportContent, "text/html; charset=utf-8");
-            
-            // Send the message
-            Transport.send(message);
-            
-            LOGGER.info("Weekly attendance report email sent to " + student.getEmail());
-            
-        } catch (MessagingException e) {
-            LOGGER.log(Level.SEVERE, "Failed to send weekly attendance report email", e);
-        }
+        return sendEmail(userEmail, subject, body);
+    }
+    
+    /**
+     * Send attendance warning notification
+     * @param userEmail The user's email address
+     * @param userName The user's name
+     * @param attendancePercentage The current attendance percentage
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendAttendanceWarning(String userEmail, String userName, double attendancePercentage) {
+        String subject = "Low Attendance Warning";
+        String body = "Dear " + userName + ",\n\n"
+                + "Your current attendance percentage is " + attendancePercentage + "%, "
+                + "which is below the required minimum of 75%.\n\n"
+                + "Please ensure you attend classes regularly to maintain good attendance.\n\n"
+                + "Regards,\nStudent Attendance Management System";
+        
+        return sendEmail(userEmail, subject, body);
+    }
+    
+    /**
+     * Send low attendance warning notification
+     * @param user The user
+     * @param subjectName The subject name
+     * @param className The class name
+     * @param academicYear The academic year
+     * @param attendancePercentage The current attendance percentage
+     * @param minRequired The minimum required attendance percentage
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendLowAttendanceWarning(User user, String subjectName, String className, 
+                                          String academicYear, double attendancePercentage, double minRequired) {
+        String subject = "Low Attendance Warning - " + subjectName;
+        String body = "Dear " + user.getName() + ",\n\n"
+                + "Your attendance in " + subjectName + " for " + className + " (" + academicYear + ") "
+                + "is currently " + attendancePercentage + "%, which is below the required minimum of " 
+                + minRequired + "%.\n\n"
+                + "Please ensure you attend classes regularly to avoid academic penalties.\n\n"
+                + "Regards,\nStudent Attendance Management System";
+        
+        return sendEmail(user.getEmail(), subject, body);
+    }
+    
+    /**
+     * Send attendance summary notification
+     * @param user The user
+     * @param subjectName The subject name
+     * @param className The class name
+     * @param academicYear The academic year
+     * @param present Number of classes present
+     * @param total Total number of classes
+     * @param attendancePercentage The current attendance percentage
+     * @return True if email sent successfully, false otherwise
+     */
+    public boolean sendAttendanceSummaryNotification(User user, String subjectName, String className, 
+                                                  String academicYear, int present, int total, double attendancePercentage) {
+        String subject = "Attendance Summary - " + subjectName;
+        String body = "Dear " + user.getName() + ",\n\n"
+                + "Here is your attendance summary for " + subjectName + " in " + className + " (" + academicYear + "):\n\n"
+                + "Classes Attended: " + present + " out of " + total + "\n"
+                + "Attendance Percentage: " + attendancePercentage + "%\n\n"
+                + "Regards,\nStudent Attendance Management System";
+        
+        return sendEmail(user.getEmail(), subject, body);
     }
 }

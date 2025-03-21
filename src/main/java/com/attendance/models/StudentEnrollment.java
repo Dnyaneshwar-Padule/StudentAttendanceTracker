@@ -43,6 +43,14 @@ public class StudentEnrollment {
         this.userId = userId;
     }
     
+    /**
+     * Get student ID (alias for getUserId for better semantic meaning)
+     * @return the user ID representing the student
+     */
+    public int getStudentId() {
+        return userId;
+    }
+    
     public int getClassId() {
         return classId;
     }

@@ -25,6 +25,9 @@ public class TeacherAssignmentServlet extends HttpServlet {
     private ClassDAO classDAO = new ClassDAO();
     private DepartmentDAO departmentDAO = new DepartmentDAO();
     
+    // Use a fully qualified name for model.Class to avoid conflicts with java.lang.Class
+    private final java.lang.Class<?> CLASS_TYPE = com.attendance.models.Class.class;
+    
     /**
      * Handles the HTTP GET request
      */
@@ -132,7 +135,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
         } else {
             // HOD can only see assignments in their department
             // We need to get all classes in this department
-            List<Class> departmentClasses = classDAO.getClassesByDepartment(currentUser.getDepartmentId());
+            List<com.attendance.models.Class> departmentClasses = classDAO.getClassesByDepartment(currentUser.getDepartmentId());
             
             // Filter assignments by department classes
             assignments = teacherAssignmentDAO.getAllAssignments();
@@ -178,11 +181,11 @@ public class TeacherAssignmentServlet extends HttpServlet {
             request.setAttribute("department", department);
             
             // Get classes for this department
-            List<Class> classes = classDAO.getClassesByDepartment(currentUser.getDepartmentId());
+            List<com.attendance.models.Class> classes = classDAO.getClassesByDepartment(currentUser.getDepartmentId());
             request.setAttribute("classes", classes);
             
             // Get subjects for this department
-            for (Class classObj : classes) {
+            for (com.attendance.models.Class classObj : classes) {
                 List<Subject> subjects = subjectDAO.getSubjectsByDepartmentAndClass(
                     currentUser.getDepartmentId(), classObj.getClassId());
                 request.setAttribute("subjects", subjects);
@@ -200,11 +203,11 @@ public class TeacherAssignmentServlet extends HttpServlet {
                 int departmentId = Integer.parseInt(departmentIdStr);
                 
                 // Get classes for selected department
-                List<Class> classes = classDAO.getClassesByDepartment(departmentId);
+                List<com.attendance.models.Class> classes = classDAO.getClassesByDepartment(departmentId);
                 request.setAttribute("classes", classes);
                 
                 // Get subjects for this department
-                for (Class classObj : classes) {
+                for (com.attendance.models.Class classObj : classes) {
                     List<Subject> subjects = subjectDAO.getSubjectsByDepartmentAndClass(
                         departmentId, classObj.getClassId());
                     request.setAttribute("subjects", subjects);
@@ -246,7 +249,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
         // Get related objects
         User teacher = userDAO.getUserById(teacherId);
         Subject subject = subjectDAO.getSubjectByCode(subjectCode);
-        Class classObj = classDAO.getClassById(classId);
+        com.attendance.models.Class classObj = classDAO.getClassById(classId);
         
         if (teacher == null || subject == null || classObj == null) {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Referenced data not found");
@@ -298,7 +301,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             // Verify that teacher, subject, and class exist
             User teacher = userDAO.getUserById(teacherId);
             Subject subject = subjectDAO.getSubjectByCode(subjectCode);
-            Class classObj = classDAO.getClassById(classId);
+            com.attendance.models.Class classObj = classDAO.getClassById(classId);
             
             if (teacher == null || subject == null || classObj == null) {
                 request.setAttribute("error", "Invalid teacher, subject, or class");
@@ -483,8 +486,8 @@ public class TeacherAssignmentServlet extends HttpServlet {
     /**
      * Helper method to check if a class is in a list of classes
      */
-    private boolean isClassInDepartment(int classId, List<Class> departmentClasses) {
-        for (Class classObj : departmentClasses) {
+    private boolean isClassInDepartment(int classId, List<com.attendance.models.Class> departmentClasses) {
+        for (com.attendance.models.Class classObj : departmentClasses) {
             if (classObj.getClassId() == classId) {
                 return true;
             }

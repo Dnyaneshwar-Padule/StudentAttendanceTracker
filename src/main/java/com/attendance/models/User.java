@@ -12,6 +12,7 @@ public class User {
     private String fullName;
     private String email;
     private String phoneNumber;
+    private String address;
     private String role; // Student, Teacher, HOD, Principal, Admin
     private String department;
     private String classRoom; // FY, SY, TY
@@ -44,6 +45,22 @@ public class User {
         this.role = role;
         this.isActive = true;
     }
+    
+    /**
+     * Constructor with minimal fields
+     * 
+     * @param username the username
+     * @param password the password
+     * @param fullName the full name
+     * @param email the email
+     */
+    public User(String username, String password, String fullName, String email) {
+        this.username = username;
+        this.password = password;
+        this.fullName = fullName;
+        this.email = email;
+        this.isActive = true;
+    }
 
     /**
      * Full constructor
@@ -54,6 +71,7 @@ public class User {
      * @param fullName the full name
      * @param email the email
      * @param phoneNumber the phone number
+     * @param address the address
      * @param role the role
      * @param department the department
      * @param classRoom the class
@@ -64,7 +82,7 @@ public class User {
      * @param updatedAt when the user was last updated
      */
     public User(int userId, String username, String password, String fullName, String email, 
-              String phoneNumber, String role, String department, String classRoom, String rollNo, 
+              String phoneNumber, String address, String role, String department, String classRoom, String rollNo, 
               String profileImagePath, boolean isActive, Timestamp createdAt, Timestamp updatedAt) {
         this.userId = userId;
         this.username = username;
@@ -72,6 +90,7 @@ public class User {
         this.fullName = fullName;
         this.email = email;
         this.phoneNumber = phoneNumber;
+        this.address = address;
         this.role = role;
         this.department = department;
         this.classRoom = classRoom;
@@ -130,6 +149,14 @@ public class User {
     public String getFullName() {
         return fullName;
     }
+    
+    /**
+     * Get user name (alias for getFullName for better semantic meaning)
+     * @return the user's full name
+     */
+    public String getName() {
+        return fullName;
+    }
 
     /**
      * @param fullName the fullName to set
@@ -164,6 +191,36 @@ public class User {
      */
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+    
+    /**
+     * Alias for getPhoneNumber() for better compatibility
+     * @return the phone number
+     */
+    public String getPhone() {
+        return phoneNumber;
+    }
+    
+    /**
+     * Alias for setPhoneNumber() for better compatibility
+     * @param phone the phone number to set
+     */
+    public void setPhone(String phone) {
+        this.phoneNumber = phone;
+    }
+    
+    /**
+     * @return the address
+     */
+    public String getAddress() {
+        return address;
+    }
+
+    /**
+     * @param address the address to set
+     */
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     /**
@@ -248,6 +305,22 @@ public class User {
      */
     public void setActive(boolean isActive) {
         this.isActive = isActive;
+    }
+    
+    /**
+     * Get the user's status as a string
+     * @return "Active" if user is active, "Inactive" otherwise
+     */
+    public String getStatus() {
+        return isActive ? "Active" : "Inactive";
+    }
+    
+    /**
+     * Set user status from string
+     * @param status "Active" or "Inactive"
+     */
+    public void setStatus(String status) {
+        this.isActive = "Active".equalsIgnoreCase(status);
     }
 
     /**

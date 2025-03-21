@@ -4,7 +4,7 @@ modules = ["postgresql-16"]
 channel = "stable-24_05"
 
 [workflows]
-runButton = "Run Java Web App"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Run Java Web App"
@@ -25,3 +25,30 @@ args = "mvn package"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "mvn exec:java -Dexec.mainClass=\"com.attendance.Main\""
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Server"
+
+[[workflows.workflow]]
+name = "Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mvn compile exec:java -Dexec.mainClass=\"com.attendance.Main\""
+waitForPort = 5000
+
+[deployment]
+run = ["sh", "-c", "mvn compile exec:java -Dexec.mainClass=\"com.attendance.Main\""]
