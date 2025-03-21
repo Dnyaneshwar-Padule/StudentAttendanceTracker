@@ -13,8 +13,11 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "mvn clean package"
+args = "mvn clean compile"
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "java -jar target/attendance-management.jar"
+args = "mvn exec:java -Dexec.mainClass=\"com.attendance.Main\""
