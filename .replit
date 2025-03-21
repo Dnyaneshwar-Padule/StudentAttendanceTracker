@@ -20,4 +20,8 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "mvn package"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "mvn exec:java -Dexec.mainClass=\"com.attendance.Main\""
