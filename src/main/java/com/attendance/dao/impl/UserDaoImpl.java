@@ -310,6 +310,30 @@ public class UserDaoImpl implements UserDao {
         
         return users;
     }
+    
+    @Override
+    public List<User> findByRoleAndDepartment(String role, int departmentId) throws SQLException {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM Users WHERE role = ? AND department_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, role);
+            stmt.setInt(2, departmentId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding users by role: " + role + " and department ID: " + departmentId, e);
+            throw e;
+        }
+        
+        return users;
+    }
 
     @Override
     public User authenticate(String email, String password) throws SQLException {

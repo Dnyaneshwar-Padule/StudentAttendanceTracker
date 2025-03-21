@@ -3,6 +3,7 @@ package com.attendance.dao.impl;
 import com.attendance.dao.UserDAO;
 import com.attendance.models.User;
 import com.attendance.utils.PasswordUtils;
+import com.attendance.utils.DatabaseConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -316,6 +317,134 @@ public class UserDAOImpl implements UserDAO {
         }
         
         return Optional.empty();
+    }
+    
+    /**
+     * Get a user by ID (direct)
+     * 
+     * @param userId the user ID
+     * @return the user if found, null otherwise
+     * @throws Exception if an error occurs
+     */
+    @Override
+    public User getUserById(int userId) throws Exception {
+        Optional<User> userOpt = getById(userId);
+        return userOpt.orElse(null);
+    }
+    
+    /**
+     * Get users by role
+     * 
+     * @param role the role to filter by
+     * @return list of users with the specified role
+     * @throws Exception if an error occurs
+     */
+    @Override
+    public List<User> getUsersByRole(String role) throws Exception {
+        return getByRole(role);
+    }
+    
+    /**
+     * Get users by role and department
+     * 
+     * @param role the role to filter by
+     * @param departmentId the department ID to filter by
+     * @return list of users with the specified role and department
+     * @throws Exception if an error occurs
+     */
+    @Override
+    public List<User> getUsersByRoleAndDepartment(String role, int departmentId) throws Exception {
+        String sql = "SELECT * FROM Users WHERE role = ? AND department_id = ? ORDER BY user_id";
+        List<User> users = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, role);
+            stmt.setInt(2, departmentId);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                User user = mapResultSetToUser(rs);
+                users.add(user);
+            }
+            
+            return users;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting users by role and department", e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Find users by status
+     * 
+     * @param status the status to filter by
+     * @return list of users with the specified status
+     * @throws Exception if an error occurs
+     */
+    @Override
+    public List<User> findByStatus(String status) throws Exception {
+        String sql = "SELECT * FROM Users WHERE status = ? ORDER BY user_id";
+        List<User> users = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, status);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                User user = mapResultSetToUser(rs);
+                users.add(user);
+            }
+            
+            return users;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding users by status", e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Search for users by a query string
+     * 
+     * @param query the search query
+     * @return list of users matching the search query
+     * @throws Exception if an error occurs
+     */
+    @Override
+    public List<User> searchUsers(String query) throws Exception {
+        String sql = "SELECT * FROM Users WHERE " +
+                     "LOWER(full_name) LIKE LOWER(?) OR " +
+                     "LOWER(email) LIKE LOWER(?) OR " +
+                     "CAST(user_id AS VARCHAR) LIKE ? " +
+                     "ORDER BY user_id";
+        List<User> users = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            String searchParam = "%" + query + "%";
+            stmt.setString(1, searchParam);
+            stmt.setString(2, searchParam);
+            stmt.setString(3, searchParam);
+            
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                User user = mapResultSetToUser(rs);
+                users.add(user);
+            }
+            
+            return users;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error searching users", e);
+            throw e;
+        }
     }
     
     /**

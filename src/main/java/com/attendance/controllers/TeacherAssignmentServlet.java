@@ -144,7 +144,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             
             // Only show this department
             departments = null;
-            Department department = departmentDAO.getDepartmentById(currentUser.getDepartmentId());
+            Department department = departmentDao.findById(currentUser.getDepartmentId());
             request.setAttribute("department", department);
         }
         
@@ -168,26 +168,26 @@ public class TeacherAssignmentServlet extends HttpServlet {
         
         if ("Principal".equals(currentUser.getRole())) {
             // Principal can assign any teacher
-            teachers = userDAO.getUsersByRole("Teacher");
-            teachers.addAll(userDAO.getUsersByRole("Class Teacher"));
-            departments = departmentDAO.getAllDepartments();
+            teachers = userDao.findByRole("Teacher");
+            teachers.addAll(userDao.findByRole("Class Teacher"));
+            departments = departmentDao.findAll();
         } else {
             // HOD can only assign teachers in their department
-            teachers = userDAO.getUsersByRoleAndDepartment("Teacher", currentUser.getDepartmentId());
-            teachers.addAll(userDAO.getUsersByRoleAndDepartment("Class Teacher", currentUser.getDepartmentId()));
+            teachers = userDao.findByRoleAndDepartment("Teacher", currentUser.getDepartmentId());
+            teachers.addAll(userDao.findByRoleAndDepartment("Class Teacher", currentUser.getDepartmentId()));
             
             // Only show this department
             departments = null;
-            Department department = departmentDAO.getDepartmentById(currentUser.getDepartmentId());
+            Department department = departmentDao.findById(currentUser.getDepartmentId());
             request.setAttribute("department", department);
             
             // Get classes for this department
-            List<com.attendance.models.Class> classes = classDAO.getClassesByDepartment(currentUser.getDepartmentId());
+            List<com.attendance.models.Class> classes = classDao.findByDepartment(currentUser.getDepartmentId());
             request.setAttribute("classes", classes);
             
             // Get subjects for this department
             for (com.attendance.models.Class classObj : classes) {
-                List<Subject> subjects = subjectDAO.getSubjectsByDepartmentAndClass(
+                List<Subject> subjects = subjectDao.findByDepartmentAndClass(
                     currentUser.getDepartmentId(), classObj.getClassId());
                 request.setAttribute("subjects", subjects);
                 break; // Just get subjects from first class
@@ -204,12 +204,12 @@ public class TeacherAssignmentServlet extends HttpServlet {
                 int departmentId = Integer.parseInt(departmentIdStr);
                 
                 // Get classes for selected department
-                List<com.attendance.models.Class> classes = classDAO.getClassesByDepartment(departmentId);
+                List<com.attendance.models.Class> classes = classDao.findByDepartment(departmentId);
                 request.setAttribute("classes", classes);
                 
                 // Get subjects for this department
                 for (com.attendance.models.Class classObj : classes) {
-                    List<Subject> subjects = subjectDAO.getSubjectsByDepartmentAndClass(
+                    List<Subject> subjects = subjectDao.findByDepartmentAndClass(
                         departmentId, classObj.getClassId());
                     request.setAttribute("subjects", subjects);
                     break; // Just get subjects from first class
@@ -248,9 +248,9 @@ public class TeacherAssignmentServlet extends HttpServlet {
         }
         
         // Get related objects
-        User teacher = userDAO.getUserById(teacherId);
-        Subject subject = subjectDAO.getSubjectByCode(subjectCode);
-        com.attendance.models.Class classObj = classDAO.getClassById(classId);
+        User teacher = userDao.findById(teacherId);
+        Subject subject = subjectDao.findByCode(subjectCode);
+        com.attendance.models.Class classObj = classDao.findById(classId);
         
         if (teacher == null || subject == null || classObj == null) {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Referenced data not found");
@@ -300,9 +300,9 @@ public class TeacherAssignmentServlet extends HttpServlet {
             int classId = Integer.parseInt(classIdStr);
             
             // Verify that teacher, subject, and class exist
-            User teacher = userDAO.getUserById(teacherId);
-            Subject subject = subjectDAO.getSubjectByCode(subjectCode);
-            com.attendance.models.Class classObj = classDAO.getClassById(classId);
+            User teacher = userDao.findById(teacherId);
+            Subject subject = subjectDao.findByCode(subjectCode);
+            com.attendance.models.Class classObj = classDao.findById(classId);
             
             if (teacher == null || subject == null || classObj == null) {
                 request.setAttribute("error", "Invalid teacher, subject, or class");
@@ -320,7 +320,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             }
             
             // Check if class belongs to teacher's department
-            Department teacherDept = departmentDAO.getDepartmentById(teacher.getDepartmentId());
+            Department teacherDept = departmentDao.findById(teacher.getDepartmentId());
             if (classObj.getDepartmentId() != teacherDept.getDepartmentId()) {
                 request.setAttribute("error", "Teacher cannot be assigned to a class outside their department");
                 showAddAssignmentForm(request, response);
@@ -328,7 +328,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             }
             
             // Check if subject is assigned to this class
-            List<Subject> classSubjects = subjectDAO.getSubjectsByDepartmentAndClass(
+            List<Subject> classSubjects = subjectDao.findByDepartmentAndClass(
                 classObj.getDepartmentId(), classObj.getClassId());
             
             boolean subjectFound = false;
@@ -347,7 +347,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             
             // If assignment type is Class Teacher, check if class already has one
             if ("Class Teacher".equals(assignmentType)) {
-                User existingClassTeacher = teacherAssignmentDAO.getClassTeacher(classId);
+                User existingClassTeacher = teacherAssignmentDao.getClassTeacher(classId);
                 if (existingClassTeacher != null) {
                     request.setAttribute("error", "This class already has a Class Teacher: " + existingClassTeacher.getName());
                     showAddAssignmentForm(request, response);
@@ -357,7 +357,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             
             // Create assignment
             TeacherAssignment assignment = new TeacherAssignment(teacherId, subjectCode, classId, assignmentType);
-            boolean created = teacherAssignmentDAO.assignTeacher(assignment);
+            boolean created = teacherAssignmentDao.assignTeacher(assignment);
             
             if (created) {
                 request.setAttribute("success", "Teacher assigned successfully");
@@ -404,7 +404,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             
             // If changing to Class Teacher, check if class already has one
             if ("Class Teacher".equals(assignmentType)) {
-                User existingClassTeacher = teacherAssignmentDAO.getClassTeacher(classId);
+                User existingClassTeacher = teacherAssignmentDao.getClassTeacher(classId);
                 if (existingClassTeacher != null && existingClassTeacher.getUserId() != teacherId) {
                     request.setAttribute("error", "This class already has a Class Teacher: " + existingClassTeacher.getName());
                     response.sendRedirect(request.getContextPath() + "/assignments/edit/" + 
@@ -414,7 +414,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             }
             
             // Update assignment
-            boolean updated = teacherAssignmentDAO.updateAssignment(assignment);
+            boolean updated = teacherAssignmentDao.updateAssignment(assignment);
             
             if (updated) {
                 request.setAttribute("success", "Assignment updated successfully");
@@ -459,7 +459,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             User currentUser = SessionUtil.getUser(request);
             
             if ("HOD".equals(currentUser.getRole())) {
-                User teacher = userDAO.getUserById(teacherId);
+                User teacher = userDao.findById(teacherId);
                 if (teacher == null || teacher.getDepartmentId() != currentUser.getDepartmentId()) {
                     request.setAttribute("error", "You can only manage assignments in your department");
                     response.sendRedirect(request.getContextPath() + "/assignments/");
@@ -468,7 +468,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             }
             
             // Remove assignment
-            boolean removed = teacherAssignmentDAO.removeAssignment(teacherId, subjectCode, classId);
+            boolean removed = teacherAssignmentDao.removeAssignment(teacherId, subjectCode, classId);
             
             if (removed) {
                 request.setAttribute("success", "Assignment removed successfully");

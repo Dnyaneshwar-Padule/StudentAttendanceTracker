@@ -41,4 +41,13 @@ public interface SubjectDao extends BaseDao<Subject, String> {
      * @throws SQLException If a database error occurs
      */
     List<Subject> findByDepartmentAndSemester(int departmentId, String semester) throws SQLException;
+    
+    /**
+     * Find subjects by department and class
+     * @param departmentId The department ID
+     * @param classId The class ID
+     * @return List of subjects in the specified department and class
+     * @throws SQLException If a database error occurs
+     */
+    List<Subject> findByDepartmentAndClass(int departmentId, int classId) throws SQLException;
 }

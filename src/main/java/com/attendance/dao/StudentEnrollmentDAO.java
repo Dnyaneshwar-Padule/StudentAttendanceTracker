@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class StudentEnrollmentDAO {
 
-    private UserDAO userDAO = new UserDAO();
+    private UserDao userDAO = new UserDaoImpl();
     private ClassDAO classDAO = new ClassDAO();
 
     /**

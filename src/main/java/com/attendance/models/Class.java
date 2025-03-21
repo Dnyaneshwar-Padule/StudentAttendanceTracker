@@ -16,6 +16,8 @@ public class Class {
     private Timestamp updatedAt;
     private String course;
     private String year;
+    private String semester;
+    private Department department; // Reference to Department object
     
     // Constructor with required fields
     public Class(String className, int departmentId) {
@@ -137,6 +139,42 @@ public class Class {
         this.year = year;
     }
     
+    /**
+     * Get the semester
+     * @return The semester
+     */
+    public String getSemester() {
+        return semester;
+    }
+    
+    /**
+     * Set the semester
+     * @param semester The semester to set
+     */
+    public void setSemester(String semester) {
+        this.semester = semester;
+    }
+    
+    /**
+     * Get the department object
+     * @return The department object
+     */
+    public Department getDepartment() {
+        return department;
+    }
+    
+    /**
+     * Set the department object
+     * @param department The department object to set
+     */
+    public void setDepartment(Department department) {
+        this.department = department;
+        // Also update the departmentId for consistency
+        if (department != null) {
+            this.departmentId = department.getDepartmentId();
+        }
+    }
+    
     @Override
     public String toString() {
         return "Class{" +
@@ -146,6 +184,7 @@ public class Class {
                 ", classTeacherId=" + classTeacherId +
                 ", course='" + course + '\'' +
                 ", year='" + year + '\'' +
+                ", semester='" + semester + '\'' +
                 '}';
     }
 }

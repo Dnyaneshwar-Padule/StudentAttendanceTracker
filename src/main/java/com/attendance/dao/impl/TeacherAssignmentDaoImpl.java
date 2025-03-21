@@ -1,7 +1,9 @@
 package com.attendance.dao.impl;
 
 import com.attendance.dao.TeacherAssignmentDao;
+import com.attendance.dao.UserDao;
 import com.attendance.models.TeacherAssignment;
+import com.attendance.models.User;
 import com.attendance.utils.DatabaseConnection;
 
 import java.sql.*;
@@ -15,6 +17,7 @@ import java.util.logging.Logger;
  */
 public class TeacherAssignmentDaoImpl implements TeacherAssignmentDao {
     private static final Logger LOGGER = Logger.getLogger(TeacherAssignmentDaoImpl.class.getName());
+    private UserDao userDao = new UserDaoImpl();
 
     @Override
     public TeacherAssignment findByTeacherSubjectAndClass(int teacherId, String subjectCode, int classId) throws SQLException {
@@ -220,6 +223,45 @@ public class TeacherAssignmentDaoImpl implements TeacherAssignmentDao {
             LOGGER.log(Level.SEVERE, "Error deleting teacher assignment", e);
             throw e;
         }
+    }
+    
+    @Override
+    public User getClassTeacher(int classId) throws SQLException {
+        String sql = "SELECT teacher_id FROM TeacherAssignments " +
+                    "WHERE class_id = ? AND assignment_type = 'Class Teacher'";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int teacherId = rs.getInt("teacher_id");
+                    return userDao.findById(teacherId);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding class teacher for class ID: " + classId, e);
+            throw e;
+        }
+        
+        return null;
+    }
+    
+    @Override
+    public boolean assignTeacher(TeacherAssignment assignment) throws SQLException {
+        return save(assignment) != null;
+    }
+    
+    @Override
+    public boolean updateAssignment(TeacherAssignment assignment) throws SQLException {
+        return update(assignment) != null;
+    }
+    
+    @Override
+    public boolean removeAssignment(int teacherId, String subjectCode, int classId) throws SQLException {
+        return delete(teacherId, subjectCode, classId);
     }
     
     /**

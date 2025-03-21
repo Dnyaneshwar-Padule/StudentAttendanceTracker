@@ -42,6 +42,15 @@ public interface UserDao extends BaseDao<User, Integer> {
     List<User> findByDepartment(int departmentId) throws SQLException;
     
     /**
+     * Find users by role and department
+     * @param role The role to search for
+     * @param departmentId The department ID
+     * @return List of users with the specified role and department
+     * @throws SQLException If a database error occurs
+     */
+    List<User> findByRoleAndDepartment(String role, int departmentId) throws SQLException;
+    
+    /**
      * Authenticate a user with email and password
      * @param email The email address
      * @param password The plain text password

@@ -37,6 +37,12 @@ public class SubjectDaoImpl implements SubjectDao {
         
         return null;
     }
+    
+    @Override
+    public Subject findByCode(String code) throws SQLException {
+        // This method is equivalent to findById since the ID for a subject is its code
+        return findById(code);
+    }
 
     @Override
     public List<Subject> findAll() throws SQLException {
@@ -191,6 +197,33 @@ public class SubjectDaoImpl implements SubjectDao {
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error finding subjects by department ID and semester", e);
+            throw e;
+        }
+        
+        return subjects;
+    }
+    
+    @Override
+    public List<Subject> findByDepartmentAndClass(int departmentId, int classId) throws SQLException {
+        List<Subject> subjects = new ArrayList<>();
+        String sql = "SELECT s.* FROM Subjects s " +
+                     "JOIN DepartmentSubjects ds ON s.subject_code = ds.subject_code " +
+                     "JOIN Classes c ON s.semester = c.semester " +
+                     "WHERE ds.department_id = ? AND c.class_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, departmentId);
+            stmt.setInt(2, classId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    subjects.add(mapResultSetToSubject(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding subjects by department ID and class ID", e);
             throw e;
         }
         

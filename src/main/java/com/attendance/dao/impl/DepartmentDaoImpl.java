@@ -178,6 +178,28 @@ public class DepartmentDaoImpl implements DepartmentDao {
         return departments;
     }
     
+    @Override
+    public Department findByCode(String code) throws SQLException {
+        String sql = "SELECT * FROM Departments WHERE department_code = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, code);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToDepartment(rs);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding department by code: " + code, e);
+            throw e;
+        }
+        
+        return null;
+    }
+    
     /**
      * Maps a database result set to a Department object
      * @param rs The result set positioned at the current row
