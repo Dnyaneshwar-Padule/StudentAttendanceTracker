@@ -1,0 +1,104 @@
+I'm building a Student Attendance Management Web Application using Java (Servlets + JDBC) and PostgreSQL as the database.
+
+✅ Here's what the system needs to support:
+
+🎓 User Roles and Hierarchy:
+Roles: Student, Teacher, Class Teacher, HOD, Principal
+Verification Flow:
+Principal is created by Admin
+HODs are approved by the Principal
+Teachers/Class Teachers are approved by the HOD
+Students are verified by Class Teachers after applying
+📚 Academic Structure:
+Each Department has 3 Classes: FY, SY, and TY
+Each class contains 2 semesters (e.g., FY → Sem 1 & 2, SY → Sem 3 & 4, TY → Sem 5 & 6)
+Attendance is tracked daily, subject-wise, semester-wise, and academic-year-wise
+Attendance data must be preserved across academic years
+System should support historical attendance viewing even after student promotion
+📌 Features:
+User Registration & Login (via email or phone number)
+Role-Based Dashboards
+Enrollment Requests System (pending → verified flow)
+Subject & Class Mapping per Department
+Teacher Assignments per Class/Subject
+Semester-wise Attendance Tracking with options: Present / Absent / Leave
+🛢️ PostgreSQL Database (Summary):
+sql
+Copy
+Edit
+CREATE TABLE Department (
+    department_id SERIAL PRIMARY KEY,
+    department_name VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE Classes (
+    class_id SERIAL PRIMARY KEY,
+    class_name VARCHAR(10) CHECK (class_name IN ('FY', 'SY', 'TY')),
+    department_id INT REFERENCES Department(department_id)
+);
+
+CREATE TABLE Users (
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    phone_no VARCHAR(20),
+    email VARCHAR(255) UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50),
+    department_id INT REFERENCES Department(department_id)
+);
+
+CREATE TABLE EnrollmentRequest (
+    request_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES Users(user_id),
+    requested_role VARCHAR(50),
+    class_id INT REFERENCES Classes(class_id),
+    enrollment_number CHAR(10),
+    submitted_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'Pending',
+    verified_by INT REFERENCES Users(user_id),
+    verified_on TIMESTAMP
+);
+
+CREATE TABLE StudentEnrollment (
+    enrollment_id CHAR(10) PRIMARY KEY,
+    user_id INT REFERENCES Users(user_id),
+    class_id INT REFERENCES Classes(class_id),
+    academic_year VARCHAR(20),
+    enrollment_status VARCHAR(20) DEFAULT 'Active'
+);
+
+CREATE TABLE Subject (
+    subject_code VARCHAR(50) PRIMARY KEY,
+    subject_name VARCHAR(255)
+);
+
+CREATE TABLE Department_Subject (
+    id SERIAL PRIMARY KEY,
+    department_id INT REFERENCES Department(department_id),
+    class_id INT REFERENCES Classes(class_id),
+    subject_code VARCHAR(50) REFERENCES Subject(subject_code)
+);
+
+CREATE TABLE TeacherAssignment (
+    teacher_id INT REFERENCES Users(user_id),
+    subject_code VARCHAR(50) REFERENCES Subject(subject_code),
+    class_id INT REFERENCES Classes(class_id),
+    assignment_type VARCHAR(50),
+    PRIMARY KEY (teacher_id, subject_code, class_id)
+);
+
+CREATE TABLE Attendance (
+    attendance_id SERIAL PRIMARY KEY,
+    attendance_date DATE,
+    subject_code VARCHAR(50) REFERENCES Subject(subject_code),
+    student_id INT REFERENCES Users(user_id),
+    semester VARCHAR(5), -- values: 1-6
+    academic_year VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'Absent'
+);
+What I need help with:
+Java + Servlets + JDBC project structure (with DAO, model, controller)
+Login system with session tracking and role-based redirect
+Dashboard views for each role
+Attendance module (insert + view attendance, based on subject/class/semester)
+Clean frontend (HTML/CSS or JSPs)
