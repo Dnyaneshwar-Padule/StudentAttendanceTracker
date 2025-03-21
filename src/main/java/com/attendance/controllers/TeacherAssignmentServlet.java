@@ -20,11 +20,11 @@ import javax.servlet.http.HttpServletResponse;
 public class TeacherAssignmentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDaoImpl();
-    private UserDAO userDAO = new UserDaoImpl();
-    private SubjectDAO subjectDAO = new SubjectDaoImpl();
-    private ClassDAO classDAO = new ClassDaoImpl();
-    private DepartmentDAO departmentDAO = new DepartmentDaoImpl();
+    private TeacherAssignmentDao teacherAssignmentDao = new TeacherAssignmentDaoImpl();
+    private UserDao userDao = new UserDaoImpl();
+    private SubjectDao subjectDao = new SubjectDaoImpl();
+    private ClassDao classDao = new ClassDaoImpl();
+    private DepartmentDao departmentDao = new DepartmentDaoImpl();
     
     // Use a fully qualified name for model.Class to avoid conflicts with java.lang.Class
     private final java.lang.Class<?> CLASS_TYPE = com.attendance.models.Class.class;
@@ -131,15 +131,15 @@ public class TeacherAssignmentServlet extends HttpServlet {
         
         if ("Principal".equals(currentUser.getRole())) {
             // Principal can see all assignments
-            assignments = teacherAssignmentDAO.getAllAssignments();
-            departments = departmentDAO.getAllDepartments();
+            assignments = teacherAssignmentDao.findAll();
+            departments = departmentDao.findAll();
         } else {
             // HOD can only see assignments in their department
             // We need to get all classes in this department
-            List<com.attendance.models.Class> departmentClasses = classDAO.getClassesByDepartment(currentUser.getDepartmentId());
+            List<com.attendance.models.Class> departmentClasses = classDao.findByDepartment(currentUser.getDepartmentId());
             
             // Filter assignments by department classes
-            assignments = teacherAssignmentDAO.getAllAssignments();
+            assignments = teacherAssignmentDao.findAll();
             assignments.removeIf(assignment -> !isClassInDepartment(assignment.getClassId(), departmentClasses));
             
             // Only show this department
@@ -232,7 +232,7 @@ public class TeacherAssignmentServlet extends HttpServlet {
             throws ServletException, IOException {
         
         // Create a composite key for the assignment
-        List<TeacherAssignment> assignments = teacherAssignmentDAO.getAllAssignments();
+        List<TeacherAssignment> assignments = teacherAssignmentDao.findAll();
         TeacherAssignment assignment = null;
         
         for (TeacherAssignment a : assignments) {

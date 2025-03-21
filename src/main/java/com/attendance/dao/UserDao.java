@@ -108,4 +108,20 @@ public interface UserDao extends BaseDao<User, Integer> {
      * @throws SQLException If a database error occurs
      */
     User registerUser(User user) throws SQLException;
+    
+    /**
+     * Search for users by name, email, or ID
+     * @param query The search query
+     * @return List of matching users
+     * @throws SQLException If a database error occurs
+     */
+    List<User> searchUsers(String query) throws SQLException;
+    
+    /**
+     * Find users by status
+     * @param status The status to search for
+     * @return List of users with the specified status
+     * @throws SQLException If a database error occurs
+     */
+    List<User> findByStatus(String status) throws SQLException;
 }

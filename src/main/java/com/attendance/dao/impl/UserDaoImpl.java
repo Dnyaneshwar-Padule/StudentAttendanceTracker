@@ -18,6 +18,52 @@ import java.util.logging.Logger;
  */
 public class UserDaoImpl implements UserDao {
     private static final Logger LOGGER = Logger.getLogger(UserDaoImpl.class.getName());
+    
+    @Override
+    public User registerUser(User user) throws SQLException {
+        String sql = "INSERT INTO Users (username, password, full_name, email, phone_number, role, " +
+                     "department, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            // Generate username if not provided (e.g., from email)
+            if (user.getUsername() == null || user.getUsername().isEmpty()) {
+                String email = user.getEmail();
+                user.setUsername(email.substring(0, email.indexOf('@')));
+            }
+            
+            // Secure the password
+            String securePassword = PasswordUtils.generateSecurePassword(user.getPassword());
+            
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, securePassword);
+            stmt.setString(3, user.getName());
+            stmt.setString(4, user.getEmail());
+            stmt.setString(5, user.getPhoneNumber());
+            stmt.setString(6, user.getRole());
+            stmt.setString(7, String.valueOf(user.getDepartmentId()));
+            stmt.setBoolean(8, user.isActive());
+            
+            int affectedRows = stmt.executeUpdate();
+            
+            if (affectedRows == 0) {
+                throw new SQLException("Creating user failed, no rows affected.");
+            }
+            
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    user.setUserId(generatedKeys.getInt(1));
+                    return user;
+                } else {
+                    throw new SQLException("Creating user failed, no ID obtained.");
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error registering user", e);
+            throw e;
+        }
+    }
 
     @Override
     public User findById(Integer id) throws SQLException {
@@ -445,5 +491,57 @@ public class UserDaoImpl implements UserDao {
         }
         
         return students;
+    }
+    
+    @Override
+    public List<User> searchUsers(String query) throws SQLException {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM Users WHERE " +
+                     "LOWER(name) LIKE LOWER(?) OR " +
+                     "LOWER(email) LIKE LOWER(?) OR " +
+                     "CAST(user_id AS VARCHAR) LIKE ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            String searchParam = "%" + query + "%";
+            stmt.setString(1, searchParam);
+            stmt.setString(2, searchParam);
+            stmt.setString(3, searchParam);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error searching for users with query: " + query, e);
+            throw e;
+        }
+        
+        return users;
+    }
+    
+    @Override
+    public List<User> findByStatus(String status) throws SQLException {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM Users WHERE is_active = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setBoolean(1, "active".equalsIgnoreCase(status));
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapResultSetToUser(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding users by status: " + status, e);
+            throw e;
+        }
+        
+        return users;
     }
 }

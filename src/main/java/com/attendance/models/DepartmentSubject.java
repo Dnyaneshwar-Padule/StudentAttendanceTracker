@@ -10,6 +10,7 @@ public class DepartmentSubject {
     private String subjectCode;
     private String semester;
     private String yearOfStudy;
+    private int credits;
     
     // Additional fields for joining
     private Department department;
@@ -76,6 +77,14 @@ public class DepartmentSubject {
         this.yearOfStudy = yearOfStudy;
     }
     
+    public int getCredits() {
+        return credits;
+    }
+    
+    public void setCredits(int credits) {
+        this.credits = credits;
+    }
+    
     public Department getDepartment() {
         return department;
     }
@@ -118,6 +127,7 @@ public class DepartmentSubject {
                 ", subjectCode='" + subjectCode + '\'' +
                 ", semester='" + semester + '\'' +
                 ", yearOfStudy='" + yearOfStudy + '\'' +
+                ", credits=" + credits +
                 '}';
     }
 }

@@ -1,5 +1,6 @@
 package com.attendance.models;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 /**
@@ -15,6 +16,14 @@ public class EnrollmentRequest {
     private String status;
     private Integer verifiedBy;
     private Timestamp verifiedOn;
+    
+    // Additional required fields
+    private String academicYear;
+    private int departmentId;
+    private Date requestDate;
+    private Integer approverId;
+    private Date approvalDate;
+    private String comments;
     
     // Additional fields for joining
     private User user;
@@ -121,6 +130,54 @@ public class EnrollmentRequest {
         }
     }
     
+    public String getAcademicYear() {
+        return academicYear;
+    }
+    
+    public void setAcademicYear(String academicYear) {
+        this.academicYear = academicYear;
+    }
+    
+    public int getDepartmentId() {
+        return departmentId;
+    }
+    
+    public void setDepartmentId(int departmentId) {
+        this.departmentId = departmentId;
+    }
+    
+    public Date getRequestDate() {
+        return requestDate;
+    }
+    
+    public void setRequestDate(Date requestDate) {
+        this.requestDate = requestDate;
+    }
+    
+    public Integer getApproverId() {
+        return approverId;
+    }
+    
+    public void setApproverId(Integer approverId) {
+        this.approverId = approverId;
+    }
+    
+    public Date getApprovalDate() {
+        return approvalDate;
+    }
+    
+    public void setApprovalDate(Date approvalDate) {
+        this.approvalDate = approvalDate;
+    }
+    
+    public String getComments() {
+        return comments;
+    }
+    
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+    
     @Override
     public String toString() {
         return "EnrollmentRequest{" +
@@ -129,6 +186,8 @@ public class EnrollmentRequest {
                 ", requestedRole='" + requestedRole + '\'' +
                 ", status='" + status + '\'' +
                 ", submittedOn=" + submittedOn +
+                ", academicYear='" + academicYear + '\'' +
+                ", departmentId=" + departmentId +
                 '}';
     }
 }

@@ -3,6 +3,7 @@ package com.attendance.controllers;
 import com.attendance.dao.*;
 import com.attendance.dao.impl.*;
 import com.attendance.models.*;
+import com.attendance.utils.DatabaseConnection;
 import com.attendance.utils.DateUtils;
 
 import javax.servlet.ServletException;
@@ -12,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,6 +41,7 @@ public class AttendanceFilterController extends HttpServlet {
     private DepartmentDao departmentDao;
     private StudentEnrollmentDao studentEnrollmentDao;
     private TeacherAssignmentDao teacherAssignmentDao;
+    private DepartmentSubjectDao departmentSubjectDao;
 
     @Override
     public void init() throws ServletException {
@@ -50,6 +53,7 @@ public class AttendanceFilterController extends HttpServlet {
         departmentDao = new DepartmentDaoImpl();
         studentEnrollmentDao = new StudentEnrollmentDaoImpl();
         teacherAssignmentDao = new TeacherAssignmentDaoImpl();
+        departmentSubjectDao = new DepartmentSubjectDaoImpl();
     }
 
     @Override
@@ -571,7 +575,8 @@ public class AttendanceFilterController extends HttpServlet {
     private void showHodFilterForm(HttpServletRequest request, HttpServletResponse response, User user) throws ServletException, IOException {
         try {
             // Get HOD's department
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departments = departmentDao.findByHod(user.getUserId());
+            Department department = departments != null && !departments.isEmpty() ? departments.get(0) : null;
             
             if (department == null) {
                 request.setAttribute("error", "You are not assigned to any department");
@@ -629,7 +634,8 @@ public class AttendanceFilterController extends HttpServlet {
     private void processHodFilter(HttpServletRequest request, HttpServletResponse response, User user) throws ServletException, IOException {
         try {
             // Get HOD's department
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departments = departmentDao.findByHod(user.getUserId());
+            Department department = departments != null && !departments.isEmpty() ? departments.get(0) : null;
             
             if (department == null) {
                 request.setAttribute("error", "You are not assigned to any department");
@@ -737,7 +743,8 @@ public class AttendanceFilterController extends HttpServlet {
         
         try {
             // Verify user is HOD of the department in filter params
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departments = departmentDao.findByHod(user.getUserId());
+            Department department = departments != null && !departments.isEmpty() ? departments.get(0) : null;
             
             if (department == null || department.getDepartmentId() != (int)filterParams.get("departmentId")) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "You are not authorized to view this department's data");

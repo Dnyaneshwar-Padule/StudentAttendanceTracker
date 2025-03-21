@@ -179,7 +179,7 @@ public class UserController extends HttpServlet {
             User newUser = new User();
             newUser.setFullName(fullName);
             newUser.setEmail(email);
-            newUser.setPasswordHash(PasswordUtils.hashPassword(password));
+            newUser.setPassword(PasswordUtils.generateSecurePassword(password));
             newUser.setRole(role);
             newUser.setStatus(status);
             
@@ -270,7 +270,7 @@ public class UserController extends HttpServlet {
             
             // Update password if provided
             if (password != null && !password.trim().isEmpty()) {
-                user.setPasswordHash(PasswordUtils.hashPassword(password));
+                user.setPassword(PasswordUtils.generateSecurePassword(password));
             }
             
             User updatedUser = userDao.update(user);
@@ -589,14 +589,14 @@ public class UserController extends HttpServlet {
                 return;
             }
             
-            if (!PasswordUtils.verifyPassword(currentPassword, currentUser.getPasswordHash())) {
+            if (!PasswordUtils.verifySecurePassword(currentPassword, currentUser.getPassword())) {
                 request.setAttribute("error", "Current password is incorrect");
                 request.getRequestDispatcher("/WEB-INF/views/profile/change-password.jsp").forward(request, response);
                 return;
             }
             
             // Update password
-            currentUser.setPasswordHash(PasswordUtils.hashPassword(newPassword));
+            currentUser.setPassword(PasswordUtils.generateSecurePassword(newPassword));
             User updatedUser = userDao.update(currentUser);
             
             if (updatedUser != null) {

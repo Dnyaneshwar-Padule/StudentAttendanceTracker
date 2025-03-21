@@ -652,7 +652,8 @@ public class DepartmentController extends HttpServlet {
     private void viewHodDepartment(HttpServletRequest request, HttpServletResponse response, User user) throws ServletException, IOException {
         try {
             // Find department by HOD
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departments = departmentDao.findByHod(user.getUserId());
+            Department department = departments != null && !departments.isEmpty() ? departments.get(0) : null;
             
             if (department == null) {
                 request.setAttribute("error", "You are not assigned to any department");
@@ -691,7 +692,8 @@ public class DepartmentController extends HttpServlet {
     private void viewDepartmentSubjects(HttpServletRequest request, HttpServletResponse response, User user) throws ServletException, IOException {
         try {
             // Find department by HOD
-            Department department = departmentDao.findByHod(user.getUserId());
+            List<Department> departments = departmentDao.findByHod(user.getUserId());
+            Department department = departments != null && !departments.isEmpty() ? departments.get(0) : null;
             
             if (department == null) {
                 request.setAttribute("error", "You are not assigned to any department");
