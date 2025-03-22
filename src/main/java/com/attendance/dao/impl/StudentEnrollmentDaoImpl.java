@@ -1,7 +1,9 @@
 package com.attendance.dao.impl;
 
 import com.attendance.dao.StudentEnrollmentDao;
+import com.attendance.dao.UserDao;
 import com.attendance.models.StudentEnrollment;
+import com.attendance.models.User;
 import com.attendance.utils.DatabaseConnection;
 
 import java.sql.*;
@@ -244,6 +246,46 @@ public class StudentEnrollmentDaoImpl implements StudentEnrollmentDao {
         }
         
         return null;
+    }
+    
+    @Override
+    public List<User> findStudentsByClass(int classId, String academicYear) throws SQLException {
+        List<User> students = new ArrayList<>();
+        String sql = "SELECT u.* FROM Users u " +
+                    "JOIN StudentEnrollments se ON u.user_id = se.student_id " +
+                    "WHERE se.class_id = ? AND se.academic_year = ? AND u.role = 'Student'";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            stmt.setString(2, academicYear);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    User student = new User();
+                    student.setUserId(rs.getInt("user_id"));
+                    student.setUsername(rs.getString("username"));
+                    student.setEmail(rs.getString("email"));
+                    student.setFullName(rs.getString("full_name"));
+                    student.setRole(rs.getString("role"));
+                    student.setDepartmentId(rs.getInt("department_id"));
+                    // We don't set the password field for security reasons
+                    students.add(student);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding students by class ID: " + classId + " and academic year: " + academicYear, e);
+            throw e;
+        }
+        
+        return students;
+    }
+    
+    @Override
+    public List<StudentEnrollment> findByStudentId(int studentId) throws SQLException {
+        // This method is the same as findByStudent, added for API compatibility
+        return findByStudent(studentId);
     }
     
     /**

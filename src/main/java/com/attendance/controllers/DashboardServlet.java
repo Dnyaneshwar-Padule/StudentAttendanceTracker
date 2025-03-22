@@ -2,11 +2,18 @@ package com.attendance.controllers;
 
 import com.attendance.dao.AttendanceDao;
 import com.attendance.dao.LeaveApplicationDao;
+import com.attendance.dao.StudentEnrollmentDao;
+import com.attendance.dao.SubjectDao;
 import com.attendance.dao.UserDao;
 import com.attendance.dao.impl.AttendanceDaoImpl;
 import com.attendance.dao.impl.LeaveApplicationDaoImpl;
+import com.attendance.dao.impl.StudentEnrollmentDaoImpl;
+import com.attendance.dao.impl.SubjectDaoImpl;
 import com.attendance.dao.impl.UserDaoImpl;
 import com.attendance.models.User;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -146,7 +153,27 @@ public class DashboardServlet extends HttpServlet {
     private void prepareDashboardStudent(HttpServletRequest request, int studentId) throws SQLException {
         // For now, just a placeholder method
         // In a full implementation, we would add student attendance statistics, etc.
-        request.setAttribute("attendancePercentage", attendanceDao.calculateAttendancePercentage(studentId));
+        // Get current semester and academic year for calculating attendance
+        String currentSemester = "1"; // Default to first semester - in a real implementation, get current semester
+        String academicYear = "2024-2025"; // Default - in a real implementation, get current academic year
+        
+        // Get student's enrollment and subject information
+        StudentEnrollmentDao enrollmentDao = new StudentEnrollmentDaoImpl();
+        SubjectDao subjectDao = new SubjectDaoImpl();
+        
+        List<String> subjectCodes = subjectDao.findAllByStudentAndSemester(studentId, currentSemester, academicYear)
+                .stream()
+                .map(subject -> subject.getSubjectCode())
+                .collect(Collectors.toList());
+        
+        // If student has at least one subject, calculate average attendance across all subjects
+        double averageAttendance = 0;
+        if (!subjectCodes.isEmpty()) {
+            String firstSubject = subjectCodes.get(0); // Just use first subject for now
+            averageAttendance = attendanceDao.calculateAttendancePercentage(studentId, firstSubject, currentSemester, academicYear);
+        }
+        
+        request.setAttribute("attendancePercentage", averageAttendance);
         request.setAttribute("leaveApplications", leaveApplicationDao.findByStudent(studentId));
     }
 }

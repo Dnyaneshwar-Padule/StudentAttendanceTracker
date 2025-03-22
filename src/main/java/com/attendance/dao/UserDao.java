@@ -133,4 +133,19 @@ public interface UserDao extends BaseDao<User, Integer> {
      * @throws SQLException If a database error occurs
      */
     List<User> findByStatus(String status) throws SQLException;
+    
+    /**
+     * Count the total number of users in the system
+     * @return Total number of users
+     * @throws SQLException If a database error occurs
+     */
+    int countUsers() throws SQLException;
+    
+    /**
+     * Count the number of users with a specific status
+     * @param status The status to count
+     * @return Number of users with the specified status
+     * @throws SQLException If a database error occurs
+     */
+    int countUsersByStatus(String status) throws SQLException;
 }

@@ -28,6 +28,95 @@ public class AttendanceDaoImpl implements AttendanceDao {
         leaveApplicationDao = new LeaveApplicationDaoImpl();
     }
     
+    @Override
+    public Map<String, Double> getMonthlyAttendanceTrend(String academicYear) throws SQLException {
+        Map<String, Double> monthlyTrend = new HashMap<>();
+        String sql = "SELECT TO_CHAR(attendance_date, 'Month') AS month, " +
+                     "COUNT(*) AS total, " +
+                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present, " +
+                     "SUM(CASE WHEN status = 'On Leave' THEN 1 ELSE 0 END) AS on_leave " +
+                     "FROM Attendance " +
+                     "WHERE academic_year = ? " +
+                     "GROUP BY TO_CHAR(attendance_date, 'Month') " +
+                     "ORDER BY MIN(attendance_date)";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, academicYear);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String month = rs.getString("month").trim();
+                    int total = rs.getInt("total");
+                    int present = rs.getInt("present");
+                    int onLeave = rs.getInt("on_leave");
+                    
+                    // Don't count "On Leave" days in the total when calculating attendance percentage
+                    int effectiveTotal = total - onLeave;
+                    
+                    if (effectiveTotal > 0) {
+                        monthlyTrend.put(month, (double) present / effectiveTotal * 100);
+                    } else if (total > 0 && effectiveTotal == 0) {
+                        // If all days are marked as "On Leave"
+                        monthlyTrend.put(month, 100.0);
+                    } else {
+                        monthlyTrend.put(month, 0.0);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting monthly attendance trend for academic year: " + academicYear, e);
+            throw e;
+        }
+        
+        return monthlyTrend;
+    }
+    
+    @Override
+    public Map<String, Double> getSemesterAttendanceTrend(String academicYear) throws SQLException {
+        Map<String, Double> semesterTrend = new HashMap<>();
+        String sql = "SELECT semester, " +
+                     "COUNT(*) AS total, " +
+                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present, " +
+                     "SUM(CASE WHEN status = 'On Leave' THEN 1 ELSE 0 END) AS on_leave " +
+                     "FROM Attendance " +
+                     "WHERE academic_year = ? " +
+                     "GROUP BY semester";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, academicYear);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String semester = rs.getString("semester");
+                    int total = rs.getInt("total");
+                    int present = rs.getInt("present");
+                    int onLeave = rs.getInt("on_leave");
+                    
+                    // Don't count "On Leave" days in the total when calculating attendance percentage
+                    int effectiveTotal = total - onLeave;
+                    
+                    if (effectiveTotal > 0) {
+                        semesterTrend.put(semester, (double) present / effectiveTotal * 100);
+                    } else if (total > 0 && effectiveTotal == 0) {
+                        // If all days are marked as "On Leave"
+                        semesterTrend.put(semester, 100.0);
+                    } else {
+                        semesterTrend.put(semester, 0.0);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting semester attendance trend for academic year: " + academicYear, e);
+            throw e;
+        }
+        
+        return semesterTrend;
+    }
+    
     /**
      * Constructor with LeaveApplicationDao dependency
      * @param leaveApplicationDao The LeaveApplicationDao implementation
@@ -316,6 +405,100 @@ public class AttendanceDaoImpl implements AttendanceDao {
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error finding attendance by subject code, date, and semester", e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    @Override
+    public List<Attendance> findRecentByStudent(int studentId, int limit) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE student_id = ? ORDER BY attendance_date DESC LIMIT ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setInt(2, limit);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding recent attendance for student ID: " + studentId, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    @Override
+    public Map<String, Object> getWeeklyAttendanceSummary(int teacherId) throws SQLException {
+        Map<String, Object> summary = new HashMap<>();
+        String sql = "SELECT COUNT(*) as total, " +
+                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) as present, " +
+                     "SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as absent, " +
+                     "SUM(CASE WHEN status = 'Leave' THEN 1 ELSE 0 END) as on_leave, " +
+                     "subject_code, " +
+                     "TO_CHAR(attendance_date, 'Day') as day_of_week " +
+                     "FROM Attendance " +
+                     "WHERE marked_by = ? " +
+                     "AND attendance_date >= CURRENT_DATE - INTERVAL '7 days' " +
+                     "GROUP BY subject_code, TO_CHAR(attendance_date, 'Day')";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, teacherId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Map<String, Object>> dailyData = new ArrayList<>();
+                
+                while (rs.next()) {
+                    Map<String, Object> daily = new HashMap<>();
+                    daily.put("day", rs.getString("day_of_week"));
+                    daily.put("subjectCode", rs.getString("subject_code"));
+                    daily.put("total", rs.getInt("total"));
+                    daily.put("present", rs.getInt("present"));
+                    daily.put("absent", rs.getInt("absent"));
+                    daily.put("onLeave", rs.getInt("on_leave"));
+                    dailyData.add(daily);
+                }
+                
+                summary.put("dailyData", dailyData);
+                summary.put("teacherId", teacherId);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting weekly attendance summary for teacher ID: " + teacherId, e);
+            throw e;
+        }
+        
+        return summary;
+    }
+    
+    @Override
+    public List<Attendance> findByClassAndDate(int classId, Date date) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT a.* FROM Attendance a " +
+                     "JOIN StudentEnrollment se ON a.student_id = se.student_id " +
+                     "WHERE se.class_id = ? AND a.attendance_date = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            stmt.setDate(2, date);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by class ID and date", e);
             throw e;
         }
         
@@ -702,6 +885,141 @@ public class AttendanceDaoImpl implements AttendanceDao {
         }
         
         return count;
+    }
+    
+    @Override
+    public double calculateInstitutionAttendancePercentage(String academicYear, String semester, String month) throws SQLException {
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(CASE WHEN a.status = 'Present' THEN 1 END) AS present_count, " +
+                "COUNT(a.attendance_id) AS total_count " +
+                "FROM attendance a " +
+                "WHERE a.academic_year = ? AND a.semester = ?");
+        
+        if (month != null && !month.isEmpty()) {
+            sql.append(" AND EXTRACT(MONTH FROM a.attendance_date) = ?");
+        }
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            
+            stmt.setString(1, academicYear);
+            stmt.setString(2, semester);
+            
+            if (month != null && !month.isEmpty()) {
+                stmt.setInt(3, Integer.parseInt(month));
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int presentCount = rs.getInt("present_count");
+                    int totalCount = rs.getInt("total_count");
+                    
+                    if (totalCount > 0) {
+                        return (double) presentCount / totalCount * 100.0;
+                    }
+                }
+            }
+        }
+        
+        return 0.0; // Default if no records found
+    }
+    
+    @Override
+    public Map<String, Integer> getTeacherMarkedAttendanceSummary(int teacherId, String academicYear, 
+                                                                 String semester, String month) throws SQLException {
+        Map<String, Integer> summary = new HashMap<>();
+        
+        StringBuilder sql = new StringBuilder(
+                "SELECT a.subject_code, COUNT(a.attendance_id) as record_count " +
+                "FROM attendance a " +
+                "JOIN teacher_assignments ta ON a.subject_code = ta.subject_code " +
+                "WHERE ta.teacher_id = ? AND a.academic_year = ? AND a.semester = ? " +
+                "AND a.marked_by = ?");
+        
+        if (month != null && !month.isEmpty()) {
+            sql.append(" AND EXTRACT(MONTH FROM a.attendance_date) = ?");
+        }
+        
+        sql.append(" GROUP BY a.subject_code");
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            
+            stmt.setInt(1, teacherId);
+            stmt.setString(2, academicYear);
+            stmt.setString(3, semester);
+            stmt.setInt(4, teacherId);
+            
+            if (month != null && !month.isEmpty()) {
+                stmt.setInt(5, Integer.parseInt(month));
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String subjectCode = rs.getString("subject_code");
+                    int count = rs.getInt("record_count");
+                    summary.put(subjectCode, count);
+                }
+            }
+        }
+        
+        return summary;
+    }
+    
+    @Override
+    public Map<String, Double> getSemesterDepartmentAttendanceTrend(int departmentId, String academicYear) throws SQLException {
+        Map<String, Double> trend = new HashMap<>();
+        
+        // Get all semesters
+        List<String> semesters = new ArrayList<>();
+        semesters.add("Semester 1");
+        semesters.add("Semester 2");
+        semesters.add("Semester 3");
+        semesters.add("Semester 4");
+        semesters.add("Semester 5");
+        semesters.add("Semester 6");
+        
+        for (String semester : semesters) {
+            double percentage = calculateDepartmentAttendancePercentage(departmentId, academicYear, semester, null);
+            trend.put(semester, percentage);
+        }
+        
+        return trend;
+    }
+    
+    @Override
+    public Map<String, Double> getMonthlyDepartmentAttendanceTrend(int departmentId, String academicYear) throws SQLException {
+        Map<String, Double> trend = new HashMap<>();
+        
+        // Get all months (1-12)
+        for (int month = 1; month <= 12; month++) {
+            // Use month names instead of numbers
+            String monthName = getMonthName(month);
+            
+            // Calculate attendance percentage for each month
+            double percentage = calculateDepartmentAttendancePercentage(departmentId, academicYear, null, String.valueOf(month));
+            trend.put(monthName, percentage);
+        }
+        
+        return trend;
+    }
+    
+    /**
+     * Helper method to convert month number to month name
+     * @param month Month number (1-12)
+     * @return Month name
+     */
+    private String getMonthName(int month) {
+        String[] monthNames = {
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        };
+        
+        if (month >= 1 && month <= 12) {
+            return monthNames[month-1];
+        }
+        
+        return "Unknown";
     }
     
     /**

@@ -1,6 +1,7 @@
 package com.attendance.dao;
 
 import com.attendance.models.StudentEnrollment;
+import com.attendance.models.User;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -50,4 +51,21 @@ public interface StudentEnrollmentDao extends BaseDao<StudentEnrollment, Integer
      * @throws SQLException If a database error occurs
      */
     StudentEnrollment findCurrentEnrollment(int studentId) throws SQLException;
+    
+    /**
+     * Find all students enrolled in a specific class for a given academic year
+     * @param classId The class ID
+     * @param academicYear The academic year
+     * @return List of User objects representing the students enrolled in the class
+     * @throws SQLException If a database error occurs
+     */
+    List<User> findStudentsByClass(int classId, String academicYear) throws SQLException;
+    
+    /**
+     * Find enrollments by student ID
+     * @param studentId The student ID
+     * @return List of enrollments for the specified student
+     * @throws SQLException If a database error occurs
+     */
+    List<StudentEnrollment> findByStudentId(int studentId) throws SQLException;
 }

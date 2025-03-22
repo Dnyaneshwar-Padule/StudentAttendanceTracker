@@ -11,6 +11,7 @@ public class Subject {
     private String description;
     private String semester;
     private int credits;
+    private int departmentId;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     
@@ -22,12 +23,13 @@ public class Subject {
     
     // Full constructor
     public Subject(String subjectCode, String subjectName, String description, String semester, 
-                 int credits, Timestamp createdAt, Timestamp updatedAt) {
+                 int credits, int departmentId, Timestamp createdAt, Timestamp updatedAt) {
         this.subjectCode = subjectCode;
         this.subjectName = subjectName;
         this.description = description;
         this.semester = semester;
         this.credits = credits;
+        this.departmentId = departmentId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -75,6 +77,14 @@ public class Subject {
     
     public void setCredits(int credits) {
         this.credits = credits;
+    }
+    
+    public int getDepartmentId() {
+        return departmentId;
+    }
+    
+    public void setDepartmentId(int departmentId) {
+        this.departmentId = departmentId;
     }
     
     public Timestamp getCreatedAt() {

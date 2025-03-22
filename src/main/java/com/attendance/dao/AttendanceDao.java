@@ -87,6 +87,32 @@ public interface AttendanceDao extends BaseDao<Attendance, Integer> {
     List<Attendance> findByClassAndSubjectAndDate(int classId, String subjectCode, Date date) throws SQLException;
     
     /**
+     * Find recent attendance records for a student
+     * @param studentId The student ID
+     * @param limit Maximum number of records to return
+     * @return List of recent attendance records for the student
+     * @throws SQLException If a database error occurs
+     */
+    List<Attendance> findRecentByStudent(int studentId, int limit) throws SQLException;
+    
+    /**
+     * Get weekly attendance summary for a teacher's classes
+     * @param teacherId The teacher ID
+     * @return Map summarizing weekly attendance
+     * @throws SQLException If a database error occurs
+     */
+    Map<String, Object> getWeeklyAttendanceSummary(int teacherId) throws SQLException;
+    
+    /**
+     * Find attendance records by class and date
+     * @param classId The class ID
+     * @param date The attendance date
+     * @return List of attendance records for the specified class and date
+     * @throws SQLException If a database error occurs
+     */
+    List<Attendance> findByClassAndDate(int classId, Date date) throws SQLException;
+    
+    /**
      * Calculate attendance percentage for a student in a subject
      * @param studentId The student ID
      * @param subjectCode The subject code
@@ -184,6 +210,27 @@ public interface AttendanceDao extends BaseDao<Attendance, Integer> {
      * @throws SQLException If a database error occurs
      */
     Map<String, Double> getSemesterDepartmentAttendanceTrend(int departmentId, String academicYear) throws SQLException;
+    
+    /**
+     * Calculate overall attendance percentage for the entire institution
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @param month The month (null for all months)
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    double calculateInstitutionAttendancePercentage(String academicYear, String semester, String month) throws SQLException;
+    
+    /**
+     * Get attendance records marked by a specific teacher
+     * @param teacherId The teacher ID
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @param month The month (null for all months)
+     * @return Map summarizing attendance marked by the teacher
+     * @throws SQLException If a database error occurs
+     */
+    Map<String, Integer> getTeacherMarkedAttendanceSummary(int teacherId, String academicYear, String semester, String month) throws SQLException;
     
     /**
      * Get attendance summary for a student across all subjects

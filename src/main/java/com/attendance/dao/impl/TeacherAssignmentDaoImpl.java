@@ -85,6 +85,12 @@ public class TeacherAssignmentDaoImpl implements TeacherAssignmentDao {
         
         return teacherAssignments;
     }
+    
+    @Override
+    public List<TeacherAssignment> findByTeacherId(int teacherId) throws SQLException {
+        // This method is the same as findByTeacher, added for API compatibility
+        return findByTeacher(teacherId);
+    }
 
     @Override
     public List<TeacherAssignment> findBySubject(String subjectCode) throws SQLException {
@@ -262,6 +268,60 @@ public class TeacherAssignmentDaoImpl implements TeacherAssignmentDao {
     @Override
     public boolean removeAssignment(int teacherId, String subjectCode, int classId) throws SQLException {
         return delete(teacherId, subjectCode, classId);
+    }
+    
+    @Override
+    public List<TeacherAssignment> findByTeacherIdAndType(int teacherId, String type) throws SQLException {
+        List<TeacherAssignment> teacherAssignments = new ArrayList<>();
+        String sql = "SELECT * FROM TeacherAssignments WHERE teacher_id = ? AND assignment_type = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, teacherId);
+            stmt.setString(2, type);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    teacherAssignments.add(mapResultSetToTeacherAssignment(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding teacher assignments by teacher ID and type", e);
+            throw e;
+        }
+        
+        return teacherAssignments;
+    }
+    
+    @Override
+    public List<TeacherAssignment> findBySubjectCode(String subjectCode) throws SQLException {
+        // This method is the same as findBySubject, added for API compatibility
+        return findBySubject(subjectCode);
+    }
+    
+    @Override
+    public List<TeacherAssignment> findByClassIdAndType(int classId, String type) throws SQLException {
+        List<TeacherAssignment> teacherAssignments = new ArrayList<>();
+        String sql = "SELECT * FROM TeacherAssignments WHERE class_id = ? AND assignment_type = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            stmt.setString(2, type);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    teacherAssignments.add(mapResultSetToTeacherAssignment(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding teacher assignments by class ID and type", e);
+            throw e;
+        }
+        
+        return teacherAssignments;
     }
     
     /**

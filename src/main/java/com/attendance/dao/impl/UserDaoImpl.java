@@ -568,4 +568,45 @@ public class UserDaoImpl implements UserDao {
         
         return users;
     }
+    
+    @Override
+    public int countUsers() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Users";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error counting users", e);
+            throw e;
+        }
+        
+        return 0;
+    }
+    
+    @Override
+    public int countUsersByStatus(String status) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Users WHERE is_active = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setBoolean(1, "active".equalsIgnoreCase(status));
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error counting users by status: " + status, e);
+            throw e;
+        }
+        
+        return 0;
+    }
 }

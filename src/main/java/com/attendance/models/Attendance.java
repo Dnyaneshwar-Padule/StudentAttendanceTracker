@@ -16,6 +16,7 @@ public class Attendance {
     private String academicYear;
     private String markedBy;
     private String remarks;
+    private Timestamp timeIn;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     
@@ -206,6 +207,20 @@ public class Attendance {
      */
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    /**
+     * @return the timeIn timestamp
+     */
+    public Timestamp getTimeIn() {
+        return timeIn;
+    }
+
+    /**
+     * @param timeIn the timeIn timestamp to set
+     */
+    public void setTimeIn(Timestamp timeIn) {
+        this.timeIn = timeIn;
     }
 
     /**

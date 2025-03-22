@@ -36,6 +36,14 @@ public interface TeacherAssignmentDao {
     List<TeacherAssignment> findByTeacher(int teacherId) throws SQLException;
     
     /**
+     * Find teacher assignments by teacher ID
+     * @param teacherId The teacher ID
+     * @return List of teacher assignments for the specified teacher
+     * @throws SQLException If a database error occurs
+     */
+    List<TeacherAssignment> findByTeacherId(int teacherId) throws SQLException;
+    
+    /**
      * Find teacher assignments by subject
      * @param subjectCode The subject code
      * @return List of teacher assignments for the specified subject
@@ -50,6 +58,15 @@ public interface TeacherAssignmentDao {
      * @throws SQLException If a database error occurs
      */
     List<TeacherAssignment> findByClass(int classId) throws SQLException;
+    
+    /**
+     * Find teacher assignments by class ID and assignment type
+     * @param classId The class ID
+     * @param type The assignment type
+     * @return List of teacher assignments for the specified class and type
+     * @throws SQLException If a database error occurs
+     */
+    List<TeacherAssignment> findByClassIdAndType(int classId, String type) throws SQLException;
     
     /**
      * Find teacher assignments by class and subject
@@ -119,4 +136,21 @@ public interface TeacherAssignmentDao {
      * @throws SQLException If a database error occurs
      */
     boolean removeAssignment(int teacherId, String subjectCode, int classId) throws SQLException;
+    
+    /**
+     * Find teacher assignments by teacher ID and assignment type
+     * @param teacherId The teacher ID
+     * @param type The assignment type
+     * @return List of teacher assignments for the specified teacher and type
+     * @throws SQLException If a database error occurs
+     */
+    List<TeacherAssignment> findByTeacherIdAndType(int teacherId, String type) throws SQLException;
+    
+    /**
+     * Find teacher assignments by subject code
+     * @param subjectCode The subject code
+     * @return List of teacher assignments for the specified subject
+     * @throws SQLException If a database error occurs
+     */
+    List<TeacherAssignment> findBySubjectCode(String subjectCode) throws SQLException;
 }

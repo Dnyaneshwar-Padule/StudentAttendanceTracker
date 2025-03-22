@@ -215,7 +215,7 @@ public class FixedAttendanceReportController extends HttpServlet {
             request.setAttribute("subjects", subjects);
             
             // Get class information
-            com.attendance.models.Class studentClass = classDao.findById(enrollment.getClassId());
+            Class studentClass = classDao.findById(enrollment.getClassId());
             request.setAttribute("studentClass", studentClass);
             
             // Get recent attendance records
@@ -268,7 +268,7 @@ public class FixedAttendanceReportController extends HttpServlet {
         }
         
         // Get class and subject information
-        List<com.attendance.models.Class> classes = new ArrayList<>();
+        List<Class> classes = new ArrayList<>();
         for (Integer classId : classAttendance.keySet()) {
             classes.add(classDao.findById(classId));
         }
@@ -286,7 +286,7 @@ public class FixedAttendanceReportController extends HttpServlet {
         request.setAttribute("subjects", subjects);
         
         // Get attendance statistics for the last seven days
-        Map<String, Object> weeklySummary = 
+        Map<Date, Integer> weeklySummary = 
                 attendanceDao.getWeeklyAttendanceSummary(teacher.getUserId());
         request.setAttribute("weeklySummary", weeklySummary);
     }
@@ -316,9 +316,9 @@ public class FixedAttendanceReportController extends HttpServlet {
         
         // Class-wise attendance in the department
         Map<Integer, Double> classAttendance = new HashMap<>();
-        List<com.attendance.models.Class> departmentClasses = classDao.findByDepartment(departmentId);
+        List<Class> departmentClasses = classDao.findByDepartment(departmentId);
         
-        for (com.attendance.models.Class cls : departmentClasses) {
+        for (Class cls : departmentClasses) {
             double attendancePercentage = 
                     attendanceDao.calculateClassAttendancePercentage(
                             cls.getClassId(),
@@ -476,7 +476,7 @@ public class FixedAttendanceReportController extends HttpServlet {
             }
             
             // Get class details
-            com.attendance.models.Class studentClass = classDao.findById(enrollment.getClassId());
+            Class studentClass = classDao.findById(enrollment.getClassId());
             
             // Get attendance statistics
             double overallAttendance = 
@@ -613,7 +613,7 @@ public class FixedAttendanceReportController extends HttpServlet {
         if (classIdParam == null || classIdParam.isEmpty()) {
             // No class ID provided, show class selection form
             try {
-                List<com.attendance.models.Class> classes;
+                List<Class> classes;
                 
                 // Filter classes based on user role
                 if ("Principal".equals(currentUser.getRole()) || "Admin".equals(currentUser.getRole())) {
@@ -658,7 +658,7 @@ public class FixedAttendanceReportController extends HttpServlet {
             int classId = Integer.parseInt(classIdParam);
             
             // Get class details
-            com.attendance.models.Class classObj = classDao.findById(classId);
+            Class classObj = classDao.findById(classId);
             if (classObj == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Class not found");
                 return;
@@ -961,11 +961,11 @@ public class FixedAttendanceReportController extends HttpServlet {
             }
             
             // Get classes where this subject is taught
-            List<com.attendance.models.Class> subjectClasses = new ArrayList<>();
+            List<Class> subjectClasses = new ArrayList<>();
             Map<Integer, List<User>> classStudents = new HashMap<>();
             
             for (TeacherAssignment assignment : assignments) {
-                com.attendance.models.Class classObj = classDao.findById(assignment.getClassId());
+                Class classObj = classDao.findById(assignment.getClassId());
                 if (classObj != null && !subjectClasses.contains(classObj)) {
                     subjectClasses.add(classObj);
                     
@@ -987,7 +987,7 @@ public class FixedAttendanceReportController extends HttpServlet {
             
             // Class-wise subject attendance
             Map<Integer, Double> classAttendance = new HashMap<>();
-            for (com.attendance.models.Class classObj : subjectClasses) {
+            for (Class classObj : subjectClasses) {
                 double percentage = 
                         attendanceDao.calculateSubjectClassAttendancePercentage(
                                 classObj.getClassId(),
@@ -1202,7 +1202,7 @@ public class FixedAttendanceReportController extends HttpServlet {
             }
             
             // Get classes in the department
-            List<com.attendance.models.Class> classes = classDao.findByDepartment(departmentId);
+            List<Class> classes = classDao.findByDepartment(departmentId);
             
             // Class-wise attendance
             Map<Integer, Double> classAttendance = new HashMap<>();

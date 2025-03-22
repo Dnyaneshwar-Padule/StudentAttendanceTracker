@@ -66,26 +66,65 @@ public class SubjectDaoImpl implements SubjectDao {
 
     @Override
     public Subject save(Subject subject) throws SQLException {
-        String sql = "INSERT INTO Subjects (subject_code, subject_name, semester, credits) VALUES (?, ?, ?, ?)";
+        Connection conn = null;
+        PreparedStatement stmt = null;
         
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);  // Start transaction
             
+            // First insert into Subjects table
+            String sqlSubject = "INSERT INTO Subjects (subject_code, subject_name, semester, credits) VALUES (?, ?, ?, ?)";
+            stmt = conn.prepareStatement(sqlSubject);
             stmt.setString(1, subject.getSubjectCode());
             stmt.setString(2, subject.getSubjectName());
             stmt.setString(3, subject.getSemester());
             stmt.setInt(4, subject.getCredits());
             
             int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected > 0) {
-                return subject;
+            
+            // If department ID is set, also insert into DepartmentSubjects table
+            if (rowsAffected > 0 && subject.getDepartmentId() > 0) {
+                stmt.close();
+                
+                String sqlDeptSubject = "INSERT INTO DepartmentSubjects (department_id, subject_code) VALUES (?, ?)";
+                stmt = conn.prepareStatement(sqlDeptSubject);
+                stmt.setInt(1, subject.getDepartmentId());
+                stmt.setString(2, subject.getSubjectCode());
+                
+                stmt.executeUpdate();
             }
+            
+            conn.commit();  // Commit transaction
+            return subject;
+            
         } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();  // Rollback on error
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error rolling back transaction", ex);
+                }
+            }
             LOGGER.log(Level.SEVERE, "Error saving subject: " + subject, e);
             throw e;
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    LOGGER.log(Level.SEVERE, "Error closing statement", e);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);  // Reset auto commit
+                    conn.close();
+                } catch (SQLException e) {
+                    LOGGER.log(Level.SEVERE, "Error closing connection", e);
+                }
+            }
         }
-        
-        return null;
     }
 
     @Override
@@ -132,7 +171,7 @@ public class SubjectDaoImpl implements SubjectDao {
     @Override
     public List<Subject> findByDepartment(int departmentId) throws SQLException {
         List<Subject> subjects = new ArrayList<>();
-        String sql = "SELECT s.* FROM Subjects s " +
+        String sql = "SELECT s.*, ds.department_id FROM Subjects s " +
                      "JOIN DepartmentSubjects ds ON s.subject_code = ds.subject_code " +
                      "WHERE ds.department_id = ?";
         
@@ -143,7 +182,9 @@ public class SubjectDaoImpl implements SubjectDao {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    subjects.add(mapResultSetToSubject(rs));
+                    Subject subject = mapResultSetToSubject(rs);
+                    subject.setDepartmentId(departmentId); // Explicitly set department ID
+                    subjects.add(subject);
                 }
             }
         } catch (SQLException e) {
@@ -230,6 +271,56 @@ public class SubjectDaoImpl implements SubjectDao {
         return subjects;
     }
     
+    @Override
+    public List<Subject> findByClassId(int classId) throws SQLException {
+        List<Subject> subjects = new ArrayList<>();
+        String sql = "SELECT s.* FROM Subjects s " +
+                     "JOIN Classes c ON s.semester = c.semester " +
+                     "WHERE c.class_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    subjects.add(mapResultSetToSubject(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding subjects by class ID: " + classId, e);
+            throw e;
+        }
+        
+        return subjects;
+    }
+    
+    @Override
+    public List<Subject> searchSubjects(String query) throws SQLException {
+        List<Subject> subjects = new ArrayList<>();
+        String sql = "SELECT * FROM Subjects WHERE subject_code LIKE ? OR subject_name LIKE ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            String likePattern = "%" + query + "%";
+            stmt.setString(1, likePattern);
+            stmt.setString(2, likePattern);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    subjects.add(mapResultSetToSubject(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error searching subjects with query: " + query, e);
+            throw e;
+        }
+        
+        return subjects;
+    }
+    
     /**
      * Maps a database result set to a Subject object
      * @param rs The result set positioned at the current row
@@ -242,6 +333,14 @@ public class SubjectDaoImpl implements SubjectDao {
         subject.setSubjectName(rs.getString("subject_name"));
         subject.setSemester(rs.getString("semester"));
         subject.setCredits(rs.getInt("credits"));
+        
+        // Try to map departmentId if the column exists
+        try {
+            subject.setDepartmentId(rs.getInt("department_id"));
+        } catch (SQLException e) {
+            // Column may not exist in some queries, that's ok
+        }
+        
         return subject;
     }
 }
