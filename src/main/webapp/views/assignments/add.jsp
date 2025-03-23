@@ -1,7 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.attendance.models.*" %>
+<%@ page import="com.attendance.models.User" %>
+<%@ page import="com.attendance.models.Subject" %>
+<%@ page import="com.attendance.models.Teacher" %>
+<%@ page import="com.attendance.models.Department" %>
 <%@ page import="com.attendance.utils.SessionUtil" %>
 <%@ page import="java.util.*" %>
+<%-- Import Class model with fully qualified name to avoid ambiguity --%>
+<%@ page import="com.attendance.models.Class" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
