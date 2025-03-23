@@ -5,6 +5,7 @@ import com.attendance.models.User;
 import com.attendance.models.Class;
 import com.attendance.utils.DatabaseConnection;
 import com.attendance.dao.impl.UserDaoImpl;
+import com.attendance.dao.impl.ClassDAOImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.List;
 public class StudentEnrollmentDAO {
 
     private UserDao userDAO = new UserDaoImpl();
-    private ClassDAO classDAO = new ClassDAO();
+    private ClassDAO classDAO = new ClassDAOImpl();
 
     /**
      * Create a new student enrollment

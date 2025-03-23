@@ -48,6 +48,19 @@ public class User {
     }
     
     /**
+     * Constructor for registration with full name (used in AuthController)
+     */
+    public User(String fullName, String email, String password, String role) {
+        this();
+        this.setFullName(fullName); // This will split and set firstName and lastName
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        // Generate a username from email if not provided
+        this.username = email.split("@")[0];
+    }
+    
+    /**
      * Full constructor
      */
     public User(int id, String username, String password, String firstName, String lastName, 

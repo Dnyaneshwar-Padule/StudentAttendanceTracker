@@ -3,6 +3,7 @@ package com.attendance.dao;
 import com.attendance.models.Attendance;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -277,4 +278,113 @@ public interface AttendanceDao extends BaseDao<Attendance, Integer> {
      */
     int markAttendance(String subjectCode, Date date, String semester, String academicYear, 
                        Map<Integer, String> studentAttendance) throws SQLException;
+                       
+    /**
+     * Get attendance percentage for a student (alias for calculateAttendancePercentage)
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param semester The semester
+     * @param academicYear The academic year
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    default double getAttendancePercentage(int studentId, String subjectCode, String semester, String academicYear) throws SQLException {
+        return calculateAttendancePercentage(studentId, subjectCode, semester, academicYear);
+    }
+    
+    /**
+     * Get attendance by student ID (alias for findByStudent)
+     * @param studentId The student ID
+     * @return List of attendance records for the specified student
+     * @throws SQLException If a database error occurs
+     */
+    default List<Attendance> getByStudent(int studentId) throws SQLException {
+        return findByStudent(studentId);
+    }
+    
+    /**
+     * Get attendance by subject code (alias for findBySubject)
+     * @param subjectCode The subject code
+     * @return List of attendance records for the specified subject
+     * @throws SQLException If a database error occurs
+     */
+    default List<Attendance> getBySubject(String subjectCode) throws SQLException {
+        return findBySubject(subjectCode);
+    }
+    
+    /**
+     * Get all attendance records (alias for findAll)
+     * @return List of all attendance records
+     * @throws SQLException If a database error occurs
+     */
+    default List<Attendance> getAll() throws SQLException {
+        return findAll();
+    }
+    
+    /**
+     * Get attendance by student, semester, and academic year
+     * @param studentId The student ID
+     * @param semester The semester
+     * @param academicYear The academic year
+     * @return List of attendance records
+     * @throws SQLException If a database error occurs
+     */
+    default List<Attendance> getByStudentSemesterAndYear(int studentId, String semester, String academicYear) throws SQLException {
+        return findByStudent(studentId, academicYear, semester, null); // null for month to get all months
+    }
+    
+    /**
+     * Get attendance by student, subject, and semester (alias for findByStudentSubjectAndSemester)
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param semester The semester
+     * @return List of attendance records
+     * @throws SQLException If a database error occurs
+     */
+    default List<Attendance> getByStudentSubjectAndSemester(int studentId, String subjectCode, String semester) throws SQLException {
+        return findByStudentSubjectAndSemester(studentId, subjectCode, semester);
+    }
+    
+    /**
+     * Get attendance by date (alias for findByDate)
+     * @param date The attendance date
+     * @return List of attendance records for the specified date
+     * @throws SQLException If a database error occurs
+     */
+    default List<Attendance> getByDate(Date date) throws SQLException {
+        return findByDate(date);
+    }
+    
+    /**
+     * Get attendance by ID (alias for findById)
+     * @param id The attendance ID
+     * @return The attendance record with the specified ID
+     * @throws SQLException If a database error occurs
+     */
+    default Attendance getById(int id) throws SQLException {
+        return findById(id);
+    }
+    
+    /**
+     * Mark attendance for multiple students at once
+     * @param studentIds List of student IDs
+     * @param status Attendance status (Present/Absent/On Leave)
+     * @param date Attendance date
+     * @param subjectCode Subject code
+     * @param semester Semester
+     * @param academicYear Academic year
+     * @param markedBy ID of the user marking attendance
+     * @return Number of attendance records marked
+     * @throws SQLException If a database error occurs
+     */
+    default int markAttendanceBulk(List<Integer> studentIds, String status, Date date, 
+                                 String subjectCode, String semester, String academicYear, 
+                                 String markedBy) throws SQLException {
+        Map<Integer, String> studentAttendance = new HashMap<>();
+        for (Integer studentId : studentIds) {
+            studentAttendance.put(studentId, status);
+        }
+        
+        return markAttendance(subjectCode, date, semester, academicYear, studentAttendance);
+    }
 }

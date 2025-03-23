@@ -365,6 +365,12 @@ public class UserDaoImpl implements UserDao {
         return null;
     }
     
+    @Override
+    public java.util.Optional<User> authenticateOptional(String email, String password) throws SQLException {
+        User user = authenticate(email, password);
+        return java.util.Optional.ofNullable(user);
+    }
+    
     /**
      * Maps a database result set to a User object
      * @param rs The result set positioned at the current row

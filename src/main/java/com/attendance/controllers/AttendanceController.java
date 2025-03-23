@@ -1,9 +1,9 @@
 package com.attendance.controllers;
 
-import com.attendance.dao.AttendanceDAO;
-import com.attendance.dao.UserDAO;
-import com.attendance.dao.impl.AttendanceDAOImpl;
-import com.attendance.dao.impl.UserDAOImpl;
+import com.attendance.dao.AttendanceDao;
+import com.attendance.dao.UserDao;
+import com.attendance.dao.impl.AttendanceDaoImpl;
+import com.attendance.dao.impl.UserDaoImpl;
 import com.attendance.models.Attendance;
 import com.attendance.models.User;
 import com.attendance.utils.EmailNotificationService;
@@ -34,8 +34,8 @@ import java.util.logging.Logger;
 public class AttendanceController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(AttendanceController.class.getName());
     
-    private final AttendanceDAO attendanceDAO = new AttendanceDAOImpl();
-    private final UserDAO userDAO = new UserDAOImpl();
+    private final AttendanceDao attendanceDAO = new AttendanceDaoImpl();
+    private final UserDao userDAO = new UserDaoImpl();
     private final EmailNotificationService emailService = EmailNotificationService.getInstance();
     
     @Override
@@ -171,11 +171,9 @@ public class AttendanceController extends HttpServlet {
             
             // Send email notifications
             for (Integer studentId : studentIds) {
-                Optional<User> studentOpt = userDAO.getById(studentId);
+                User student = userDAO.getById(studentId);
                 
-                if (studentOpt.isPresent()) {
-                    User student = studentOpt.get();
-                    
+                if (student != null) {
                     Attendance attendance = new Attendance();
                     attendance.setStudentId(studentId);
                     attendance.setSubjectCode(subjectCode);
@@ -272,10 +270,10 @@ public class AttendanceController extends HttpServlet {
         }
         
         try {
-            Optional<Attendance> attendanceOpt = attendanceDAO.getById(Integer.parseInt(attendanceId));
+            Attendance attendance = attendanceDAO.getById(Integer.parseInt(attendanceId));
             
-            if (attendanceOpt.isPresent()) {
-                request.setAttribute("attendance", attendanceOpt.get());
+            if (attendance != null) {
+                request.setAttribute("attendance", attendance);
                 request.getRequestDispatcher("/WEB-INF/views/attendance/edit.jsp").forward(request, response);
             } else {
                 request.setAttribute("errorMessage", "Attendance record not found");
@@ -308,10 +306,9 @@ public class AttendanceController extends HttpServlet {
         }
         
         try {
-            Optional<Attendance> attendanceOpt = attendanceDAO.getById(Integer.parseInt(attendanceId));
+            Attendance attendance = attendanceDAO.getById(Integer.parseInt(attendanceId));
             
-            if (attendanceOpt.isPresent()) {
-                Attendance attendance = attendanceOpt.get();
+            if (attendance != null) {
                 attendance.setStatus(status);
                 attendance.setRemarks(remarks);
                 attendance.setMarkedBy(user.getFullName());
@@ -319,10 +316,9 @@ public class AttendanceController extends HttpServlet {
                 attendanceDAO.update(attendance);
                 
                 // Get the student and send notification
-                Optional<User> studentOpt = userDAO.getById(attendance.getStudentId());
+                User student = userDAO.getById(attendance.getStudentId());
                 
-                if (studentOpt.isPresent()) {
-                    User student = studentOpt.get();
+                if (student != null) {
                     emailService.sendAttendanceNotification(student, attendance, attendance.getSubjectCode());
                 }
                 
@@ -374,10 +370,9 @@ public class AttendanceController extends HttpServlet {
                 List<Attendance> attendanceList = attendanceDAO.getByStudentSubjectAndSemester(
                         studentIdInt, subjectCode, semester);
                 
-                Optional<User> studentOpt = userDAO.getById(studentIdInt);
+                User student = userDAO.getById(studentIdInt);
                 
-                if (studentOpt.isPresent()) {
-                    User student = studentOpt.get();
+                if (student != null) {
                     double percentage = attendanceDAO.getAttendancePercentage(
                             studentIdInt, subjectCode, semester, academicYear);
                     
@@ -400,11 +395,9 @@ public class AttendanceController extends HttpServlet {
                 List<Attendance> attendanceList = attendanceDAO.getByStudentSemesterAndYear(
                         studentIdInt, semester, academicYear);
                 
-                Optional<User> studentOpt = userDAO.getById(studentIdInt);
+                User student = userDAO.getById(studentIdInt);
                 
-                if (studentOpt.isPresent()) {
-                    User student = studentOpt.get();
-                    
+                if (student != null) {
                     reportData.put("student", student);
                     reportData.put("attendanceList", attendanceList);
                     reportData.put("semester", semester);

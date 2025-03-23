@@ -22,6 +22,7 @@ public class Attendance {
     private LocalDateTime updatedAt;
     private String attendanceSession; // Morning, Afternoon
     private Integer leaveApplicationId; // Optional reference to a leave application if status is "Leave"
+    private LocalDateTime timeIn; // Time when the student checked in
     
     /**
      * Default constructor
@@ -255,6 +256,22 @@ public class Attendance {
 
     public void setLeaveApplicationId(Integer leaveApplicationId) {
         this.leaveApplicationId = leaveApplicationId;
+    }
+    
+    /**
+     * Get the time when the student checked in
+     * @return The check-in time
+     */
+    public LocalDateTime getTimeIn() {
+        return timeIn;
+    }
+    
+    /**
+     * Set the time when the student checked in
+     * @param timeIn The check-in time
+     */
+    public void setTimeIn(LocalDateTime timeIn) {
+        this.timeIn = timeIn;
     }
     
     /**

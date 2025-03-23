@@ -1,7 +1,7 @@
 package com.attendance.controllers;
 
 import com.attendance.dao.*;
-import com.attendance.dao.impl.UserDaoImpl;
+import com.attendance.dao.impl.*;
 import com.attendance.models.*;
 import com.attendance.utils.SessionUtil;
 
@@ -22,11 +22,12 @@ import jakarta.servlet.http.HttpServletResponse;
 public class EnrollmentRequestServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private EnrollmentRequestDAO enrollmentRequestDAO = new EnrollmentRequestDAO();
+    private EnrollmentRequestDAO enrollmentRequestDAO = new EnrollmentRequestDaoImpl();
     private StudentEnrollmentDAO studentEnrollmentDAO = new StudentEnrollmentDAO();
     private UserDao userDAO = new UserDaoImpl();
-    private ClassDAO classDAO = new ClassDAO();
-    private DepartmentDAO departmentDAO = new DepartmentDAO();
+    private ClassDAO classDAO = new ClassDAOImpl();
+    private DepartmentDAO departmentDAO = new DepartmentDAOImpl();
+    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDAO();
     
     /**
      * Handles the HTTP GET request
@@ -105,7 +106,7 @@ public class EnrollmentRequestServlet extends HttpServlet {
         
         // Check if user already has a pending request
         // Implementation depends on your data model - this is just an example
-        List<EnrollmentRequest> pendingRequests = enrollmentRequestDAO.getRequestsByStatus("Pending");
+        List<EnrollmentRequest> pendingRequests = enrollmentRequestDAO.getEnrollmentRequestsByStatus("Pending");
         for (EnrollmentRequest pendingRequest : pendingRequests) {
             if (pendingRequest.getUserId() == currentUser.getUserId()) {
                 request.setAttribute("error", "You already have a pending enrollment request.");

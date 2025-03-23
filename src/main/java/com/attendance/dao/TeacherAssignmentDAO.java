@@ -6,6 +6,8 @@ import com.attendance.models.Subject;
 import com.attendance.models.Class;
 import com.attendance.utils.DatabaseConnection;
 import com.attendance.dao.impl.UserDaoImpl;
+import com.attendance.dao.impl.SubjectDAOImpl;
+import com.attendance.dao.impl.ClassDAOImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -17,8 +19,8 @@ import java.util.List;
 public class TeacherAssignmentDAO {
 
     private UserDao userDAO = new UserDaoImpl();
-    private SubjectDAO subjectDAO = new SubjectDAO();
-    private ClassDAO classDAO = new ClassDAO();
+    private SubjectDAO subjectDAO = new SubjectDAOImpl();
+    private ClassDAO classDAO = new ClassDAOImpl();
 
     /**
      * Assign a teacher to a subject and class

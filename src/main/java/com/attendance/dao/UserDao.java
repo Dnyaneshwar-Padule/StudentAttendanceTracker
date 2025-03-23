@@ -3,6 +3,7 @@ package com.attendance.dao;
 import com.attendance.models.User;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * DAO interface for User entities
@@ -156,7 +157,10 @@ public interface UserDao extends BaseDao<User, Integer> {
      * @return Optional containing the authenticated user, empty if authentication fails
      * @throws SQLException If a database error occurs
      */
-    java.util.Optional<User> authenticateOptional(String email, String password) throws SQLException;
+    default Optional<User> authenticateOptional(String email, String password) throws SQLException {
+        User user = authenticate(email, password);
+        return Optional.ofNullable(user);
+    }
     
     /**
      * Find a user by email address (alias for findByEmail to maintain compatibility)
@@ -177,4 +181,26 @@ public interface UserDao extends BaseDao<User, Integer> {
     default User create(User user) throws SQLException {
         return registerUser(user);
     }
+    
+    /**
+     * Find a user by ID (alias for findById to maintain compatibility)
+     * @param id The user ID
+     * @return The user or null if not found
+     * @throws SQLException If a database error occurs
+     */
+    default User getById(int id) throws SQLException {
+        return findById(id);
+    }
+    
+    /**
+     * Get users by role (alias for findByRole to maintain compatibility)
+     * @param role The role to search for
+     * @return List of users with the specified role
+     * @throws SQLException If a database error occurs
+     */
+    default List<User> getByRole(String role) throws SQLException {
+        return findByRole(role);
+    }
+    
+    // No need for duplicate methods as authenticate is already defined at line 61
 }

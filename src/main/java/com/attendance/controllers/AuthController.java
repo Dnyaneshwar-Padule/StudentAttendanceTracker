@@ -1,7 +1,7 @@
 package com.attendance.controllers;
 
-import com.attendance.dao.UserDAO;
-import com.attendance.dao.impl.UserDAOImpl;
+import com.attendance.dao.UserDao;
+import com.attendance.dao.impl.UserDaoImpl;
 import com.attendance.models.User;
 import com.attendance.utils.PasswordUtils;
 
@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 @WebServlet(urlPatterns = {"/login", "/logout", "/register"})
 public class AuthController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(AuthController.class.getName());
-    private final UserDAO userDAO = new UserDAOImpl();
+    private final UserDao userDAO = new UserDaoImpl();
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -155,8 +155,8 @@ public class AuthController extends HttpServlet {
         
         try {
             // Check if email already exists
-            Optional<User> existingUser = userDAO.getByEmail(email);
-            if (existingUser.isPresent()) {
+            User existingUser = userDAO.getByEmail(email);
+            if (existingUser != null) {
                 request.setAttribute("errorMessage", "Email already registered");
                 request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
                 return;

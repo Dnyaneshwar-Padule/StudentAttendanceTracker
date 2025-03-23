@@ -9,8 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import com.attendance.dao.UserDAO;
-import com.attendance.dao.impl.UserDAOImpl;
+import com.attendance.dao.UserDao;
+import com.attendance.dao.impl.UserDaoImpl;
 import com.attendance.models.User;
 
 /**
@@ -21,11 +21,11 @@ public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(LoginServlet.class.getName());
     
-    private UserDAO userDAO;
+    private UserDao userDAO;
     
     @Override
     public void init() {
-        userDAO = new UserDAOImpl();
+        userDAO = new UserDaoImpl();
     }
     
     /**

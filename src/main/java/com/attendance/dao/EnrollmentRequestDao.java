@@ -79,4 +79,21 @@ public interface EnrollmentRequestDao extends BaseDao<EnrollmentRequest, Integer
     default boolean updateRequestStatus(int requestId, String status, int approverId) throws SQLException {
         return updateStatus(requestId, status, approverId, "");
     }
+    
+    /**
+     * Get request by ID
+     * @param requestId The request ID
+     * @return The enrollment request, or null if not found
+     * @throws SQLException If a database error occurs
+     */
+    EnrollmentRequest getRequestById(int requestId) throws SQLException;
+    
+    /**
+     * Get pending requests for a specific verifier role
+     * @param verifierRole The role of the verifier (HOD, Class Teacher, etc)
+     * @param departmentId The department ID of the verifier
+     * @return List of pending enrollment requests for the specified verifier
+     * @throws SQLException If a database error occurs
+     */
+    List<EnrollmentRequest> getPendingRequestsForVerifier(String verifierRole, Integer departmentId) throws SQLException;
 }

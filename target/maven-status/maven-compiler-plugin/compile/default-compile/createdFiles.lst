@@ -1,4 +1,0 @@
-com/attendance/utils/DatabaseInitializer.class
-com/attendance/filters/AuthenticationFilter.class
-com/attendance/BasicDbTestServer.class
-com/attendance/BasicDbTestServer$DbTestServlet.class

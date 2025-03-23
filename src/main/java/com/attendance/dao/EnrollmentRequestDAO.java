@@ -97,4 +97,31 @@ public interface EnrollmentRequestDAO {
      * @return List of pending enrollment requests for the specified department
      */
     List<EnrollmentRequest> getPendingEnrollmentRequestsByDepartmentId(int departmentId);
+    
+    /**
+     * Get an enrollment request by ID
+     * 
+     * @param requestId The ID of the enrollment request
+     * @return The enrollment request, or null if not found
+     */
+    EnrollmentRequest getRequestById(int requestId);
+    
+    /**
+     * Get pending enrollment requests for a specific verifier role
+     * 
+     * @param verifierRole The role of the verifier (e.g., "Principal", "HOD", "Class Teacher")
+     * @param departmentId The department ID (can be null for Principal)
+     * @return List of pending enrollment requests for the specified verifier
+     */
+    List<EnrollmentRequest> getPendingRequestsForVerifier(String verifierRole, Integer departmentId);
+    
+    /**
+     * Update the status of an enrollment request
+     * 
+     * @param requestId The ID of the enrollment request
+     * @param status The new status of the request
+     * @param approverId The ID of the user updating the status
+     * @return true if successful, false otherwise
+     */
+    boolean updateRequestStatus(int requestId, String status, int approverId);
 }
