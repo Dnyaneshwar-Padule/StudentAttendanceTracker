@@ -1,7 +1,6 @@
 package com.attendance.controllers;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,8 +10,8 @@ import java.util.logging.Logger;
 
 /**
  * Servlet handling user logout
+ * Mapped in web.xml
  */
-@WebServlet("/logout")
 public class LogoutServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(LogoutServlet.class.getName());
     

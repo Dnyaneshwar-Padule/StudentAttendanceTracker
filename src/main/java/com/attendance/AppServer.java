@@ -21,6 +21,8 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.catalina.LifecycleException;
+
 import com.attendance.dao.impl.DatabaseConnection;
 
 /**
@@ -41,8 +43,8 @@ public class AppServer {
             String classpath = System.getProperty("java.class.path");
             LOGGER.info("Classpath: " + classpath);
             
-            // Initialize the database
-            initializeDatabase();
+            // Database will be initialized by the ServletContextListener
+            LOGGER.info("Database initialization will be handled by ServletContextListener");
             
             // Set up and start the Tomcat server
             int port = 5000;
@@ -72,27 +74,49 @@ public class AppServer {
                 throw new RuntimeException("Webapp directory does not exist");
             }
             
+            // Check if web.xml exists and is accessible
+            File webXmlFile = new File(docBase.getAbsolutePath() + "/WEB-INF/web.xml");
+            if (webXmlFile.exists()) {
+                LOGGER.info("web.xml found at: " + webXmlFile.getAbsolutePath());
+            } else {
+                LOGGER.severe("web.xml not found at expected location: " + webXmlFile.getAbsolutePath());
+                
+                // List all files in the WEB-INF directory
+                File webInfDir = new File(docBase.getAbsolutePath() + "/WEB-INF");
+                if (webInfDir.exists() && webInfDir.isDirectory()) {
+                    File[] files = webInfDir.listFiles();
+                    if (files != null) {
+                        LOGGER.info("Files in WEB-INF directory:");
+                        for (File file : files) {
+                            LOGGER.info("  - " + file.getName() + " (readable: " + file.canRead() + ")");
+                        }
+                    } else {
+                        LOGGER.warning("Could not list files in WEB-INF directory");
+                    }
+                } else {
+                    LOGGER.severe("WEB-INF directory does not exist at: " + webInfDir.getAbsolutePath());
+                }
+            }
+            
             // Create context and configure
             Context context = tomcat.addWebapp(contextPath, docBase.getAbsolutePath());
             context.setConfigFile(null);
             context.setCreateUploadTargets(true);
             
-            // Configure TLD scanning - be explicit about what to scan
-            StandardJarScanFilter jarScanFilter = new StandardJarScanFilter();
-            jarScanFilter.setDefaultPluggabilityScan(false);
-            jarScanFilter.setDefaultTldScan(true); // Changed to true to ensure JSTL is found
-            context.getJarScanner().setJarScanFilter(jarScanFilter);
-            
-            // Add TldSkipPatterns to context to improve startup time but ensure JSTL is loaded
-            context.setJarScanner(new StandardJarScanner() {
+            // Simplify JAR scanning to avoid initialization errors
+            StandardJarScanner jarScanner = new StandardJarScanner();
+            jarScanner.setScanManifest(false);
+            jarScanner.setJarScanFilter(new StandardJarScanFilter() {
                 @Override
-                public void scan(JarScanType scanType, ServletContext context,
-                        JarScannerCallback callback) {
-                    LOGGER.info("Starting JAR scanning: " + scanType);
-                    super.scan(scanType, context, callback);
-                    LOGGER.info("JAR scanning completed: " + scanType);
+                public boolean check(JarScanType scanType, String jarName) {
+                    // Only scan for TLDs in JSTL-related JARs
+                    if (scanType == JarScanType.TLD) {
+                        return jarName.contains("jstl") || jarName.contains("taglibs");
+                    }
+                    return false;
                 }
             });
+            context.setJarScanner(jarScanner);
             
             // Add class directories
             File additionWebInfClasses = new File("target/classes");
@@ -106,12 +130,40 @@ public class AppServer {
                     additionWebInfClasses.getAbsolutePath(), "/"));
             context.setResources(resources);
             
-            // Start the server
+            // Start the server with better error reporting
             LOGGER.info("Starting Tomcat server...");
-            tomcat.start();
-            LOGGER.info("Server started on port: " + port);
-            LOGGER.info("Application available at http://0.0.0.0:" + port);
-            tomcat.getServer().await();
+            try {
+                tomcat.start();
+                LOGGER.info("Server started on port: " + port);
+                LOGGER.info("Application available at http://0.0.0.0:" + port);
+                
+                // Log any startup errors from the context
+                Context ctx = (Context)tomcat.getHost().findChild("");
+                if (ctx != null) {
+                    if (ctx.getState().isAvailable()) {
+                        LOGGER.info("Context is available and running properly");
+                    } else {
+                        LOGGER.severe("Context is not available. Current state: " + ctx.getStateName());
+                        // Log all listeners for debugging
+                        LOGGER.info("Context listeners:");
+                        Object[] listeners = ctx.getApplicationLifecycleListeners();
+                        if (listeners != null) {
+                            for (Object listener : listeners) {
+                                LOGGER.info("  - " + listener.getClass().getName());
+                            }
+                        } else {
+                            LOGGER.info("  No listeners registered");
+                        }
+                    }
+                } else {
+                    LOGGER.severe("Could not find the ROOT context");
+                }
+                
+                tomcat.getServer().await();
+            } catch (LifecycleException e) {
+                LOGGER.log(Level.SEVERE, "Error starting Tomcat server", e);
+                throw e;
+            }
             
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error starting the application", e);

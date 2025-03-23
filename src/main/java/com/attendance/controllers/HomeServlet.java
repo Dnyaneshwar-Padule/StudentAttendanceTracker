@@ -2,7 +2,6 @@ package com.attendance.controllers;
 
 import java.io.IOException;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,8 +9,8 @@ import java.util.logging.Logger;
 
 /**
  * Home servlet to handle the root URL
+ * Mapped in web.xml to the root URL
  */
-@WebServlet(name = "HomeServlet", urlPatterns = {"", "/"})
 public class HomeServlet extends HttpServlet {
     
     private static final Logger LOGGER = Logger.getLogger(HomeServlet.class.getName());
