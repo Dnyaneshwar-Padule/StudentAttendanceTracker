@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,58 +25,75 @@ public class AttendanceDAOImpl implements AttendanceDAO {
     
     private static final Logger LOGGER = Logger.getLogger(AttendanceDAOImpl.class.getName());
     
-    // SQL queries
+    // SQL queries for the new schema
     private static final String SQL_CREATE_ATTENDANCE = 
-            "INSERT INTO attendance (student_id, class_id, subject_id, date, status, remarks, " +
-            "marked_by_id, created_at, updated_at, attendance_session, leave_application_id) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
+            "INSERT INTO Attendance (student_id, subject_code, attendance_date, status, semester, academic_year) " +
+            "VALUES (?, ?, ?, ?, ?, ?) RETURNING attendance_id";
     
     private static final String SQL_GET_ATTENDANCE_BY_ID = 
-            "SELECT * FROM attendance WHERE id = ?";
+            "SELECT * FROM Attendance WHERE attendance_id = ?";
     
     private static final String SQL_GET_ATTENDANCE_BY_STUDENT_ID = 
-            "SELECT * FROM attendance WHERE student_id = ? ORDER BY date DESC";
+            "SELECT * FROM Attendance WHERE student_id = ? ORDER BY attendance_date DESC";
     
     private static final String SQL_GET_ATTENDANCE_BY_STUDENT_ID_AND_DATE_RANGE = 
-            "SELECT * FROM attendance WHERE student_id = ? AND date BETWEEN ? AND ? ORDER BY date";
+            "SELECT * FROM Attendance WHERE student_id = ? AND attendance_date BETWEEN ? AND ? ORDER BY attendance_date";
     
+    private static final String SQL_GET_ATTENDANCE_BY_SEMESTER = 
+            "SELECT * FROM Attendance WHERE semester = ? ORDER BY attendance_date DESC, student_id";
+    
+    private static final String SQL_GET_ATTENDANCE_BY_SEMESTER_AND_DATE = 
+            "SELECT * FROM Attendance WHERE semester = ? AND attendance_date = ? ORDER BY student_id";
+    
+    private static final String SQL_GET_ATTENDANCE_BY_SUBJECT_CODE = 
+            "SELECT * FROM Attendance WHERE subject_code = ? ORDER BY attendance_date DESC, student_id";
+            
+    // Keeping class_id queries for backward compatibility - we'll map semester to classId
     private static final String SQL_GET_ATTENDANCE_BY_CLASS_ID = 
-            "SELECT * FROM attendance WHERE class_id = ? ORDER BY date DESC, student_id";
-    
+            "SELECT * FROM Attendance WHERE semester = ? ORDER BY attendance_date DESC, student_id";
+            
     private static final String SQL_GET_ATTENDANCE_BY_CLASS_ID_AND_DATE = 
-            "SELECT * FROM attendance WHERE class_id = ? AND date = ? ORDER BY student_id";
-    
+            "SELECT * FROM Attendance WHERE semester = ? AND attendance_date = ? ORDER BY student_id";
+            
     private static final String SQL_GET_ATTENDANCE_BY_SUBJECT_ID = 
-            "SELECT * FROM attendance WHERE subject_id = ? ORDER BY date DESC, student_id";
+            "SELECT * FROM Attendance WHERE subject_code = ? ORDER BY attendance_date DESC, student_id";
+            
+    private static final String SQL_GET_ATTENDANCE_BY_CLASS_ID_AND_DATE_RANGE = 
+            "SELECT * FROM Attendance WHERE semester = ? AND attendance_date BETWEEN ? AND ? ORDER BY attendance_date, student_id";
+            
+    private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_CLASS_ID = 
+            "SELECT status, COUNT(*) as count FROM Attendance WHERE semester = ? GROUP BY status";
+            
+    private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_CLASS_ID_AND_DATE_RANGE = 
+            "SELECT status, COUNT(*) as count FROM Attendance WHERE semester = ? AND attendance_date BETWEEN ? AND ? GROUP BY status";
     
     private static final String SQL_GET_ATTENDANCE_BY_DATE = 
-            "SELECT * FROM attendance WHERE date = ? ORDER BY class_id, student_id";
+            "SELECT * FROM Attendance WHERE attendance_date = ? ORDER BY semester, student_id";
     
     private static final String SQL_UPDATE_ATTENDANCE = 
-            "UPDATE attendance SET student_id = ?, class_id = ?, subject_id = ?, date = ?, " +
-            "status = ?, remarks = ?, marked_by_id = ?, updated_at = ?, " +
-            "attendance_session = ?, leave_application_id = ? WHERE id = ?";
+            "UPDATE Attendance SET student_id = ?, subject_code = ?, attendance_date = ?, " +
+            "status = ?, semester = ?, academic_year = ? WHERE attendance_id = ?";
     
     private static final String SQL_DELETE_ATTENDANCE = 
-            "DELETE FROM attendance WHERE id = ?";
+            "DELETE FROM Attendance WHERE attendance_id = ?";
     
-    private static final String SQL_GET_ATTENDANCE_BY_CLASS_ID_AND_DATE_RANGE = 
-            "SELECT * FROM attendance WHERE class_id = ? AND date BETWEEN ? AND ? ORDER BY date, student_id";
+    private static final String SQL_GET_ATTENDANCE_BY_SEMESTER_AND_DATE_RANGE = 
+            "SELECT * FROM Attendance WHERE semester = ? AND attendance_date BETWEEN ? AND ? ORDER BY attendance_date, student_id";
     
     private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_STUDENT_ID = 
-            "SELECT status, COUNT(*) as count FROM attendance WHERE student_id = ? GROUP BY status";
+            "SELECT status, COUNT(*) as count FROM Attendance WHERE student_id = ? GROUP BY status";
     
     private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_STUDENT_ID_AND_DATE_RANGE = 
-            "SELECT status, COUNT(*) as count FROM attendance WHERE student_id = ? AND date BETWEEN ? AND ? GROUP BY status";
+            "SELECT status, COUNT(*) as count FROM Attendance WHERE student_id = ? AND attendance_date BETWEEN ? AND ? GROUP BY status";
     
-    private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_CLASS_ID = 
-            "SELECT status, COUNT(*) as count FROM attendance WHERE class_id = ? GROUP BY status";
+    private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_SEMESTER = 
+            "SELECT status, COUNT(*) as count FROM Attendance WHERE semester = ? GROUP BY status";
     
-    private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_CLASS_ID_AND_DATE_RANGE = 
-            "SELECT status, COUNT(*) as count FROM attendance WHERE class_id = ? AND date BETWEEN ? AND ? GROUP BY status";
+    private static final String SQL_GET_ATTENDANCE_SUMMARY_BY_SEMESTER_AND_DATE_RANGE = 
+            "SELECT status, COUNT(*) as count FROM Attendance WHERE semester = ? AND attendance_date BETWEEN ? AND ? GROUP BY status";
     
     private static final String SQL_CHECK_ATTENDANCE_EXISTS = 
-            "SELECT COUNT(*) FROM attendance WHERE student_id = ? AND date = ?";
+            "SELECT COUNT(*) FROM Attendance WHERE student_id = ? AND attendance_date = ?";
     
     @Override
     public int createAttendance(Attendance attendance) {
@@ -88,26 +106,17 @@ public class AttendanceDAOImpl implements AttendanceDAO {
             conn = DatabaseConnection.getConnection();
             pstmt = conn.prepareStatement(SQL_CREATE_ATTENDANCE, Statement.RETURN_GENERATED_KEYS);
             
+            // Map to new schema fields
             pstmt.setInt(1, attendance.getStudentId());
-            pstmt.setInt(2, attendance.getClassId());
-            pstmt.setInt(3, attendance.getSubjectId());
-            pstmt.setDate(4, Date.valueOf(attendance.getDate()));
-            pstmt.setString(5, attendance.getStatus());
-            pstmt.setString(6, attendance.getRemarks());
-            pstmt.setInt(7, attendance.getMarkedById());
-            pstmt.setTimestamp(8, Timestamp.valueOf(attendance.getCreatedAt()));
-            pstmt.setTimestamp(9, Timestamp.valueOf(attendance.getUpdatedAt()));
-            pstmt.setString(10, attendance.getAttendanceSession());
-            
-            if (attendance.getLeaveApplicationId() != null) {
-                pstmt.setInt(11, attendance.getLeaveApplicationId());
-            } else {
-                pstmt.setNull(11, java.sql.Types.INTEGER);
-            }
+            pstmt.setString(2, attendance.getSubjectCode());
+            pstmt.setDate(3, Date.valueOf(attendance.getDate()));
+            pstmt.setString(4, attendance.getStatus());
+            pstmt.setString(5, String.valueOf(attendance.getSemester()));
+            pstmt.setString(6, attendance.getAcademicYear());
             
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
-                rs = pstmt.getResultSet();
+                rs = pstmt.getGeneratedKeys();
                 if (rs.next()) {
                     generatedId = rs.getInt(1);
                     attendance.setId(generatedId); // Update the attendance object with the new ID
@@ -325,23 +334,14 @@ public class AttendanceDAOImpl implements AttendanceDAO {
             conn = DatabaseConnection.getConnection();
             pstmt = conn.prepareStatement(SQL_UPDATE_ATTENDANCE);
             
+            // Map to new schema fields
             pstmt.setInt(1, attendance.getStudentId());
-            pstmt.setInt(2, attendance.getClassId());
-            pstmt.setInt(3, attendance.getSubjectId());
-            pstmt.setDate(4, Date.valueOf(attendance.getDate()));
-            pstmt.setString(5, attendance.getStatus());
-            pstmt.setString(6, attendance.getRemarks());
-            pstmt.setInt(7, attendance.getMarkedById());
-            pstmt.setTimestamp(8, Timestamp.valueOf(attendance.getUpdatedAt()));
-            pstmt.setString(9, attendance.getAttendanceSession());
-            
-            if (attendance.getLeaveApplicationId() != null) {
-                pstmt.setInt(10, attendance.getLeaveApplicationId());
-            } else {
-                pstmt.setNull(10, java.sql.Types.INTEGER);
-            }
-            
-            pstmt.setInt(11, attendance.getId());
+            pstmt.setString(2, attendance.getSubjectCode());
+            pstmt.setDate(3, Date.valueOf(attendance.getDate()));
+            pstmt.setString(4, attendance.getStatus());
+            pstmt.setString(5, String.valueOf(attendance.getSemester()));
+            pstmt.setString(6, attendance.getAcademicYear());
+            pstmt.setInt(7, attendance.getId());
             
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
@@ -362,13 +362,14 @@ public class AttendanceDAOImpl implements AttendanceDAO {
         try {
             conn = DatabaseConnection.getConnection();
             pstmt = conn.prepareStatement(SQL_DELETE_ATTENDANCE);
+            // In the new schema, the primary key is attendance_id
             pstmt.setInt(1, attendanceId);
             
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
             
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error deleting attendance", e);
+            LOGGER.log(Level.SEVERE, "Error deleting attendance with ID: " + attendanceId, e);
             return false;
         } finally {
             closeResources(conn, pstmt, null);
@@ -550,6 +551,7 @@ public class AttendanceDAOImpl implements AttendanceDAO {
             conn = DatabaseConnection.getConnection();
             pstmt = conn.prepareStatement(SQL_CHECK_ATTENDANCE_EXISTS);
             pstmt.setInt(1, studentId);
+            // In the new schema, the date column is named attendance_date
             pstmt.setDate(2, Date.valueOf(date));
             
             rs = pstmt.executeQuery();
@@ -560,7 +562,7 @@ public class AttendanceDAOImpl implements AttendanceDAO {
             return false;
             
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error checking if attendance exists", e);
+            LOGGER.log(Level.SEVERE, "Error checking if attendance exists for student ID: " + studentId + " and date: " + date, e);
             return false;
         } finally {
             closeResources(conn, pstmt, rs);
@@ -577,36 +579,41 @@ public class AttendanceDAOImpl implements AttendanceDAO {
     private Attendance extractAttendanceFromResultSet(ResultSet rs) throws SQLException {
         Attendance attendance = new Attendance();
         
-        attendance.setId(rs.getInt("id"));
+        // Map fields from the new schema
+        attendance.setId(rs.getInt("attendance_id"));
         attendance.setStudentId(rs.getInt("student_id"));
-        attendance.setClassId(rs.getInt("class_id"));
-        attendance.setSubjectId(rs.getInt("subject_id"));
+        attendance.setSubjectCode(rs.getString("subject_code"));
         
-        Date date = rs.getDate("date");
+        // Setting the semester
+        String semesterStr = rs.getString("semester");
+        try {
+            int semester = Integer.parseInt(semesterStr);
+            attendance.setSemester(semester);
+        } catch (NumberFormatException e) {
+            // Handle case where semester might be stored as non-integer value
+            attendance.setSemester(1); // Default to semester 1 if parsing fails
+            LOGGER.warning("Could not parse semester value: " + semesterStr);
+        }
+        
+        // Set academic year
+        attendance.setAcademicYear(rs.getString("academic_year"));
+        
+        // Set the attendance date
+        Date date = rs.getDate("attendance_date");
         if (date != null) {
             attendance.setDate(date.toLocalDate());
         }
         
+        // Set the status
         attendance.setStatus(rs.getString("status"));
-        attendance.setRemarks(rs.getString("remarks"));
-        attendance.setMarkedById(rs.getInt("marked_by_id"));
         
-        Timestamp createdAt = rs.getTimestamp("created_at");
-        if (createdAt != null) {
-            attendance.setCreatedAt(createdAt.toLocalDateTime());
-        }
-        
-        Timestamp updatedAt = rs.getTimestamp("updated_at");
-        if (updatedAt != null) {
-            attendance.setUpdatedAt(updatedAt.toLocalDateTime());
-        }
-        
-        attendance.setAttendanceSession(rs.getString("attendance_session"));
-        
-        int leaveApplicationId = rs.getInt("leave_application_id");
-        if (!rs.wasNull()) {
-            attendance.setLeaveApplicationId(leaveApplicationId);
-        }
+        // Set default values for fields not in the new schema but required by the model
+        attendance.setClassId(0); // Default to 0 since class_id is not in the new schema
+        attendance.setSubjectId(0); // Default to 0 since subject_id is not in the new schema
+        attendance.setRemarks(""); // Empty remarks since it's not in the new schema
+        attendance.setMarkedById(0); // Default to 0 since marked_by_id is not in the new schema
+        attendance.setCreatedAt(LocalDateTime.now()); // Set to current time
+        attendance.setUpdatedAt(LocalDateTime.now()); // Set to current time
         
         return attendance;
     }
