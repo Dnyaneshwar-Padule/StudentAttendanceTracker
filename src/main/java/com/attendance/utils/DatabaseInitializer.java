@@ -1,162 +1,224 @@
 package com.attendance.utils;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import com.attendance.utils.DatabaseConnection;
-import com.attendance.utils.PasswordUtils;
 
 /**
- * Database initializer that runs when the application starts
+ * Utility class to initialize the database schema
  */
-@WebListener
-public class DatabaseInitializer implements ServletContextListener {
+public class DatabaseInitializer {
+    
     private static final Logger LOGGER = Logger.getLogger(DatabaseInitializer.class.getName());
-
-    @Override
-    public void contextInitialized(ServletContextEvent sce) {
-        LOGGER.info("Initializing database...");
+    
+    /**
+     * Initialize the database by creating required tables if they don't exist
+     */
+    public static void initialize() {
+        LOGGER.info("Starting database initialization...");
         
-        try {
-            LOGGER.info("Checking database connection...");
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // Create tables if they don't exist
+            createDepartmentTable(conn);
+            createUsersTable(conn);
+            createClassTable(conn);
+            createSubjectTable(conn);
+            createStudentClassTable(conn);
+            createAttendanceTable(conn);
+            createLeaveApplicationTable(conn);
             
-            // Print database environment variables for debugging (without values)
-            LOGGER.info("DATABASE_URL environment variable exists: " + (System.getenv("DATABASE_URL") != null));
-            LOGGER.info("PGUSER environment variable exists: " + (System.getenv("PGUSER") != null));
-            LOGGER.info("PGPASSWORD environment variable exists: " + (System.getenv("PGPASSWORD") != null));
-            LOGGER.info("PGHOST environment variable exists: " + (System.getenv("PGHOST") != null));
-            LOGGER.info("PGPORT environment variable exists: " + (System.getenv("PGPORT") != null));
-            LOGGER.info("PGDATABASE environment variable exists: " + (System.getenv("PGDATABASE") != null));
+            // Create an admin user if no users exist
+            createDefaultAdminIfNeeded(conn);
             
-            // Test database connection first
-            try (Connection testConn = DatabaseConnection.getConnection()) {
-                LOGGER.info("Database connection tested successfully!");
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Failed to connect to database during initialization. Application may not function correctly.", e);
-                return; // Exit early as we can't proceed without a database
-            }
+            LOGGER.info("Database initialization completed successfully");
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error initializing database", e);
+        }
+    }
+    
+    private static void createDepartmentTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS Departments (" +
+                "department_id SERIAL PRIMARY KEY, " +
+                "name VARCHAR(100) NOT NULL, " +
+                "description TEXT, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            LOGGER.info("Departments table created or already exists");
+        }
+    }
+    
+    private static void createUsersTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS Users (" +
+                "user_id SERIAL PRIMARY KEY, " +
+                "name VARCHAR(100) NOT NULL, " +
+                "phone_no VARCHAR(15), " +
+                "email VARCHAR(100) UNIQUE NOT NULL, " +
+                "password VARCHAR(100) NOT NULL, " +
+                "role VARCHAR(20) NOT NULL, " +
+                "department_id INTEGER, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (department_id) REFERENCES Departments(department_id)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            LOGGER.info("Users table created or already exists");
+        }
+    }
+    
+    private static void createClassTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS Classes (" +
+                "class_id SERIAL PRIMARY KEY, " +
+                "name VARCHAR(100) NOT NULL, " +
+                "year VARCHAR(10) NOT NULL, " + // FY, SY, TY
+                "semester INTEGER NOT NULL, " + // 1-6
+                "department_id INTEGER NOT NULL, " +
+                "class_teacher_id INTEGER, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (department_id) REFERENCES Departments(department_id), " +
+                "FOREIGN KEY (class_teacher_id) REFERENCES Users(user_id)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            LOGGER.info("Classes table created or already exists");
+        }
+    }
+    
+    private static void createSubjectTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS Subjects (" +
+                "subject_id SERIAL PRIMARY KEY, " +
+                "name VARCHAR(100) NOT NULL, " +
+                "code VARCHAR(20) NOT NULL, " +
+                "description TEXT, " +
+                "class_id INTEGER NOT NULL, " +
+                "teacher_id INTEGER, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (class_id) REFERENCES Classes(class_id), " +
+                "FOREIGN KEY (teacher_id) REFERENCES Users(user_id)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            LOGGER.info("Subjects table created or already exists");
+        }
+    }
+    
+    private static void createStudentClassTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS StudentClass (" +
+                "id SERIAL PRIMARY KEY, " +
+                "student_id INTEGER NOT NULL, " +
+                "class_id INTEGER NOT NULL, " +
+                "enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (student_id) REFERENCES Users(user_id), " +
+                "FOREIGN KEY (class_id) REFERENCES Classes(class_id), " +
+                "UNIQUE(student_id, class_id)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            LOGGER.info("StudentClass table created or already exists");
+        }
+    }
+    
+    private static void createAttendanceTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS Attendance (" +
+                "attendance_id SERIAL PRIMARY KEY, " +
+                "student_id INTEGER NOT NULL, " +
+                "subject_id INTEGER NOT NULL, " +
+                "status VARCHAR(10) NOT NULL, " + // Present, Absent, Leave
+                "date DATE NOT NULL, " +
+                "marked_by INTEGER NOT NULL, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (student_id) REFERENCES Users(user_id), " +
+                "FOREIGN KEY (subject_id) REFERENCES Subjects(subject_id), " +
+                "FOREIGN KEY (marked_by) REFERENCES Users(user_id), " +
+                "UNIQUE(student_id, subject_id, date)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            LOGGER.info("Attendance table created or already exists");
+        }
+    }
+    
+    private static void createLeaveApplicationTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS LeaveApplications (" +
+                "application_id SERIAL PRIMARY KEY, " +
+                "student_id INTEGER NOT NULL, " +
+                "from_date DATE NOT NULL, " +
+                "to_date DATE NOT NULL, " +
+                "reason TEXT NOT NULL, " +
+                "status VARCHAR(20) DEFAULT 'Pending', " + // Pending, Approved, Rejected
+                "approved_by INTEGER, " +
+                "approval_date TIMESTAMP, " +
+                "rejection_reason TEXT, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "FOREIGN KEY (student_id) REFERENCES Users(user_id), " +
+                "FOREIGN KEY (approved_by) REFERENCES Users(user_id)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+            LOGGER.info("LeaveApplications table created or already exists");
+        }
+    }
+    
+    private static void createDefaultAdminIfNeeded(Connection conn) throws SQLException {
+        // Check if any users exist
+        String checkSql = "SELECT COUNT(*) FROM Users";
+        
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(checkSql)) {
             
-            // Load schema SQL file
-            LOGGER.info("Loading schema SQL file...");
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("database/schema.sql");
-            
-            if (inputStream == null) {
-                LOGGER.severe("Could not find database schema file! Path: database/schema.sql");
-                return;
-            }
-            
-            String schemaSql = new BufferedReader(new InputStreamReader(inputStream))
-                    .lines().collect(Collectors.joining("\n"));
-            
-            LOGGER.info("Schema SQL file loaded successfully. Size: " + schemaSql.length() + " characters");
-            
-            // Execute schema SQL
-            try (Connection conn = DatabaseConnection.getConnection();
-                 Statement stmt = conn.createStatement()) {
+            if (rs.next() && rs.getInt(1) == 0) {
+                // No users exist, create a default admin
                 
-                // Split the SQL script by semicolons to execute each statement separately
-                String[] sqlStatements = schemaSql.split(";");
-                LOGGER.info("Number of SQL statements to execute: " + sqlStatements.length);
+                // First, create a default department
+                String deptSql = "INSERT INTO Departments (name, description) " +
+                               "VALUES ('Administration', 'System Administration Department') " +
+                               "RETURNING department_id";
                 
-                int statementsExecuted = 0;
-                for (String sql : sqlStatements) {
-                    if (!sql.trim().isEmpty()) {
-                        try {
-                            stmt.execute(sql);
-                            statementsExecuted++;
-                        } catch (SQLException e) {
-                            // Log the error but continue with other statements
-                            // This handles the case where tables already exist
-                            LOGGER.log(Level.WARNING, "Error executing SQL statement: " + e.getMessage());
+                int departmentId;
+                try (PreparedStatement pstmt = conn.prepareStatement(deptSql)) {
+                    try (ResultSet deptRs = pstmt.executeQuery()) {
+                        if (deptRs.next()) {
+                            departmentId = deptRs.getInt(1);
+                        } else {
+                            LOGGER.warning("Failed to create default department");
+                            return;
                         }
                     }
                 }
                 
-                LOGGER.info("Database schema initialized successfully! Executed " + statementsExecuted + " statements.");
+                // Create admin user
+                String adminSql = "INSERT INTO Users (name, phone_no, email, password, role, department_id) " +
+                                "VALUES (?, ?, ?, ?, ?, ?)";
                 
-                // Insert default admin user if no users exist
-                insertDefaultAdmin(conn);
-                
-                // Initialize directory structure for biometric data
-                initializeBiometricDirectories();
-                
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Error initializing database schema", e);
-            }
-            
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error loading database schema file", e);
-        }
-    }
-    
-    /**
-     * Insert default admin user if no users exist
-     */
-    private void insertDefaultAdmin(Connection conn) {
-        try {
-            // Check if any users exist
-            boolean usersExist = false;
-            try (Statement stmt = conn.createStatement()) {
-                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM Users");
-                if (rs.next() && rs.getInt(1) > 0) {
-                    usersExist = true;
+                try (PreparedStatement pstmt = conn.prepareStatement(adminSql)) {
+                    pstmt.setString(1, "System Admin");
+                    pstmt.setString(2, "1234567890");
+                    pstmt.setString(3, "admin@example.com");
+                    pstmt.setString(4, "admin123"); // Consider using password hashing in production
+                    pstmt.setString(5, "Admin");
+                    pstmt.setInt(6, departmentId);
+                    
+                    int rowsAffected = pstmt.executeUpdate();
+                    if (rowsAffected > 0) {
+                        LOGGER.info("Default admin user created successfully");
+                    } else {
+                        LOGGER.warning("Failed to create default admin user");
+                    }
                 }
             }
-            
-            // Insert default admin if no users exist
-            if (!usersExist) {
-                LOGGER.info("Creating default admin user...");
-                
-                // Insert admin user with hashed password for "admin123"
-                String hashedPassword = PasswordUtils.generateSecurePassword("admin123");
-                String sql = "INSERT INTO Users (full_name, email, password, role, status) " +
-                           "VALUES ('System Admin', 'admin@example.com', '" + hashedPassword + "', 'Admin', 'Active')";
-                
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.execute(sql);
-                    LOGGER.info("Default admin user created successfully!");
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error creating default admin user", e);
         }
-    }
-    
-    /**
-     * Initialize directory structure for biometric data
-     */
-    private void initializeBiometricDirectories() {
-        try {
-            // Create directories for biometric data
-            java.nio.file.Files.createDirectories(java.nio.file.Paths.get("data/faces"));
-            java.nio.file.Files.createDirectories(java.nio.file.Paths.get("data/models"));
-            
-            // Create empty placeholder file for the face cascade
-            java.nio.file.Path cascadePath = java.nio.file.Paths.get("data/haarcascade_frontalface_default.xml");
-            if (!java.nio.file.Files.exists(cascadePath)) {
-                java.nio.file.Files.createFile(cascadePath);
-                LOGGER.info("Created placeholder for face cascade file. Please replace with actual cascade file.");
-            }
-            
-            LOGGER.info("Biometric directories initialized successfully!");
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error initializing biometric directories", e);
-        }
-    }
-
-    @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        // Any cleanup if needed
     }
 }

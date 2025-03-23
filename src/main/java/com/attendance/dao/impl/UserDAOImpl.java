@@ -1,193 +1,179 @@
 package com.attendance.dao.impl;
 
-import com.attendance.dao.UserDAO;
-import com.attendance.models.User;
-import com.attendance.utils.PasswordUtils;
-import com.attendance.utils.DatabaseConnection;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.attendance.dao.UserDAO;
+import com.attendance.models.User;
+import com.attendance.utils.DatabaseConnection;
+
 /**
- * Implementation of UserDAO interface
+ * Implementation of the UserDAO interface
  */
 public class UserDAOImpl implements UserDAO {
+    
     private static final Logger LOGGER = Logger.getLogger(UserDAOImpl.class.getName());
     
-    /**
-     * Create a new user
-     * 
-     * @param user the user to create
-     * @return the created user with generated ID
-     * @throws Exception if an error occurs
-     */
     @Override
-    public User create(User user) throws Exception {
-        String sql = "INSERT INTO Users (full_name, email, password, phone, address, role, status) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING user_id";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, user.getFullName());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getPassword());  // In production, this would be hashed
-            stmt.setString(4, user.getPhone());
-            stmt.setString(5, user.getAddress());
-            stmt.setString(6, user.getRole());
-            stmt.setString(7, user.getStatus() != null ? user.getStatus() : "Active");
-            
-            ResultSet rs = stmt.executeQuery();
-            
-            if (rs.next()) {
-                user.setUserId(rs.getInt("user_id"));
-                return user;
-            } else {
-                throw new SQLException("Failed to create user, no ID generated");
-            }
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error creating user", e);
-            throw e;
-        }
-    }
-    
-    /**
-     * Get a user by ID
-     * 
-     * @param userId the user ID
-     * @return an Optional containing the user if found
-     * @throws Exception if an error occurs
-     */
-    @Override
-    public Optional<User> getById(int userId) throws Exception {
+    public User findById(int userId) {
         String sql = "SELECT * FROM Users WHERE user_id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
             
-            if (rs.next()) {
-                User user = mapResultSetToUser(rs);
-                return Optional.of(user);
-            } else {
-                return Optional.empty();
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractUserFromResultSet(rs);
+                }
             }
             
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting user by ID", e);
-            throw e;
+            LOGGER.log(Level.SEVERE, "Error finding user by ID: " + userId, e);
         }
+        
+        return null;
     }
     
-    /**
-     * Get a user by email
-     * 
-     * @param email the user email
-     * @return an Optional containing the user if found
-     * @throws Exception if an error occurs
-     */
     @Override
-    public Optional<User> getByEmail(String email) throws Exception {
+    public User findByEmail(String email) {
         String sql = "SELECT * FROM Users WHERE email = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, email);
-            ResultSet rs = stmt.executeQuery();
             
-            if (rs.next()) {
-                User user = mapResultSetToUser(rs);
-                return Optional.of(user);
-            } else {
-                return Optional.empty();
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractUserFromResultSet(rs);
+                }
             }
             
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting user by email", e);
-            throw e;
+            LOGGER.log(Level.SEVERE, "Error finding user by email: " + email, e);
         }
+        
+        return null;
     }
     
-    /**
-     * Update an existing user
-     * 
-     * @param user the user to update
-     * @return the updated user
-     * @throws Exception if an error occurs
-     */
     @Override
-    public User update(User user) throws Exception {
-        String sql = "UPDATE Users SET full_name = ?, email = ?, phone = ?, " +
-                   "address = ?, role = ?, status = ?, updated_at = CURRENT_TIMESTAMP " +
-                   "WHERE user_id = ?";
+    public User authenticate(String email, String password) {
+        String sql = "SELECT * FROM Users WHERE email = ? AND password = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, user.getFullName());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getPhone());
-            stmt.setString(4, user.getAddress());
-            stmt.setString(5, user.getRole());
-            stmt.setString(6, user.getStatus());
-            stmt.setInt(7, user.getUserId());
+            stmt.setString(1, email);
+            stmt.setString(2, password);
             
-            int rowsAffected = stmt.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                return user;
-            } else {
-                throw new SQLException("Failed to update user, no rows affected");
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractUserFromResultSet(rs);
+                }
             }
             
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating user", e);
-            throw e;
+            LOGGER.log(Level.SEVERE, "Error authenticating user: " + email, e);
+        }
+        
+        return null;
+    }
+    
+    @Override
+    public int insert(User user) {
+        String sql = "INSERT INTO Users (name, phone_no, email, password, role, department_id) " +
+                     "VALUES (?, ?, ?, ?, ?, ?) RETURNING user_id";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, user.getName());
+            stmt.setString(2, user.getPhoneNo());
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getPassword());
+            stmt.setString(5, user.getRole());
+            
+            if (user.getDepartmentId() != null) {
+                stmt.setInt(6, user.getDepartmentId());
+            } else {
+                stmt.setNull(6, java.sql.Types.INTEGER);
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error inserting user: " + user, e);
+        }
+        
+        return -1;
+    }
+    
+    @Override
+    public boolean update(User user) {
+        String sql = "UPDATE Users SET name = ?, phone_no = ?, email = ?, " +
+                     "password = ?, role = ?, department_id = ? " +
+                     "WHERE user_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, user.getName());
+            stmt.setString(2, user.getPhoneNo());
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getPassword());
+            stmt.setString(5, user.getRole());
+            
+            if (user.getDepartmentId() != null) {
+                stmt.setInt(6, user.getDepartmentId());
+            } else {
+                stmt.setNull(6, java.sql.Types.INTEGER);
+            }
+            
+            stmt.setInt(7, user.getUserId());
+            
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error updating user: " + user, e);
+            return false;
         }
     }
     
-    /**
-     * Delete a user
-     * 
-     * @param userId the ID of the user to delete
-     * @return true if deletion was successful
-     * @throws Exception if an error occurs
-     */
     @Override
-    public boolean delete(int userId) throws Exception {
+    public boolean delete(int userId) {
         String sql = "DELETE FROM Users WHERE user_id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setInt(1, userId);
-            int rowsAffected = stmt.executeUpdate();
             
+            int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
             
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error deleting user", e);
-            throw e;
+            LOGGER.log(Level.SEVERE, "Error deleting user with ID: " + userId, e);
+            return false;
         }
     }
     
-    /**
-     * Get all users
-     * 
-     * @return list of all users
-     * @throws Exception if an error occurs
-     */
     @Override
-    public List<User> getAll() throws Exception {
-        String sql = "SELECT * FROM Users ORDER BY user_id";
+    public List<User> findAll() {
+        String sql = "SELECT * FROM Users";
         List<User> users = new ArrayList<>();
         
         try (Connection conn = DatabaseConnection.getConnection();
@@ -195,277 +181,82 @@ public class UserDAOImpl implements UserDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                User user = mapResultSetToUser(rs);
-                users.add(user);
+                users.add(extractUserFromResultSet(rs));
             }
             
-            return users;
-            
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting all users", e);
-            throw e;
+            LOGGER.log(Level.SEVERE, "Error finding all users", e);
         }
+        
+        return users;
     }
     
-    /**
-     * Get users by role
-     * 
-     * @param role the role to filter by
-     * @return list of users with the specified role
-     * @throws Exception if an error occurs
-     */
     @Override
-    public List<User> getByRole(String role) throws Exception {
-        String sql = "SELECT * FROM Users WHERE role = ? ORDER BY user_id";
+    public List<User> findByRole(String role) {
+        String sql = "SELECT * FROM Users WHERE role = ?";
         List<User> users = new ArrayList<>();
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, role);
-            ResultSet rs = stmt.executeQuery();
             
-            while (rs.next()) {
-                User user = mapResultSetToUser(rs);
-                users.add(user);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(extractUserFromResultSet(rs));
+                }
             }
             
-            return users;
-            
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting users by role", e);
-            throw e;
-        }
-    }
-    
-    /**
-     * Change user password
-     * 
-     * @param userId the user ID
-     * @param newPassword the new password
-     * @return true if password was changed successfully
-     * @throws Exception if an error occurs
-     */
-    @Override
-    public boolean changePassword(int userId, String newPassword) throws Exception {
-        String sql = "UPDATE Users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, newPassword);  // In production, this would be hashed
-            stmt.setInt(2, userId);
-            
-            int rowsAffected = stmt.executeUpdate();
-            
-            return rowsAffected > 0;
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error changing user password", e);
-            throw e;
-        }
-    }
-    
-    /**
-     * Update user status
-     * 
-     * @param userId the user ID
-     * @param newStatus the new status
-     * @return true if status was updated successfully
-     * @throws Exception if an error occurs
-     */
-    @Override
-    public boolean updateStatus(int userId, String newStatus) throws Exception {
-        String sql = "UPDATE Users SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, newStatus);
-            stmt.setInt(2, userId);
-            
-            int rowsAffected = stmt.executeUpdate();
-            
-            return rowsAffected > 0;
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating user status", e);
-            throw e;
-        }
-    }
-    
-    /**
-     * Authenticate a user
-     * 
-     * @param email the user email
-     * @param password the user password
-     * @return an Optional containing the user if authentication is successful
-     * @throws Exception if an error occurs
-     */
-    @Override
-    public Optional<User> authenticate(String email, String password) throws Exception {
-        Optional<User> userOpt = getByEmail(email);
-        
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            
-            // In a real application, we would use password hashing
-            // For now, we'll do a simple comparison
-            if (password.equals(user.getPassword())) {
-                return Optional.of(user);
-            }
+            LOGGER.log(Level.SEVERE, "Error finding users by role: " + role, e);
         }
         
-        return Optional.empty();
+        return users;
     }
     
-    /**
-     * Get a user by ID (direct)
-     * 
-     * @param userId the user ID
-     * @return the user if found, null otherwise
-     * @throws Exception if an error occurs
-     */
     @Override
-    public User getUserById(int userId) throws Exception {
-        Optional<User> userOpt = getById(userId);
-        return userOpt.orElse(null);
-    }
-    
-    /**
-     * Get users by role
-     * 
-     * @param role the role to filter by
-     * @return list of users with the specified role
-     * @throws Exception if an error occurs
-     */
-    @Override
-    public List<User> getUsersByRole(String role) throws Exception {
-        return getByRole(role);
-    }
-    
-    /**
-     * Get users by role and department
-     * 
-     * @param role the role to filter by
-     * @param departmentId the department ID to filter by
-     * @return list of users with the specified role and department
-     * @throws Exception if an error occurs
-     */
-    @Override
-    public List<User> getUsersByRoleAndDepartment(String role, int departmentId) throws Exception {
-        String sql = "SELECT * FROM Users WHERE role = ? AND department_id = ? ORDER BY user_id";
+    public List<User> findByDepartment(int departmentId) {
+        String sql = "SELECT * FROM Users WHERE department_id = ?";
         List<User> users = new ArrayList<>();
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, role);
-            stmt.setInt(2, departmentId);
-            ResultSet rs = stmt.executeQuery();
+            stmt.setInt(1, departmentId);
             
-            while (rs.next()) {
-                User user = mapResultSetToUser(rs);
-                users.add(user);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    users.add(extractUserFromResultSet(rs));
+                }
             }
             
-            return users;
-            
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting users by role and department", e);
-            throw e;
+            LOGGER.log(Level.SEVERE, "Error finding users by department ID: " + departmentId, e);
         }
-    }
-    
-    /**
-     * Find users by status
-     * 
-     * @param status the status to filter by
-     * @return list of users with the specified status
-     * @throws Exception if an error occurs
-     */
-    @Override
-    public List<User> findByStatus(String status) throws Exception {
-        String sql = "SELECT * FROM Users WHERE status = ? ORDER BY user_id";
-        List<User> users = new ArrayList<>();
         
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, status);
-            ResultSet rs = stmt.executeQuery();
-            
-            while (rs.next()) {
-                User user = mapResultSetToUser(rs);
-                users.add(user);
-            }
-            
-            return users;
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error finding users by status", e);
-            throw e;
-        }
+        return users;
     }
     
     /**
-     * Search for users by a query string
-     * 
-     * @param query the search query
-     * @return list of users matching the search query
-     * @throws Exception if an error occurs
+     * Helper method to extract a User from a ResultSet
+     * @param rs The ResultSet containing user data
+     * @return A User object
+     * @throws SQLException If there's an error accessing the ResultSet
      */
-    @Override
-    public List<User> searchUsers(String query) throws Exception {
-        String sql = "SELECT * FROM Users WHERE " +
-                     "LOWER(full_name) LIKE LOWER(?) OR " +
-                     "LOWER(email) LIKE LOWER(?) OR " +
-                     "CAST(user_id AS VARCHAR) LIKE ? " +
-                     "ORDER BY user_id";
-        List<User> users = new ArrayList<>();
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            String searchParam = "%" + query + "%";
-            stmt.setString(1, searchParam);
-            stmt.setString(2, searchParam);
-            stmt.setString(3, searchParam);
-            
-            ResultSet rs = stmt.executeQuery();
-            
-            while (rs.next()) {
-                User user = mapResultSetToUser(rs);
-                users.add(user);
-            }
-            
-            return users;
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error searching users", e);
-            throw e;
-        }
-    }
-    
-    /**
-     * Map a ResultSet to a User object
-     * 
-     * @param rs the ResultSet
-     * @return the User object
-     * @throws SQLException if an error occurs
-     */
-    private User mapResultSetToUser(ResultSet rs) throws SQLException {
+    private User extractUserFromResultSet(ResultSet rs) throws SQLException {
         User user = new User();
         user.setUserId(rs.getInt("user_id"));
-        user.setFullName(rs.getString("full_name"));
+        user.setName(rs.getString("name"));
+        user.setPhoneNo(rs.getString("phone_no"));
         user.setEmail(rs.getString("email"));
         user.setPassword(rs.getString("password"));
-        user.setPhone(rs.getString("phone"));
-        user.setAddress(rs.getString("address"));
         user.setRole(rs.getString("role"));
-        user.setStatus(rs.getString("status"));
-        user.setCreatedAt(rs.getTimestamp("created_at"));
-        user.setUpdatedAt(rs.getTimestamp("updated_at"));
+        
+        int departmentId = rs.getInt("department_id");
+        if (!rs.wasNull()) {
+            user.setDepartmentId(departmentId);
+        }
+        
         return user;
     }
 }

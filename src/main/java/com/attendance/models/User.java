@@ -1,465 +1,232 @@
 package com.attendance.models;
 
-import java.sql.Timestamp;
-
 /**
- * Model class for User
+ * User model class representing a user in the system
  */
 public class User {
     private int userId;
-    private String username;
-    private String password;
-    private String fullName;
+    private String name;
+    private String username; // Added for username
+    private String fullName; // Added for fullName
+    private String phoneNo;
+    private String phoneNumber; // Alternative name for phoneNo
     private String email;
-    private String phoneNumber;
-    private String address;
-    private String role; // Student, Teacher, HOD, Principal, Admin
-    private String department;
-    private String classRoom; // FY, SY, TY
-    private String rollNo;
-    private String profileImagePath;
-    private boolean isActive;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+    private String password;
+    private String role;
+    private Integer departmentId;
+    private String address; // Added for address
+    private String status; // Added for status
+    private boolean active; // Added for active status
     
-    /**
-     * Default constructor
-     */
-    public User() {
-    }
+    // Constructors
+    public User() {}
     
-    /**
-     * Constructor with basic details
-     * 
-     * @param username the username
-     * @param password the password
-     * @param fullName the full name
-     * @param email the email
-     * @param role the role
-     */
-    public User(String username, String password, String fullName, String email, String role) {
-        this.username = username;
-        this.password = password;
-        this.fullName = fullName;
-        this.email = email;
-        this.role = role;
-        this.isActive = true;
-    }
-    
-    /**
-     * Constructor with minimal fields
-     * 
-     * @param username the username
-     * @param password the password
-     * @param fullName the full name
-     * @param email the email
-     */
-    public User(String username, String password, String fullName, String email) {
-        this.username = username;
-        this.password = password;
-        this.fullName = fullName;
-        this.email = email;
-        this.isActive = true;
-    }
-
-    /**
-     * Full constructor
-     * 
-     * @param userId the user ID
-     * @param username the username
-     * @param password the password
-     * @param fullName the full name
-     * @param email the email
-     * @param phoneNumber the phone number
-     * @param address the address
-     * @param role the role
-     * @param department the department
-     * @param classRoom the class
-     * @param rollNo the roll number
-     * @param profileImagePath the profile image path
-     * @param isActive whether the user is active
-     * @param createdAt when the user was created
-     * @param updatedAt when the user was last updated
-     */
-    public User(int userId, String username, String password, String fullName, String email, 
-              String phoneNumber, String address, String role, String department, String classRoom, String rollNo, 
-              String profileImagePath, boolean isActive, Timestamp createdAt, Timestamp updatedAt) {
+    public User(int userId, String name, String phoneNo, String email, 
+                String password, String role, Integer departmentId) {
         this.userId = userId;
-        this.username = username;
-        this.password = password;
-        this.fullName = fullName;
+        this.name = name;
+        this.phoneNo = phoneNo;
+        this.phoneNumber = phoneNo; // Set both phone fields
         this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
+        this.password = password;
         this.role = role;
-        this.department = department;
-        this.classRoom = classRoom;
-        this.rollNo = rollNo;
-        this.profileImagePath = profileImagePath;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.departmentId = departmentId;
+        this.active = true; // Default to active
+        this.fullName = name; // Default fullName to name
+        this.username = email; // Default username to email
     }
-
-    /**
-     * @return the userId
-     */
+    
+    // Constructor for registration with 4 arguments (name, email, password, role)
+    public User(String name, String email, String password, String role) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.active = true; // Default to active
+        this.fullName = name; // Default fullName to name
+        this.username = email; // Default username to email
+    }
+    
+    // Constructor for registration with 5 arguments (name, phone, email, password, role)
+    public User(String name, String phoneNo, String email, String password, String role) {
+        this.name = name;
+        this.phoneNo = phoneNo;
+        this.phoneNumber = phoneNo; // Set both phone fields
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.active = true; // Default to active
+        this.fullName = name; // Default fullName to name
+        this.username = email; // Default username to email
+    }
+    
+    // Getters and Setters
     public int getUserId() {
         return userId;
     }
-
-    /**
-     * @param userId the userId to set
-     */
+    
     public void setUserId(int userId) {
         this.userId = userId;
     }
-
-    /**
-     * @return the username
-     */
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+        this.fullName = name; // Keep fullName in sync with name
+    }
+    
     public String getUsername() {
         return username;
     }
-
-    /**
-     * @param username the username to set
-     */
+    
     public void setUsername(String username) {
         this.username = username;
     }
-
-    /**
-     * @return the password
-     */
-    public String getPassword() {
-        return password;
-    }
-
-    /**
-     * @param password the password to set
-     */
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    /**
-     * @return the fullName
-     */
+    
     public String getFullName() {
-        return fullName;
+        return fullName != null ? fullName : name;
     }
     
-    /**
-     * Get user name (alias for getFullName for better semantic meaning)
-     * @return the user's full name
-     */
-    public String getName() {
-        return fullName;
-    }
-
-    /**
-     * Set user name (alias for setFullName for better semantic meaning)
-     * @param name the user's full name
-     */
-    public void setName(String name) {
-        this.fullName = name;
-    }
-
-    /**
-     * @param fullName the fullName to set
-     */
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
-
-    /**
-     * @return the email
-     */
+    
+    public String getPhoneNo() {
+        return phoneNo;
+    }
+    
+    public void setPhoneNo(String phoneNo) {
+        this.phoneNo = phoneNo;
+        this.phoneNumber = phoneNo; // Keep phoneNumber in sync
+    }
+    
+    public String getPhoneNumber() {
+        return phoneNumber != null ? phoneNumber : phoneNo;
+    }
+    
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+        this.phoneNo = phoneNumber; // Keep phoneNo in sync
+    }
+    
+    // Shorthand method to match controller usage
+    public void setPhone(String phone) {
+        setPhoneNo(phone);
+    }
+    
     public String getEmail() {
         return email;
     }
-
-    /**
-     * @param email the email to set
-     */
+    
     public void setEmail(String email) {
         this.email = email;
     }
-
-    /**
-     * @return the phoneNumber
-     */
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    /**
-     * @param phoneNumber the phoneNumber to set
-     */
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    
+    public String getPassword() {
+        return password;
     }
     
-    /**
-     * Alias for getPhoneNumber() for better compatibility
-     * @return the phone number
-     */
-    public String getPhone() {
-        return phoneNumber;
+    public void setPassword(String password) {
+        this.password = password;
     }
     
-    /**
-     * Alias for setPhoneNumber() for better compatibility
-     * @param phone the phone number to set
-     */
-    public void setPhone(String phone) {
-        this.phoneNumber = phone;
-    }
-    
-    /**
-     * Alias for getPhoneNumber() for seamless compatibility
-     * @return the phone number
-     */
-    public String getPhoneNo() {
-        return phoneNumber;
-    }
-    
-    /**
-     * Alias for setPhoneNumber() for seamless compatibility
-     * @param phoneNo the phone number to set
-     */
-    public void setPhoneNo(String phoneNo) {
-        this.phoneNumber = phoneNo;
-    }
-    
-    /**
-     * @return the address
-     */
-    public String getAddress() {
-        return address;
-    }
-
-    /**
-     * @param address the address to set
-     */
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    /**
-     * @return the role
-     */
     public String getRole() {
         return role;
     }
-
-    /**
-     * @param role the role to set
-     */
+    
     public void setRole(String role) {
         this.role = role;
     }
-
-    /**
-     * @return the department
-     */
-    public String getDepartment() {
-        return department;
-    }
-
-    /**
-     * @param department the department to set
-     */
-    public void setDepartment(String department) {
-        this.department = department;
+    
+    public Integer getDepartmentId() {
+        return departmentId;
     }
     
-    /**
-     * Get the department ID from the department
-     * This is a compatibility method for cases where department is stored as "ID:Name"
-     * 
-     * @return the department ID as an integer, or 0 if not available
-     */
-    public int getDepartmentId() {
-        if (department == null || department.isEmpty()) {
-            return 0;
-        }
-        
-        // If department is stored in format "ID:Name", extract the ID
-        if (department.contains(":")) {
-            try {
-                return Integer.parseInt(department.split(":")[0]);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        
-        // If just a number is stored
-        try {
-            return Integer.parseInt(department);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
     }
     
-    /**
-     * Set the department ID 
-     * @param departmentId the department ID to set
-     */
-    public void setDepartmentId(int departmentId) {
-        this.department = String.valueOf(departmentId);
-    }
-
-    /**
-     * @return the classRoom
-     */
-    public String getClassRoom() {
-        return classRoom;
-    }
-
-    /**
-     * @param classRoom the classRoom to set
-     */
-    public void setClassRoom(String classRoom) {
-        this.classRoom = classRoom;
-    }
-
-    /**
-     * @return the rollNo
-     */
-    public String getRollNo() {
-        return rollNo;
-    }
-
-    /**
-     * @param rollNo the rollNo to set
-     */
-    public void setRollNo(String rollNo) {
-        this.rollNo = rollNo;
-    }
-
-    /**
-     * @return the profileImagePath
-     */
-    public String getProfileImagePath() {
-        return profileImagePath;
-    }
-
-    /**
-     * @param profileImagePath the profileImagePath to set
-     */
-    public void setProfileImagePath(String profileImagePath) {
-        this.profileImagePath = profileImagePath;
-    }
-
-    /**
-     * @return whether the user is active
-     */
-    public boolean isActive() {
-        return isActive;
-    }
-
-    /**
-     * @param isActive set whether the user is active
-     */
-    public void setActive(boolean isActive) {
-        this.isActive = isActive;
+    public String getAddress() {
+        return address;
     }
     
-    /**
-     * Get the user's status as a string
-     * @return "Active" if user is active, "Inactive" otherwise
-     */
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
     public String getStatus() {
-        return isActive ? "Active" : "Inactive";
+        return status;
     }
     
-    /**
-     * Set user status from string
-     * @param status "Active" or "Inactive"
-     */
     public void setStatus(String status) {
-        this.isActive = "Active".equalsIgnoreCase(status);
+        this.status = status;
     }
-
-    /**
-     * @return the createdAt
-     */
-    public Timestamp getCreatedAt() {
-        return createdAt;
+    
+    public boolean isActive() {
+        return active;
     }
-
-    /**
-     * @param createdAt the createdAt to set
-     */
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    /**
-     * @return the updatedAt
-     */
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
-    }
-
-    /**
-     * @param updatedAt the updatedAt to set
-     */
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+    
+    public void setActive(boolean active) {
+        this.active = active;
     }
     
     /**
-     * Check if user is a Student
-     * 
-     * @return true if the user is a Student
+     * Check if this user is a student
+     * @return true if the user's role is "Student"
      */
     public boolean isStudent() {
-        return "Student".equalsIgnoreCase(role);
+        return "Student".equalsIgnoreCase(this.role);
     }
     
     /**
-     * Check if user is a Teacher
-     * 
-     * @return true if the user is a Teacher
+     * Check if this user is a teacher
+     * @return true if the user's role is "Teacher"
      */
     public boolean isTeacher() {
-        return "Teacher".equalsIgnoreCase(role);
+        return "Teacher".equalsIgnoreCase(this.role);
     }
     
     /**
-     * Check if user is a Head of Department
-     * 
-     * @return true if the user is a HOD
+     * Check if this user is a HOD
+     * @return true if the user's role is "HOD"
      */
     public boolean isHOD() {
-        return "HOD".equalsIgnoreCase(role);
+        return "HOD".equalsIgnoreCase(this.role);
     }
     
     /**
-     * Check if user is a Principal
-     * 
-     * @return true if the user is a Principal
+     * Check if this user is a Principal
+     * @return true if the user's role is "Principal"
      */
     public boolean isPrincipal() {
-        return "Principal".equalsIgnoreCase(role);
+        return "Principal".equalsIgnoreCase(this.role);
     }
     
     /**
-     * Check if user is an Admin
-     * 
-     * @return true if the user is an Admin
+     * Check if this user is an Admin
+     * @return true if the user's role is "Admin"
      */
     public boolean isAdmin() {
-        return "Admin".equalsIgnoreCase(role);
+        return "Admin".equalsIgnoreCase(this.role);
     }
-
+    
     @Override
     public String toString() {
-        return "User{" + "userId=" + userId + ", username=" + username + ", fullName=" + fullName + 
-               ", email=" + email + ", role=" + role + ", department=" + department + 
-               ", classRoom=" + classRoom + ", isActive=" + isActive + '}';
+        return "User{" +
+                "userId=" + userId +
+                ", name='" + name + '\'' +
+                ", username='" + username + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", phoneNo='" + phoneNo + '\'' +
+                ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
+                ", departmentId=" + departmentId +
+                ", address='" + address + '\'' +
+                ", status='" + status + '\'' +
+                ", active=" + active +
+                '}';
     }
 }

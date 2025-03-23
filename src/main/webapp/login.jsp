@@ -1,87 +1,83 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.attendance.utils.SessionUtil" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Student Attendance Management System</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/styles.css">
+    <!-- Bootstrap CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #4a6fdc;
+            color: white;
+            text-align: center;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 20px;
+        }
+        .btn-primary {
+            background-color: #4a6fdc;
+            border-color: #4a6fdc;
+        }
+    </style>
 </head>
 <body>
-    <%-- Check if user is already logged in --%>
-    <% if (SessionUtil.isLoggedIn(request)) { 
-        // Redirect to dashboard
-        SessionUtil.redirectToDashboard(request, response);
-        return;
-    } %>
-
     <div class="container">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title mb-0">Login</h3>
-                    </div>
-                    <div class="card-body">
-                        <% if (request.getAttribute("error") != null) { %>
-                            <div class="alert alert-danger">
-                                <%= request.getAttribute("error") %>
-                            </div>
-                        <% } %>
-                        
-                        <% if (request.getAttribute("success") != null) { %>
-                            <div class="alert alert-success">
-                                <%= request.getAttribute("success") %>
-                            </div>
-                        <% } %>
-                        
-                        <form action="${pageContext.request.contextPath}/login" method="post">
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="password">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary btn-block">Login</button>
-                            </div>
-                        </form>
-                        
-                        <div class="text-center mt-3">
-                            <p>Don't have an account? <a href="${pageContext.request.contextPath}/register">Register here</a></p>
-                        </div>
-                    </div>
+        <div class="login-container">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Student Attendance Management</h3>
+                    <p class="mb-0">Sign in to your account</p>
                 </div>
-                
-                <div class="card mt-4">
-                    <div class="card-body">
-                        <h5 class="card-title">User Roles</h5>
-                        <p class="card-text">The system supports the following roles:</p>
-                        <ul>
-                            <li><strong>Student:</strong> View attendance, check reports</li>
-                            <li><strong>Teacher:</strong> Record attendance for assigned subjects</li>
-                            <li><strong>Class Teacher:</strong> Verify student enrollments, manage class attendance</li>
-                            <li><strong>HOD:</strong> Approve teacher registrations, department management</li>
-                            <li><strong>Principal:</strong> Approve HOD registrations, institution-wide management</li>
-                        </ul>
+                <div class="card-body p-4">
+                    <!-- Display error message if any -->
+                    <% if(request.getAttribute("errorMessage") != null) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= request.getAttribute("errorMessage") %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+                    
+                    <form action="login" method="post">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   placeholder="Enter your email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="Enter your password" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Sign In</button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-3 text-center">
+                        <p>Don't have an account? <a href="register.jsp">Register here</a></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <%-- Include footer --%>
-    <jsp:include page="/views/common/footer.jsp" />
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="${pageContext.request.contextPath}/assets/js/scripts.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

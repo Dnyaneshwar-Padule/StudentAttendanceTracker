@@ -1,149 +1,153 @@
 package com.attendance.dao;
 
-import com.attendance.models.User;
 import java.util.List;
 import java.util.Optional;
+import com.attendance.models.User;
 
 /**
- * Data Access Object Interface for User
+ * Data Access Object interface for User entity
  */
 public interface UserDAO {
     
     /**
-     * Create a new user
-     * 
-     * @param user the user to create
-     * @return the created user with generated ID
-     * @throws Exception if an error occurs
+     * Find a user by their ID
+     * @param userId The user ID
+     * @return The user if found, null otherwise
      */
-    User create(User user) throws Exception;
+    User findById(int userId);
     
     /**
-     * Get a user by ID
-     * 
-     * @param userId the user ID
-     * @return an Optional containing the user if found
-     * @throws Exception if an error occurs
+     * Find a user by their ID with Optional
+     * @param userId The user ID
+     * @return Optional containing the user if found, empty Optional otherwise
      */
-    Optional<User> getById(int userId) throws Exception;
+    default Optional<User> findOptionalById(int userId) {
+        return Optional.ofNullable(findById(userId));
+    }
     
     /**
-     * Get a user by email
-     * 
-     * @param email the user email
-     * @return an Optional containing the user if found
-     * @throws Exception if an error occurs
+     * Find a user by their ID (alternative name)
+     * @param userId The user ID
+     * @return Optional containing the user if found, empty Optional otherwise
      */
-    Optional<User> getByEmail(String email) throws Exception;
+    default Optional<User> getById(int userId) {
+        return findOptionalById(userId);
+    }
+    
+    /**
+     * Find a user by their email
+     * @param email The user's email
+     * @return The user if found, null otherwise
+     */
+    User findByEmail(String email);
+    
+    /**
+     * Find a user by their email with Optional
+     * @param email The user's email
+     * @return Optional containing the user if found, empty Optional otherwise
+     */
+    default Optional<User> findOptionalByEmail(String email) {
+        return Optional.ofNullable(findByEmail(email));
+    }
+    
+    /**
+     * Find a user by their email (alternative name)
+     * @param email The user's email
+     * @return Optional containing the user if found, empty Optional otherwise
+     */
+    default Optional<User> getByEmail(String email) {
+        return findOptionalByEmail(email);
+    }
+    
+    /**
+     * Authenticate a user with email and password
+     * @param email The user's email
+     * @param password The user's password
+     * @return The authenticated user if credentials are valid, null otherwise
+     */
+    User authenticate(String email, String password);
+    
+    /**
+     * Authenticate a user with email and password returning Optional
+     * @param email The user's email
+     * @param password The user's password
+     * @return Optional containing the authenticated user if credentials are valid, empty Optional otherwise
+     */
+    default Optional<User> authenticateOptional(String email, String password) {
+        return Optional.ofNullable(authenticate(email, password));
+    }
+    
+    /**
+     * Insert a new user into the database
+     * @param user The user to insert
+     * @return The ID of the newly inserted user, or -1 if the operation failed
+     */
+    int insert(User user);
+    
+    /**
+     * Create a new user and return the ID
+     * @param user The user to create
+     * @return The ID of the newly created user, or -1 if the operation failed
+     */
+    default int createAndGetId(User user) {
+        return insert(user);
+    }
+    
+    /**
+     * Create a new user and return the created user object
+     * @param user The user to create
+     * @return The created user object with ID set
+     */
+    default User create(User user) {
+        int userId = insert(user);
+        if (userId > 0) {
+            // Set the ID on the user object
+            user.setUserId(userId);
+            return user;
+        }
+        return null;
+    }
     
     /**
      * Update an existing user
-     * 
-     * @param user the user to update
-     * @return the updated user
-     * @throws Exception if an error occurs
+     * @param user The user to update
+     * @return true if the update was successful, false otherwise
      */
-    User update(User user) throws Exception;
+    boolean update(User user);
     
     /**
      * Delete a user
-     * 
-     * @param userId the ID of the user to delete
-     * @return true if deletion was successful
-     * @throws Exception if an error occurs
+     * @param userId The ID of the user to delete
+     * @return true if the deletion was successful, false otherwise
      */
-    boolean delete(int userId) throws Exception;
+    boolean delete(int userId);
     
     /**
      * Get all users
-     * 
-     * @return list of all users
-     * @throws Exception if an error occurs
+     * @return A list of all users
      */
-    List<User> getAll() throws Exception;
+    List<User> findAll();
     
     /**
-     * Get users by role
-     * 
-     * @param role the role to filter by
-     * @return list of users with the specified role
-     * @throws Exception if an error occurs
+     * Find users by role
+     * @param role The role to search for
+     * @return A list of users with the specified role
      */
-    List<User> getByRole(String role) throws Exception;
+    List<User> findByRole(String role);
     
     /**
-     * Change user password
-     * 
-     * @param userId the user ID
-     * @param newPassword the new password
-     * @return true if password was changed successfully
-     * @throws Exception if an error occurs
+     * Find users by role (alternative name)
+     * @param role The role to search for
+     * @return A list of users with the specified role
      */
-    boolean changePassword(int userId, String newPassword) throws Exception;
+    default List<User> getByRole(String role) {
+        return findByRole(role);
+    }
     
     /**
-     * Update user status
-     * 
-     * @param userId the user ID
-     * @param newStatus the new status
-     * @return true if status was updated successfully
-     * @throws Exception if an error occurs
+     * Find users by department
+     * @param departmentId The department ID
+     * @return A list of users in the specified department
      */
-    boolean updateStatus(int userId, String newStatus) throws Exception;
-    
-    /**
-     * Authenticate a user
-     * 
-     * @param email the user email
-     * @param password the user password
-     * @return an Optional containing the user if authentication is successful
-     * @throws Exception if an error occurs
-     */
-    Optional<User> authenticate(String email, String password) throws Exception;
-    
-    /**
-     * Get a user by ID (direct)
-     * 
-     * @param userId the user ID
-     * @return the user if found, null otherwise
-     * @throws Exception if an error occurs
-     */
-    User getUserById(int userId) throws Exception;
-    
-    /**
-     * Get users by role
-     * 
-     * @param role the role to filter by
-     * @return list of users with the specified role
-     * @throws Exception if an error occurs
-     */
-    List<User> getUsersByRole(String role) throws Exception;
-    
-    /**
-     * Get users by role and department
-     * 
-     * @param role the role to filter by
-     * @param departmentId the department ID to filter by
-     * @return list of users with the specified role and department
-     * @throws Exception if an error occurs
-     */
-    List<User> getUsersByRoleAndDepartment(String role, int departmentId) throws Exception;
-    
-    /**
-     * Find users by status
-     * 
-     * @param status the status to filter by
-     * @return list of users with the specified status
-     * @throws Exception if an error occurs
-     */
-    List<User> findByStatus(String status) throws Exception;
-    
-    /**
-     * Search for users by a query string
-     * 
-     * @param query the search query
-     * @return list of users matching the search query
-     * @throws Exception if an error occurs
-     */
-    List<User> searchUsers(String query) throws Exception;
+    List<User> findByDepartment(int departmentId);
 }

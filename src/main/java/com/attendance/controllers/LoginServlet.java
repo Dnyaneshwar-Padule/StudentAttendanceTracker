@@ -1,9 +1,7 @@
 package com.attendance.controllers;
 
-import com.attendance.dao.UserDao;
-import com.attendance.dao.impl.UserDaoImpl;
-import com.attendance.models.User;
-import com.attendance.utils.PasswordUtils;
+import java.io.IOException;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,94 +9,88 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import com.attendance.dao.UserDAO;
+import com.attendance.dao.impl.UserDAOImpl;
+import com.attendance.models.User;
 
 /**
- * Servlet handling user login
+ * Servlet for handling user login
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(LoginServlet.class.getName());
-    private UserDao userDao;
+    
+    private UserDAO userDAO;
     
     @Override
-    public void init() throws ServletException {
-        super.init();
-        userDao = new UserDaoImpl();
+    public void init() {
+        userDAO = new UserDAOImpl();
     }
     
     /**
-     * Handles GET requests to show the login page
+     * Handle GET requests to show the login page
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        
         // Check if user is already logged in
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute("user") != null) {
             // User is already logged in, redirect to dashboard
-            response.sendRedirect(request.getContextPath() + "/dashboard");
+            response.sendRedirect("dashboard");
             return;
         }
         
         // Forward to login page
-        request.getRequestDispatcher("/views/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/login.jsp").forward(request, response);
     }
     
     /**
-     * Handles POST requests to process login form submission
+     * Handle POST requests for login form submission
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         
-        // Validate inputs
-        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
+        // Basic validation
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
             request.setAttribute("errorMessage", "Email and password are required");
-            request.getRequestDispatcher("/views/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/login.jsp").forward(request, response);
             return;
         }
         
         try {
-            // Attempt to authenticate user
-            User user = userDao.findByEmail(email);
+            // Authenticate user
+            User user = userDAO.authenticate(email, password);
             
-            if (user != null && PasswordUtils.checkPassword(password, user.getPassword())) {
+            if (user != null) {
                 // User authenticated successfully
-                
-                // Check if account is active
-                if (!"Active".equals(user.getStatus())) {
-                    request.setAttribute("errorMessage", "Your account is not active. Please contact administrator.");
-                    request.getRequestDispatcher("/views/login.jsp").forward(request, response);
-                    return;
-                }
-                
-                // Create session for authenticated user
                 HttpSession session = request.getSession();
                 session.setAttribute("user", user);
                 session.setAttribute("userId", user.getUserId());
+                session.setAttribute("userName", user.getName());
                 session.setAttribute("userRole", user.getRole());
-                session.setAttribute("userName", user.getFullName());
                 
                 // Log successful login
-                LOGGER.info("User logged in: " + user.getEmail());
+                LOGGER.info("User logged in: " + email + ", Role: " + user.getRole());
                 
-                // Redirect to dashboard
-                response.sendRedirect(request.getContextPath() + "/dashboard");
+                // Redirect to appropriate dashboard based on role
+                response.sendRedirect("dashboard");
             } else {
                 // Authentication failed
                 request.setAttribute("errorMessage", "Invalid email or password");
-                request.getRequestDispatcher("/views/login.jsp").forward(request, response);
+                request.getRequestDispatcher("/login.jsp").forward(request, response);
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error during login", e);
-            request.setAttribute("errorMessage", "A system error occurred. Please try again later.");
-            request.getRequestDispatcher("/views/login.jsp").forward(request, response);
+        } catch (Exception e) {
+            LOGGER.severe("Error during login: " + e.getMessage());
+            request.setAttribute("errorMessage", "An error occurred during login. Please try again.");
+            request.getRequestDispatcher("/login.jsp").forward(request, response);
         }
     }
 }

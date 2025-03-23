@@ -7,59 +7,58 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Utility class for database connection handling
+ * Utility class for obtaining database connections
  */
 public class DatabaseConnection {
-    private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
-    private static Connection connection = null;
     
-    /**
-     * Gets a connection to the database
-     * @return Database connection
-     * @throws SQLException If connection fails
-     */
-    public static Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            try {
-                // Load the JDBC driver
-                Class.forName("org.postgresql.Driver");
-                
-                // Get database connection parameters from environment variables
-                String dbUrl = System.getenv("DATABASE_URL");
-                String dbUser = System.getenv("PGUSER");
-                String dbPassword = System.getenv("PGPASSWORD");
-                
-                // If DATABASE_URL is not available, construct it from individual parts
-                if (dbUrl == null || dbUrl.trim().isEmpty()) {
-                    String dbHost = System.getenv("PGHOST");
-                    String dbPort = System.getenv("PGPORT");
-                    String dbName = System.getenv("PGDATABASE");
-                    
-                    dbUrl = "jdbc:postgresql://" + dbHost + ":" + dbPort + "/" + dbName;
-                }
-                
-                // Get connection
-                connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-                LOGGER.info("Database connection established successfully");
-            } catch (ClassNotFoundException e) {
-                LOGGER.log(Level.SEVERE, "PostgreSQL JDBC driver not found", e);
-                throw new SQLException("PostgreSQL JDBC driver not found", e);
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Failed to connect to database", e);
-                throw e;
-            }
+    private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
+    
+    // Environment variables for database connection
+    private static final String DB_URL = System.getenv("DATABASE_URL");
+    private static final String DB_USER = System.getenv("PGUSER");
+    private static final String DB_PASSWORD = System.getenv("PGPASSWORD");
+    
+    static {
+        try {
+            // Register JDBC driver
+            Class.forName("org.postgresql.Driver");
+            LOGGER.info("PostgreSQL JDBC Driver registered successfully");
+        } catch (ClassNotFoundException e) {
+            LOGGER.log(Level.SEVERE, "PostgreSQL JDBC Driver not found", e);
         }
-        return connection;
     }
     
     /**
-     * Closes the database connection
+     * Get a database connection
+     * @return A database connection
+     * @throws SQLException If there's an error connecting to the database
      */
-    public static void closeConnection() {
-        if (connection != null) {
+    public static Connection getConnection() throws SQLException {
+        if (DB_URL == null || DB_URL.isEmpty()) {
+            LOGGER.severe("Database URL is missing. Please set the DATABASE_URL environment variable.");
+            throw new SQLException("Database URL is missing");
+        }
+        
+        try {
+            // Create and return a connection
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            LOGGER.fine("Database connection established successfully");
+            return conn;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to establish database connection", e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Close a database connection
+     * @param conn The connection to close
+     */
+    public static void closeConnection(Connection conn) {
+        if (conn != null) {
             try {
-                connection.close();
-                LOGGER.info("Database connection closed successfully");
+                conn.close();
+                LOGGER.fine("Database connection closed successfully");
             } catch (SQLException e) {
                 LOGGER.log(Level.WARNING, "Error closing database connection", e);
             }

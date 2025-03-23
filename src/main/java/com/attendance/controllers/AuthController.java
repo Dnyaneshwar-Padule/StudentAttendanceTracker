@@ -88,7 +88,7 @@ public class AuthController extends HttpServlet {
         }
         
         try {
-            Optional<User> userOpt = userDAO.authenticate(email, password);
+            Optional<User> userOpt = userDAO.authenticateOptional(email, password);
             
             if (userOpt.isPresent()) {
                 User user = userOpt.get();
