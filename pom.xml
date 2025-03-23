@@ -22,7 +22,29 @@
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <version>5.0.0</version>
-            <scope>provided</scope>
+            <scope>compile</scope> <!-- Changed from provided to compile -->
+        </dependency>
+        
+        <!-- Jakarta EE Web API -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <version>9.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        
+        <!-- Jakarta Expression Language (EL) -->
+        <dependency>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+        
+        <!-- Jakarta JSP API -->
+        <dependency>
+            <groupId>jakarta.servlet.jsp</groupId>
+            <artifactId>jakarta.servlet.jsp-api</artifactId>
+            <version>3.0.0</version>
         </dependency>
 
         <!-- PostgreSQL JDBC Driver -->
@@ -142,7 +164,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-exec-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.1.0</version>
                 <configuration>
                     <mainClass>com.attendance.AppServer</mainClass>
                 </configuration>
