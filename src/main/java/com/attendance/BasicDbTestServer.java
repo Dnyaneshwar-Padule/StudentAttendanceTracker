@@ -20,7 +20,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.attendance.utils.DatabaseInitializer;
+import com.attendance.utils.DatabaseConnection;
 
 /**
  * Basic server with database connectivity test

@@ -3,6 +3,8 @@ package com.attendance.utils;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,6 +22,9 @@ public class DatabaseConnection {
     private static final String DB_NAME = System.getenv("PGDATABASE");
     private static final String DB_USER = System.getenv("PGUSER");
     private static final String DB_PASSWORD = System.getenv("PGPASSWORD");
+    
+    // Keep track of open connections for cleanup
+    private static final List<Connection> OPEN_CONNECTIONS = new ArrayList<>();
     
     static {
         try {
@@ -45,6 +50,8 @@ public class DatabaseConnection {
      * @throws SQLException If there's an error connecting to the database
      */
     public static Connection getConnection() throws SQLException {
+        Connection conn = null;
+        
         // First, try using the full DATABASE_URL if available
         if (DB_URL != null && !DB_URL.isEmpty()) {
             try {
@@ -61,9 +68,8 @@ public class DatabaseConnection {
                     }
                 }
                 LOGGER.info("Attempting to connect using DATABASE_URL: " + jdbcUrl.replaceAll("password=[^&]*", "password=****"));
-                Connection conn = DriverManager.getConnection(jdbcUrl);
+                conn = DriverManager.getConnection(jdbcUrl);
                 LOGGER.info("Database connection established successfully using DATABASE_URL");
-                return conn;
             } catch (SQLException e) {
                 LOGGER.log(Level.WARNING, "Failed to connect using DATABASE_URL, will try individual components", e);
                 // Continue to the next approach
@@ -71,22 +77,30 @@ public class DatabaseConnection {
         }
         
         // If DATABASE_URL approach failed or not available, try using individual components
-        if (DB_HOST != null && DB_PORT != null && DB_NAME != null) {
+        if (conn == null && DB_HOST != null && DB_PORT != null && DB_NAME != null) {
             String url = "jdbc:postgresql://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME;
             try {
                 LOGGER.info("Attempting to connect using constructed URL: " + url);
-                Connection conn = DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
+                conn = DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
                 LOGGER.info("Database connection established successfully using constructed URL");
-                return conn;
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Failed to establish database connection using constructed URL", e);
                 throw e;
             }
         }
         
-        // If we got here, there's no valid connection information
-        LOGGER.severe("No valid database connection information available");
-        throw new SQLException("No valid database connection information available");
+        // If we got here and still don't have a connection, there's no valid connection information
+        if (conn == null) {
+            LOGGER.severe("No valid database connection information available");
+            throw new SQLException("No valid database connection information available");
+        }
+        
+        // Track this connection for cleanup
+        synchronized (OPEN_CONNECTIONS) {
+            OPEN_CONNECTIONS.add(conn);
+        }
+        
+        return conn;
     }
     
     /**
@@ -97,10 +111,34 @@ public class DatabaseConnection {
         if (conn != null) {
             try {
                 conn.close();
+                // Remove from tracked connections
+                synchronized (OPEN_CONNECTIONS) {
+                    OPEN_CONNECTIONS.remove(conn);
+                }
                 LOGGER.fine("Database connection closed successfully");
             } catch (SQLException e) {
                 LOGGER.log(Level.WARNING, "Error closing database connection", e);
             }
+        }
+    }
+    
+    /**
+     * Close all open database connections
+     * Used during application shutdown
+     */
+    public static void closeAllConnections() {
+        synchronized (OPEN_CONNECTIONS) {
+            LOGGER.info("Closing all open database connections: " + OPEN_CONNECTIONS.size() + " connections to close");
+            
+            // Create a copy to avoid concurrent modification
+            List<Connection> connectionsCopy = new ArrayList<>(OPEN_CONNECTIONS);
+            for (Connection conn : connectionsCopy) {
+                closeConnection(conn);
+            }
+            
+            // Clear the list even if some failed to close
+            OPEN_CONNECTIONS.clear();
+            LOGGER.info("All database connections have been closed");
         }
     }
 }

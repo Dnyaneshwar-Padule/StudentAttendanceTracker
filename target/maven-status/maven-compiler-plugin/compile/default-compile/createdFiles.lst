@@ -18,6 +18,7 @@ com/attendance/models/StudentEnrollment.class
 com/attendance/dao/impl/StudentEnrollmentDaoImpl.class
 com/attendance/controllers/HelloServlet.class
 com/attendance/utils/FaceRecognitionService.class
+com/attendance/listeners/DatabaseInitializationListener.class
 com/attendance/dao/impl/AttendanceDAOImpl.class
 com/attendance/dao/DepartmentDao.class
 com/attendance/dao/ClassDao.class
