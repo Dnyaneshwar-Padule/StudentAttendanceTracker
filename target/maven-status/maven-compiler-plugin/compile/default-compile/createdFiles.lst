@@ -5,6 +5,7 @@ com/attendance/dao/impl/SubjectDaoImpl.class
 com/attendance/controllers/AttendanceFilterController.class
 com/attendance/dao/impl/UserDaoImpl.class
 com/attendance/AppServer$1.class
+com/attendance/UltraBasicServer$TestServlet.class
 com/attendance/controllers/TestServlet.class
 com/attendance/dao/BaseDao.class
 com/attendance/dao/impl/AttendanceDaoImpl.class
@@ -15,6 +16,7 @@ com/attendance/dao/StudentEnrollmentDAO.class
 com/attendance/dao/TeacherAssignmentDao.class
 com/attendance/models/StudentEnrollment.class
 com/attendance/dao/impl/StudentEnrollmentDaoImpl.class
+com/attendance/controllers/HelloServlet.class
 com/attendance/utils/FaceRecognitionService.class
 com/attendance/dao/impl/AttendanceDAOImpl.class
 com/attendance/dao/DepartmentDao.class
@@ -36,12 +38,15 @@ com/attendance/AppServer.class
 com/attendance/utils/PasswordHashing.class
 com/attendance/dao/LeaveApplicationDao.class
 com/attendance/models/EnrollmentRequest.class
+com/attendance/AppServerSimple.class
 com/attendance/dao/AttendanceDao.class
 com/attendance/dao/impl/UserDAOImpl.class
+com/attendance/MinimalServer.class
 com/attendance/controllers/FixedAttendanceReportController.class
 com/attendance/dao/SubjectDAO.class
 com/attendance/controllers/EnrollmentRequestServlet.class
 com/attendance/models/Class.class
+com/attendance/MinimalServer$RootServlet.class
 com/attendance/controllers/AttendanceController.class
 com/attendance/Main.class
 com/attendance/utils/DateUtils.class
@@ -62,9 +67,11 @@ com/attendance/dao/StudentEnrollmentDao.class
 com/attendance/controllers/LoginServlet.class
 com/attendance/models/Subject.class
 com/attendance/utils/EmailNotificationService.class
+com/attendance/UltraBasicServer.class
 com/attendance/utils/DatabaseInitializer.class
 com/attendance/dao/TeacherAssignmentDAO.class
 com/attendance/models/Department.class
+com/attendance/BasicServer$SimpleServlet.class
 com/attendance/SimpleApp$1.class
 com/attendance/controllers/StudentController.class
 com/attendance/dao/impl/EnrollmentRequestDaoImpl.class
@@ -73,4 +80,5 @@ com/attendance/dao/impl/DepartmentSubjectDaoImpl.class
 com/attendance/SimpleApp.class
 com/attendance/models/TeacherAssignment.class
 com/attendance/dao/SubjectDao.class
+com/attendance/BasicServer.class
 com/attendance/controllers/BiometricAttendanceController.class

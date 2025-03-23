@@ -16,11 +16,15 @@
         <session-timeout>30</session-timeout>
     </session-config>
     
-    <!-- Temporarily commenting out listener to isolate issues
+    <!-- Database initialization listener - Both annotation and XML configuration -->
     <listener>
+        <description>Database Initialization Listener</description>
+        <display-name>DatabaseInitializer</display-name>
         <listener-class>com.attendance.utils.DatabaseInitializer</listener-class>
     </listener>
-    -->
+    
+    <!-- Add distributable tag to enable clustering (may help with initialization) -->
+    <distributable/>
     
     <!-- Servlet Mappings -->
     <servlet>

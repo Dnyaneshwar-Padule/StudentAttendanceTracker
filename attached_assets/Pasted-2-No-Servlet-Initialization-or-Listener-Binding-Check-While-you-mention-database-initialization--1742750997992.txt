@@ -1,0 +1,110 @@
+2. 🧠 No Servlet Initialization or Listener Binding Check
+While you mention database initialization will be handled by ServletContextListener, you haven’t shown whether that listener is actually registered.
+
+✅ Check:
+
+Either the listener should be defined in web.xml:
+
+xml
+Copy
+Edit
+<listener>
+  <listener-class>com.attendance.listeners.YourContextListener</listener-class>
+</listener>
+Or annotated:
+
+java
+Copy
+Edit
+@WebListener
+public class YourContextListener implements ServletContextListener {
+3. 🐘 Tomcat’s Connector Setup: Optional Cleanup
+You're doing this:
+
+java
+Copy
+Edit
+tomcat.getConnector();
+tomcat.getConnector().setProperty("address", "0.0.0.0");
+But getConnector() creates the connector, so calling it twice is unnecessary.
+
+✅ Suggestion:
+
+java
+Copy
+Edit
+tomcat.getConnector().setProperty("address", "0.0.0.0");
+4. 🛠️ Ensure target/classes exists in Replit
+On Replit, the compiled class files might not go to target/classes — check whether this directory is even created. If not, this line:
+
+java
+Copy
+Edit
+new DirResourceSet(resources, "/WEB-INF/classes", additionWebInfClasses.getAbsolutePath(), "/");
+won’t work as expected.
+
+✅ Suggestion: Log or print the content of that folder:
+
+java
+Copy
+Edit
+if (!additionWebInfClasses.exists()) {
+    LOGGER.warning("Compiled classes folder not found. Replit may use a different structure.");
+}
+5. 💣 Database initialization not called
+You’ve defined a method:
+
+java
+Copy
+Edit
+private static void initializeDatabase()
+But it is never called in the main method. If you're relying entirely on the ServletContextListener, that’s fine. Otherwise:
+
+✅ Suggestion: Consider calling it for local debugging before tomcat.start() if needed.
+
+6. 🚫 JDBC Errors Hidden from Logs
+You create tables via stmt.execute(...) but don’t log exceptions per statement. If anything fails silently, it’s harder to debug.
+
+✅ Suggestion: Wrap each block with try-catch, or log the statement before executing:
+
+java
+Copy
+Edit
+LOGGER.info("Executing SQL: " + sql);
+stmt.execute(sql);
+7. 📦 No webapps folder fallback for Replit
+Some embedded Tomcat apps fallback to a default webapps directory if src/main/webapp doesn’t exist. In Replit, paths may be different.
+
+✅ Suggestion: Consider checking for alternate locations if running on Replit:
+
+java
+Copy
+Edit
+if (!docBase.exists()) {
+    String fallbackPath = "./webapp"; // Or use environment variable
+    docBase = new File(fallbackPath);
+    if (docBase.exists()) {
+        LOGGER.info("Fallback webapp path found: " + fallbackPath);
+    } else {
+        throw new RuntimeException("Webapp directory not found at either primary or fallback location");
+    }
+}
+8. 🔐 Password field in Users table not encrypted
+You create this column:
+
+sql
+Copy
+Edit
+password VARCHAR(255) NOT NULL
+But don’t mention encryption/hashing. It’s critical to hash passwords (e.g., using BCrypt) before storing.
+
+✅ Summary Fix List
+Issue	Suggestion
+context.setConfigFile(null)	Remove it if using web.xml
+Listener not registered?	Ensure ServletContextListener is defined in web.xml or annotated
+getConnector() called twice	Only call once and set properties after
+target/classes may not exist	Verify or change for Replit
+initializeDatabase() unused	Either call it or rely solely on listener
+JDBC logging	Log each statement or errors during creation
+Replit fallback for webapp	Add fallback for src/main/webapp/
+Password security	Use hashed passwords in the Users table

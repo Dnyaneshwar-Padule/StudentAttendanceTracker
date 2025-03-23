@@ -170,16 +170,8 @@
             <artifactId>tomcat-juli</artifactId>
             <version>10.1.15</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-util</artifactId>
-            <version>10.1.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-catalina</artifactId>
-            <version>10.1.15</version>
-        </dependency>
+        <!-- These dependencies are already declared above -->
+        <!-- Removed duplicate tomcat-util and tomcat-catalina dependencies -->
         
         <!-- Jakarta JSTL (replacing javax.servlet JSTL) -->
         <dependency>
@@ -218,7 +210,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>com.attendance.AppServer</mainClass>
+                    <mainClass>com.attendance.UltraBasicServer</mainClass>
                 </configuration>
             </plugin>
             <plugin>

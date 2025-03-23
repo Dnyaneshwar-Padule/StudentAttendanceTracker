@@ -8,14 +8,17 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+import jakarta.servlet.annotation.WebListener;
 
 import com.attendance.dao.impl.DatabaseConnection;
 
 /**
  * ServletContextListener to initialize the database schema when the application starts
  */
+@WebListener
 public class DatabaseInitializer implements ServletContextListener {
     
     private static final Logger LOGGER = Logger.getLogger(DatabaseInitializer.class.getName());
@@ -26,70 +29,91 @@ public class DatabaseInitializer implements ServletContextListener {
     public static void initialize() {
         LOGGER.info("Starting database initialization...");
         
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            // Create tables if they don't exist
-            createDepartmentTable(conn);
-            createUsersTable(conn);
-            createClassTable(conn);
-            createSubjectTable(conn);
-            createStudentClassTable(conn);
-            createAttendanceTable(conn);
-            createLeaveApplicationTable(conn);
+        try {
+            // Test the database connection first
+            Connection testConn = null;
+            try {
+                testConn = DatabaseConnection.getConnection();
+                LOGGER.info("Database connection test successful");
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Database connection test failed: " + e.getMessage(), e);
+                throw e; // Rethrow to abort initialization
+            } finally {
+                if (testConn != null) {
+                    try {
+                        testConn.close();
+                    } catch (SQLException e) {
+                        LOGGER.log(Level.WARNING, "Error closing test connection", e);
+                    }
+                }
+            }
             
-            // Create an admin user if no users exist
-            createDefaultAdminIfNeeded(conn);
-            
-            LOGGER.info("Database initialization completed successfully");
+            // Now proceed with actual initialization
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                // Create tables if they don't exist
+                createDepartmentTable(conn);
+                createUsersTable(conn);
+                createClassTable(conn);
+                createSubjectTable(conn);
+                createStudentClassTable(conn);
+                createAttendanceTable(conn);
+                createLeaveApplicationTable(conn);
+                
+                // Create an admin user if no users exist
+                createDefaultAdminIfNeeded(conn);
+                
+                LOGGER.info("Database initialization completed successfully");
+            }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error initializing database", e);
+            // Don't throw exception to allow context to start
         }
     }
     
     private static void createDepartmentTable(Connection conn) throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS Departments (" +
+        String sql = "CREATE TABLE IF NOT EXISTS Department (" +
                 "department_id SERIAL PRIMARY KEY, " +
-                "name VARCHAR(100) NOT NULL, " +
-                "description TEXT, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                "department_name VARCHAR(100) UNIQUE NOT NULL" +
                 ")";
         
+        LOGGER.info("Executing SQL: " + sql);
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
-            LOGGER.info("Departments table created or already exists");
+            LOGGER.info("Department table created or already exists");
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error creating Department table: " + e.getMessage(), e);
+            throw e; // Rethrow to allow caller to handle or abort
         }
     }
     
     private static void createUsersTable(Connection conn) throws SQLException {
+        // Note: password field should store hashed passwords (not plaintext)
+        // in production we would use bcrypt or similar algorithm
         String sql = "CREATE TABLE IF NOT EXISTS Users (" +
                 "user_id SERIAL PRIMARY KEY, " +
-                "name VARCHAR(100) NOT NULL, " +
-                "phone_no VARCHAR(15), " +
-                "email VARCHAR(100) UNIQUE NOT NULL, " +
-                "password VARCHAR(100) NOT NULL, " +
-                "role VARCHAR(20) NOT NULL, " +
-                "department_id INTEGER, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (department_id) REFERENCES Departments(department_id)" +
+                "name VARCHAR(255), " +
+                "phone_no VARCHAR(20), " +
+                "email VARCHAR(255) UNIQUE, " +
+                "password VARCHAR(255) NOT NULL, " + // Stores hashed passwords, not plaintext
+                "role VARCHAR(50), " +
+                "department_id INT REFERENCES Department(department_id)" +
                 ")";
         
+        LOGGER.info("Executing SQL: " + sql);
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
             LOGGER.info("Users table created or already exists");
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error creating Users table: " + e.getMessage(), e);
+            throw e;
         }
     }
     
     private static void createClassTable(Connection conn) throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS Classes (" +
                 "class_id SERIAL PRIMARY KEY, " +
-                "name VARCHAR(100) NOT NULL, " +
-                "year VARCHAR(10) NOT NULL, " + // FY, SY, TY
-                "semester INTEGER NOT NULL, " + // 1-6
-                "department_id INTEGER NOT NULL, " +
-                "class_teacher_id INTEGER, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (department_id) REFERENCES Departments(department_id), " +
-                "FOREIGN KEY (class_teacher_id) REFERENCES Users(user_id)" +
+                "class_name VARCHAR(10) CHECK (class_name IN ('FY', 'SY', 'TY')), " +
+                "department_id INT REFERENCES Department(department_id)" +
                 ")";
         
         try (Statement stmt = conn.createStatement()) {
@@ -99,54 +123,87 @@ public class DatabaseInitializer implements ServletContextListener {
     }
     
     private static void createSubjectTable(Connection conn) throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS Subjects (" +
-                "subject_id SERIAL PRIMARY KEY, " +
-                "name VARCHAR(100) NOT NULL, " +
-                "code VARCHAR(20) NOT NULL, " +
-                "description TEXT, " +
-                "class_id INTEGER NOT NULL, " +
-                "teacher_id INTEGER, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (class_id) REFERENCES Classes(class_id), " +
-                "FOREIGN KEY (teacher_id) REFERENCES Users(user_id)" +
+        String sql = "CREATE TABLE IF NOT EXISTS Subject (" +
+                "subject_code VARCHAR(50) PRIMARY KEY, " +
+                "subject_name VARCHAR(255)" +
                 ")";
         
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
-            LOGGER.info("Subjects table created or already exists");
+            LOGGER.info("Subject table created or already exists");
+        }
+        
+        // Create Department_Subject table
+        String deptSubjectSql = "CREATE TABLE IF NOT EXISTS Department_Subject (" +
+                "id SERIAL PRIMARY KEY, " +
+                "department_id INT REFERENCES Department(department_id), " +
+                "class_id INT REFERENCES Classes(class_id), " +
+                "subject_code VARCHAR(50) REFERENCES Subject(subject_code)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(deptSubjectSql);
+            LOGGER.info("Department_Subject table created or already exists");
+        }
+        
+        // Create TeacherAssignment table
+        String teacherAssignmentSql = "CREATE TABLE IF NOT EXISTS TeacherAssignment (" +
+                "teacher_id INT REFERENCES Users(user_id), " +
+                "subject_code VARCHAR(50) REFERENCES Subject(subject_code), " +
+                "class_id INT REFERENCES Classes(class_id), " +
+                "assignment_type VARCHAR(50), " +
+                "PRIMARY KEY (teacher_id, subject_code, class_id)" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(teacherAssignmentSql);
+            LOGGER.info("TeacherAssignment table created or already exists");
         }
     }
     
     private static void createStudentClassTable(Connection conn) throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS StudentClass (" +
-                "id SERIAL PRIMARY KEY, " +
-                "student_id INTEGER NOT NULL, " +
-                "class_id INTEGER NOT NULL, " +
-                "enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (student_id) REFERENCES Users(user_id), " +
-                "FOREIGN KEY (class_id) REFERENCES Classes(class_id), " +
-                "UNIQUE(student_id, class_id)" +
+        // Create EnrollmentRequest table
+        String enrollmentRequestSql = "CREATE TABLE IF NOT EXISTS EnrollmentRequest (" +
+                "request_id SERIAL PRIMARY KEY, " +
+                "user_id INT REFERENCES Users(user_id), " +
+                "requested_role VARCHAR(50), " +
+                "class_id INT REFERENCES Classes(class_id), " +
+                "enrollment_number CHAR(10), " +
+                "submitted_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "status VARCHAR(20) DEFAULT 'Pending', " +
+                "verified_by INT REFERENCES Users(user_id), " +
+                "verified_on TIMESTAMP" +
                 ")";
         
         try (Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            LOGGER.info("StudentClass table created or already exists");
+            stmt.execute(enrollmentRequestSql);
+            LOGGER.info("EnrollmentRequest table created or already exists");
+        }
+        
+        // Create StudentEnrollment table
+        String studentEnrollmentSql = "CREATE TABLE IF NOT EXISTS StudentEnrollment (" +
+                "enrollment_id CHAR(10) PRIMARY KEY, " +
+                "user_id INT REFERENCES Users(user_id), " +
+                "class_id INT REFERENCES Classes(class_id), " +
+                "academic_year VARCHAR(20), " +
+                "enrollment_status VARCHAR(20) DEFAULT 'Active'" +
+                ")";
+        
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(studentEnrollmentSql);
+            LOGGER.info("StudentEnrollment table created or already exists");
         }
     }
     
     private static void createAttendanceTable(Connection conn) throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS Attendance (" +
                 "attendance_id SERIAL PRIMARY KEY, " +
-                "student_id INTEGER NOT NULL, " +
-                "subject_id INTEGER NOT NULL, " +
-                "status VARCHAR(10) NOT NULL, " + // Present, Absent, Leave
-                "date DATE NOT NULL, " +
-                "marked_by INTEGER NOT NULL, " +
-                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "FOREIGN KEY (student_id) REFERENCES Users(user_id), " +
-                "FOREIGN KEY (subject_id) REFERENCES Subjects(subject_id), " +
-                "FOREIGN KEY (marked_by) REFERENCES Users(user_id), " +
-                "UNIQUE(student_id, subject_id, date)" +
+                "attendance_date DATE, " +
+                "subject_code VARCHAR(50) REFERENCES Subject(subject_code), " +
+                "student_id INT REFERENCES Users(user_id), " +
+                "semester VARCHAR(5), " + // values: 1-6
+                "academic_year VARCHAR(20), " +
+                "status VARCHAR(20) DEFAULT 'Absent'" +
                 ")";
         
         try (Statement stmt = conn.createStatement()) {
@@ -188,8 +245,8 @@ public class DatabaseInitializer implements ServletContextListener {
                 // No users exist, create a default admin
                 
                 // First, create a default department
-                String deptSql = "INSERT INTO Departments (name, description) " +
-                               "VALUES ('Administration', 'System Administration Department') " +
+                String deptSql = "INSERT INTO Department (department_name) " +
+                               "VALUES ('Administration') " +
                                "RETURNING department_id";
                 
                 int departmentId;
@@ -212,10 +269,14 @@ public class DatabaseInitializer implements ServletContextListener {
                     pstmt.setString(1, "System Admin");
                     pstmt.setString(2, "1234567890");
                     pstmt.setString(3, "admin@example.com");
-                    pstmt.setString(4, "admin123"); // Consider using password hashing in production
+                    // TODO: In production, use a password hashing library like BCrypt
+                    // For simplicity, we're using plain text in development
+                    // String hashedPassword = BCrypt.hashpw("admin123", BCrypt.gensalt());
+                    pstmt.setString(4, "admin123"); // This should be hashed in production!
                     pstmt.setString(5, "Admin");
                     pstmt.setInt(6, departmentId);
                     
+                    LOGGER.info("Creating default admin user with email: admin@example.com");
                     int rowsAffected = pstmt.executeUpdate();
                     if (rowsAffected > 0) {
                         LOGGER.info("Default admin user created successfully");
@@ -233,7 +294,13 @@ public class DatabaseInitializer implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         LOGGER.info("ServletContextListener initialized - initializing database");
-        initialize();
+        try {
+            initialize();
+            LOGGER.info("Database initialization completed in ServletContextListener");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error during database initialization in ServletContextListener", e);
+            // Continue context initialization even if database setup fails
+        }
     }
     
     /**

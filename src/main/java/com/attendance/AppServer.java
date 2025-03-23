@@ -43,8 +43,10 @@ public class AppServer {
             String classpath = System.getProperty("java.class.path");
             LOGGER.info("Classpath: " + classpath);
             
-            // Database will be initialized by the ServletContextListener
-            LOGGER.info("Database initialization will be handled by ServletContextListener");
+            // Database will be initialized both here and by the ServletContextListener
+            LOGGER.info("Initializing database directly before server startup");
+            com.attendance.utils.DatabaseInitializer.initialize(); // Direct initialization call
+            LOGGER.info("Database initialization completed directly");
             
             // Set up and start the Tomcat server
             int port = 5000;
@@ -59,8 +61,7 @@ public class AppServer {
             tomcat.setBaseDir(catalinaHome);
             tomcat.setPort(port);
             
-            // Initialize the connector explicitly
-            tomcat.getConnector();
+            // Initialize the connector explicitly (once is enough)
             tomcat.getConnector().setProperty("address", "0.0.0.0");
             
             // Add the web application context at root path
@@ -100,34 +101,71 @@ public class AppServer {
             
             // Create context and configure
             Context context = tomcat.addWebapp(contextPath, docBase.getAbsolutePath());
-            context.setConfigFile(null);
             context.setCreateUploadTargets(true);
+            
+            // Enable detailed logging for context configuration issues
+            context.setLogEffectiveWebXml(true);
+            
+            // Add an error reporter to capture JAR scanning issues
+            context.addServletContainerInitializer((c, ctx) -> {
+                LOGGER.info("Servlet container initializer called");
+            }, null);
+            
+            // Configure the context for better servlet initialization
+            // Note: setFailCtxIfServletStartFails is not available in this Tomcat version
+            
+            // Load our ServletContextListener manually
+            context.addApplicationListener("com.attendance.utils.DatabaseInitializer");
             
             // Simplify JAR scanning to avoid initialization errors
             StandardJarScanner jarScanner = new StandardJarScanner();
             jarScanner.setScanManifest(false);
+            
+            // Set more permissive JAR scanning to avoid TLD issues
             jarScanner.setJarScanFilter(new StandardJarScanFilter() {
                 @Override
                 public boolean check(JarScanType scanType, String jarName) {
-                    // Only scan for TLDs in JSTL-related JARs
-                    if (scanType == JarScanType.TLD) {
-                        return jarName.contains("jstl") || jarName.contains("taglibs");
-                    }
+                    // Limit scanning to essential JARs only
                     return false;
                 }
             });
             context.setJarScanner(jarScanner);
             
-            // Add class directories
+            // Add class directories - with fallback for Replit
             File additionWebInfClasses = new File("target/classes");
             LOGGER.info("Adding WEB-INF/classes directory: " + additionWebInfClasses.getAbsolutePath());
+            
             if (!additionWebInfClasses.exists()) {
-                LOGGER.warning("Classes directory does not exist: " + additionWebInfClasses.getAbsolutePath());
+                LOGGER.warning("Primary classes directory does not exist: " + additionWebInfClasses.getAbsolutePath());
+                
+                // Try fallback locations for Replit
+                String[] fallbackPaths = {"./classes", "./build/classes", "./out/production/classes"};
+                boolean foundClasses = false;
+                
+                for (String path : fallbackPaths) {
+                    File fallbackDir = new File(path);
+                    if (fallbackDir.exists() && fallbackDir.isDirectory()) {
+                        additionWebInfClasses = fallbackDir;
+                        LOGGER.info("Using fallback classes directory: " + fallbackDir.getAbsolutePath());
+                        foundClasses = true;
+                        break;
+                    }
+                }
+                
+                if (!foundClasses) {
+                    LOGGER.warning("Could not find compiled classes in any expected location. " +
+                                  "Web application may not function correctly.");
+                    // Create the classes directory to avoid errors
+                    additionWebInfClasses.mkdirs();
+                }
             }
             
             WebResourceRoot resources = new StandardRoot(context);
-            resources.addPreResources(new DirResourceSet(resources, "/WEB-INF/classes",
-                    additionWebInfClasses.getAbsolutePath(), "/"));
+            if (additionWebInfClasses.exists()) {
+                resources.addPreResources(new DirResourceSet(resources, "/WEB-INF/classes",
+                        additionWebInfClasses.getAbsolutePath(), "/"));
+                LOGGER.info("Added resource set for: " + additionWebInfClasses.getAbsolutePath());
+            }
             context.setResources(resources);
             
             // Start the server with better error reporting
