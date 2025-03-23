@@ -52,22 +52,31 @@ public class SubjectDAOImpl implements SubjectDAO {
     
     /**
      * Get a subject by ID
+     * Note: In the new schema, subjects are identified by their code rather than an ID
      */
     @Override
     public Subject getSubjectById(int subjectId) {
-        String sql = "SELECT * FROM subjects WHERE id = ?";
+        // In the new database schema, subjects don't have numeric IDs
+        // This method is implemented for backward compatibility
+        // It will attempt to find a subject with a code that matches the ID as a string
+        
+        String sql = "SELECT * FROM Subject WHERE subject_code = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setInt(1, subjectId);
+            // Convert the ID to string since subject_code is a string in the new schema
+            pstmt.setString(1, String.valueOf(subjectId));
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return mapResultSetToSubject(rs);
+                Subject subject = new Subject();
+                subject.setCode(rs.getString("subject_code"));
+                subject.setName(rs.getString("subject_name"));
+                return subject;
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving subject by ID", e);
+            LOGGER.log(Level.SEVERE, "Error retrieving subject by ID converted to code", e);
         }
         return null;
     }

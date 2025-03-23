@@ -83,7 +83,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
      */
     @Override
     public Department getDepartmentByName(String name) {
-        String sql = "SELECT * FROM departments WHERE name = ?";
+        String sql = "SELECT * FROM Department WHERE department_name = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -92,7 +92,10 @@ public class DepartmentDAOImpl implements DepartmentDAO {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return mapResultSetToDepartment(rs);
+                Department department = new Department();
+                department.setId(rs.getInt("department_id"));
+                department.setName(rs.getString("department_name"));
+                return department;
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error retrieving department by name: " + name, e);
@@ -105,18 +108,13 @@ public class DepartmentDAOImpl implements DepartmentDAO {
      */
     @Override
     public boolean updateDepartment(Department department) {
-        String sql = "UPDATE departments SET name = ?, code = ?, hod_id = ?, description = ?, updated_at = ? " +
-                     "WHERE id = ?";
+        String sql = "UPDATE Department SET department_name = ? WHERE department_id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, department.getName());
-            pstmt.setString(2, department.getCode());
-            pstmt.setInt(3, department.getHodId());
-            pstmt.setString(4, department.getDescription());
-            pstmt.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
-            pstmt.setInt(6, department.getId());
+            pstmt.setInt(2, department.getId());
             
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
@@ -131,7 +129,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
      */
     @Override
     public boolean deleteDepartment(int departmentId) {
-        String sql = "DELETE FROM departments WHERE id = ?";
+        String sql = "DELETE FROM Department WHERE department_id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -151,14 +149,17 @@ public class DepartmentDAOImpl implements DepartmentDAO {
     @Override
     public List<Department> getAllDepartments() {
         List<Department> departments = new ArrayList<>();
-        String sql = "SELECT * FROM departments ORDER BY name";
+        String sql = "SELECT * FROM Department ORDER BY department_name";
         
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                departments.add(mapResultSetToDepartment(rs));
+                Department department = new Department();
+                department.setId(rs.getInt("department_id"));
+                department.setName(rs.getString("department_name"));
+                departments.add(department);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error retrieving all departments", e);
@@ -168,11 +169,14 @@ public class DepartmentDAOImpl implements DepartmentDAO {
     
     /**
      * Get departments by HOD ID
+     * Note: In the new schema, we need to join with Users table to find HOD-department associations
      */
     @Override
     public List<Department> getDepartmentsByHodId(int hodId) {
         List<Department> departments = new ArrayList<>();
-        String sql = "SELECT * FROM departments WHERE hod_id = ? ORDER BY name";
+        // This is an adapted query since our new schema doesn't have HOD link directly in Department
+        String sql = "SELECT d.* FROM Department d JOIN Users u ON d.department_id = u.department_id " +
+                     "WHERE u.user_id = ? AND u.role = 'HOD' ORDER BY d.department_name";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -181,7 +185,10 @@ public class DepartmentDAOImpl implements DepartmentDAO {
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                departments.add(mapResultSetToDepartment(rs));
+                Department department = new Department();
+                department.setId(rs.getInt("department_id"));
+                department.setName(rs.getString("department_name"));
+                departments.add(department);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error retrieving departments by HOD ID: " + hodId, e);
@@ -189,34 +196,5 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         return departments;
     }
     
-    /**
-     * Helper method to map a ResultSet to a Department object
-     */
-    private Department mapResultSetToDepartment(ResultSet rs) throws SQLException {
-        Department department = new Department();
-        department.setId(rs.getInt("id"));
-        department.setName(rs.getString("name"));
-        department.setHodId(rs.getInt("hod_id"));
-        department.setDescription(rs.getString("description"));
-        
-        // Handle code if it exists in the database
-        try {
-            department.setCode(rs.getString("code"));
-        } catch (SQLException e) {
-            // Column may not exist, ignore
-        }
-        
-        Timestamp createdAt = rs.getTimestamp("created_at");
-        Timestamp updatedAt = rs.getTimestamp("updated_at");
-        
-        if (createdAt != null) {
-            department.setCreatedAt(createdAt.toLocalDateTime());
-        }
-        
-        if (updatedAt != null) {
-            department.setUpdatedAt(updatedAt.toLocalDateTime());
-        }
-        
-        return department;
-    }
+    // Helper method removed since we're now directly mapping result sets in each method
 }
