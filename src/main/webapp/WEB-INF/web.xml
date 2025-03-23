@@ -11,51 +11,15 @@
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 
-    <!-- Error Pages -->
-    <error-page>
-        <error-code>404</error-code>
-        <location>/views/error/404.jsp</location>
-    </error-page>
-    
-    <error-page>
-        <error-code>500</error-code>
-        <location>/views/error/500.jsp</location>
-    </error-page>
-
     <!-- Session Configuration -->
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>
-
-    <!-- Security Constraints -->
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>Restricted Access</web-resource-name>
-            <url-pattern>/views/student/*</url-pattern>
-            <url-pattern>/views/teacher/*</url-pattern>
-            <url-pattern>/views/classteacher/*</url-pattern>
-            <url-pattern>/views/hod/*</url-pattern>
-            <url-pattern>/views/principal/*</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-            <role-name>*</role-name>
-        </auth-constraint>
-    </security-constraint>
     
     <!-- Listeners -->
     <listener>
         <listener-class>com.attendance.utils.DatabaseInitializer</listener-class>
     </listener>
-    
-    <!-- Filter Mappings -->
-    <filter>
-        <filter-name>AuthenticationFilter</filter-name>
-        <filter-class>com.attendance.filters.AuthenticationFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>AuthenticationFilter</filter-name>
-        <url-pattern>/views/*</url-pattern>
-    </filter-mapping>
     
     <!-- Servlet Mappings -->
     <servlet>

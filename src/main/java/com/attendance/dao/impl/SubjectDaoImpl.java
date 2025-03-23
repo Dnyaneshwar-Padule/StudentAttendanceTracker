@@ -343,4 +343,31 @@ public class SubjectDaoImpl implements SubjectDao {
         
         return subject;
     }
+    
+    @Override
+    public List<Subject> findAllByStudentAndSemester(int studentId, String semester, String academicYear) throws SQLException {
+        List<Subject> subjects = new ArrayList<>();
+        String sql = "SELECT s.* FROM Subjects s " +
+                     "JOIN StudentEnrollment se ON s.class_id = se.class_id " +
+                     "WHERE se.student_id = ? AND s.semester = ? AND se.academic_year = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setString(2, semester);
+            stmt.setString(3, academicYear);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    subjects.add(mapResultSetToSubject(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding subjects for student and semester", e);
+            throw e;
+        }
+        
+        return subjects;
+    }
 }

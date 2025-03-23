@@ -20,6 +20,17 @@ public interface AttendanceDao extends BaseDao<Attendance, Integer> {
     List<Attendance> findByStudent(int studentId) throws SQLException;
     
     /**
+     * Find attendance records by student with filters for academic year, semester, and month
+     * @param studentId The student ID
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @param month The month (can be null for all months)
+     * @return List of attendance records for the specified student with filters
+     * @throws SQLException If a database error occurs
+     */
+    List<Attendance> findByStudent(int studentId, String academicYear, String semester, String month) throws SQLException;
+    
+    /**
      * Find attendance records by subject
      * @param subjectCode The subject code
      * @return List of attendance records for the specified subject
@@ -43,6 +54,18 @@ public interface AttendanceDao extends BaseDao<Attendance, Integer> {
      * @throws SQLException If a database error occurs
      */
     List<Attendance> findByStudentAndSubject(int studentId, String subjectCode) throws SQLException;
+    
+    /**
+     * Find attendance records by student and subject with filters for academic year, semester, and month
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param academicYear The academic year
+     * @param semester The semester
+     * @param month The month (can be null for all months)
+     * @return List of attendance records for the specified student and subject with filters
+     * @throws SQLException If a database error occurs
+     */
+    List<Attendance> findByStudentAndSubject(int studentId, String subjectCode, String academicYear, String semester, String month) throws SQLException;
     
     /**
      * Find attendance records by student, subject, and semester

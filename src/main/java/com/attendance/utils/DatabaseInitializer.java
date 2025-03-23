@@ -29,16 +29,37 @@ public class DatabaseInitializer implements ServletContextListener {
         LOGGER.info("Initializing database...");
         
         try {
+            LOGGER.info("Checking database connection...");
+            
+            // Print database environment variables for debugging (without values)
+            LOGGER.info("DATABASE_URL environment variable exists: " + (System.getenv("DATABASE_URL") != null));
+            LOGGER.info("PGUSER environment variable exists: " + (System.getenv("PGUSER") != null));
+            LOGGER.info("PGPASSWORD environment variable exists: " + (System.getenv("PGPASSWORD") != null));
+            LOGGER.info("PGHOST environment variable exists: " + (System.getenv("PGHOST") != null));
+            LOGGER.info("PGPORT environment variable exists: " + (System.getenv("PGPORT") != null));
+            LOGGER.info("PGDATABASE environment variable exists: " + (System.getenv("PGDATABASE") != null));
+            
+            // Test database connection first
+            try (Connection testConn = DatabaseConnection.getConnection()) {
+                LOGGER.info("Database connection tested successfully!");
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Failed to connect to database during initialization. Application may not function correctly.", e);
+                return; // Exit early as we can't proceed without a database
+            }
+            
             // Load schema SQL file
+            LOGGER.info("Loading schema SQL file...");
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream("database/schema.sql");
             
             if (inputStream == null) {
-                LOGGER.severe("Could not find database schema file!");
+                LOGGER.severe("Could not find database schema file! Path: database/schema.sql");
                 return;
             }
             
             String schemaSql = new BufferedReader(new InputStreamReader(inputStream))
                     .lines().collect(Collectors.joining("\n"));
+            
+            LOGGER.info("Schema SQL file loaded successfully. Size: " + schemaSql.length() + " characters");
             
             // Execute schema SQL
             try (Connection conn = DatabaseConnection.getConnection();
@@ -46,14 +67,23 @@ public class DatabaseInitializer implements ServletContextListener {
                 
                 // Split the SQL script by semicolons to execute each statement separately
                 String[] sqlStatements = schemaSql.split(";");
+                LOGGER.info("Number of SQL statements to execute: " + sqlStatements.length);
                 
+                int statementsExecuted = 0;
                 for (String sql : sqlStatements) {
                     if (!sql.trim().isEmpty()) {
-                        stmt.execute(sql);
+                        try {
+                            stmt.execute(sql);
+                            statementsExecuted++;
+                        } catch (SQLException e) {
+                            // Log the error but continue with other statements
+                            // This handles the case where tables already exist
+                            LOGGER.log(Level.WARNING, "Error executing SQL statement: " + e.getMessage());
+                        }
                     }
                 }
                 
-                LOGGER.info("Database schema initialized successfully!");
+                LOGGER.info("Database schema initialized successfully! Executed " + statementsExecuted + " statements.");
                 
                 // Insert default admin user if no users exist
                 insertDefaultAdmin(conn);

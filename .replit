@@ -47,8 +47,12 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "mvn compile exec:java -Dexec.mainClass=\"com.attendance.Main\""
+args = "mvn compile exec:java -Dexec.mainClass=\"com.attendance.SimpleApp\""
 waitForPort = 5000
 
 [deployment]
-run = ["sh", "-c", "mvn compile exec:java -Dexec.mainClass=\"com.attendance.Main\""]
+run = ["sh", "-c", "mvn compile exec:java -Dexec.mainClass=\"com.attendance.SimpleApp\""]
+
+[[ports]]
+localPort = 5000
+externalPort = 80

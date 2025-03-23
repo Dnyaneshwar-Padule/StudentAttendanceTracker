@@ -263,6 +263,56 @@ public class AttendanceDaoImpl implements AttendanceDao {
         
         return attendanceList;
     }
+    
+    @Override
+    public List<Attendance> findByStudent(int studentId, String academicYear, String semester, String month) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM Attendance WHERE student_id = ?");
+        
+        if (academicYear != null && !academicYear.isEmpty()) {
+            sqlBuilder.append(" AND academic_year = ?");
+        }
+        
+        if (semester != null && !semester.isEmpty()) {
+            sqlBuilder.append(" AND semester = ?");
+        }
+        
+        if (month != null && !month.isEmpty()) {
+            sqlBuilder.append(" AND EXTRACT(MONTH FROM attendance_date) = ?");
+        }
+        
+        sqlBuilder.append(" ORDER BY attendance_date DESC");
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlBuilder.toString())) {
+            
+            int paramIndex = 1;
+            stmt.setInt(paramIndex++, studentId);
+            
+            if (academicYear != null && !academicYear.isEmpty()) {
+                stmt.setString(paramIndex++, academicYear);
+            }
+            
+            if (semester != null && !semester.isEmpty()) {
+                stmt.setString(paramIndex++, semester);
+            }
+            
+            if (month != null && !month.isEmpty()) {
+                stmt.setInt(paramIndex++, Integer.parseInt(month));
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by student ID with filters", e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
 
     @Override
     public List<Attendance> findBySubject(String subjectCode) throws SQLException {
@@ -328,6 +378,57 @@ public class AttendanceDaoImpl implements AttendanceDao {
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error finding attendance by student ID and subject code", e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    @Override
+    public List<Attendance> findByStudentAndSubject(int studentId, String subjectCode, String academicYear, String semester, String month) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM Attendance WHERE student_id = ? AND subject_code = ?");
+        
+        if (academicYear != null && !academicYear.isEmpty()) {
+            sqlBuilder.append(" AND academic_year = ?");
+        }
+        
+        if (semester != null && !semester.isEmpty()) {
+            sqlBuilder.append(" AND semester = ?");
+        }
+        
+        if (month != null && !month.isEmpty()) {
+            sqlBuilder.append(" AND EXTRACT(MONTH FROM attendance_date) = ?");
+        }
+        
+        sqlBuilder.append(" ORDER BY attendance_date DESC");
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlBuilder.toString())) {
+            
+            int paramIndex = 1;
+            stmt.setInt(paramIndex++, studentId);
+            stmt.setString(paramIndex++, subjectCode);
+            
+            if (academicYear != null && !academicYear.isEmpty()) {
+                stmt.setString(paramIndex++, academicYear);
+            }
+            
+            if (semester != null && !semester.isEmpty()) {
+                stmt.setString(paramIndex++, semester);
+            }
+            
+            if (month != null && !month.isEmpty()) {
+                stmt.setInt(paramIndex++, Integer.parseInt(month));
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by student ID and subject code with filters", e);
             throw e;
         }
         
