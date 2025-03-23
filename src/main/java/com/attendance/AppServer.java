@@ -43,10 +43,8 @@ public class AppServer {
             String classpath = System.getProperty("java.class.path");
             LOGGER.info("Classpath: " + classpath);
             
-            // Database will be initialized both here and by the ServletContextListener
-            LOGGER.info("Initializing database directly before server startup");
-            com.attendance.utils.DatabaseInitializer.initialize(); // Direct initialization call
-            LOGGER.info("Database initialization completed directly");
+            // Database will be initialized by the ServletContextListener when the context is initialized
+            LOGGER.info("Database initialization will be handled by DatabaseInitializationListener");
             
             // Set up and start the Tomcat server
             int port = 5000;
@@ -115,7 +113,7 @@ public class AppServer {
             // Note: setFailCtxIfServletStartFails is not available in this Tomcat version
             
             // Load our ServletContextListener manually
-            context.addApplicationListener("com.attendance.utils.DatabaseInitializer");
+            context.addApplicationListener("com.attendance.listeners.DatabaseInitializationListener");
             
             // Simplify JAR scanning to avoid initialization errors
             StandardJarScanner jarScanner = new StandardJarScanner();
