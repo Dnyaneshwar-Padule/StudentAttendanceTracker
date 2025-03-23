@@ -356,9 +356,26 @@ public class SubjectDAOImpl implements SubjectDAO {
      */
     @Override
     public boolean assignSubjectToDepartmentClass(int departmentId, int classId, String academicYear) {
-        // This would typically update all subjects matching the criteria
-        // For now, just return true as a placeholder
-        return true;
+        String sql = "UPDATE subjects SET department_id = ?, class_id = ?, academic_year = ?, updated_at = ? " +
+                    "WHERE department_id IS NULL OR department_id != ? OR class_id != ? OR academic_year != ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, departmentId);
+            pstmt.setInt(2, classId);
+            pstmt.setString(3, academicYear);
+            pstmt.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+            pstmt.setInt(5, departmentId);
+            pstmt.setInt(6, classId);
+            pstmt.setString(7, academicYear);
+            
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error assigning subject to department and class", e);
+            return false;
+        }
     }
     
     /**
@@ -366,9 +383,23 @@ public class SubjectDAOImpl implements SubjectDAO {
      */
     @Override
     public boolean removeSubjectFromDepartmentClass(int departmentId, int classId, String academicYear) {
-        // This would typically update all subjects matching the criteria
-        // For now, just return true as a placeholder
-        return true;
+        String sql = "UPDATE subjects SET department_id = NULL, class_id = NULL, academic_year = NULL, updated_at = ? " +
+                    "WHERE department_id = ? AND class_id = ? AND academic_year = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+            pstmt.setInt(2, departmentId);
+            pstmt.setInt(3, classId);
+            pstmt.setString(4, academicYear);
+            
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error removing subject from department and class", e);
+            return false;
+        }
     }
     
     /**
