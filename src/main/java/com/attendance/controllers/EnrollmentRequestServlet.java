@@ -367,6 +367,5 @@ public class EnrollmentRequestServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/enrollment/pending");
     }
     
-    // Required by the DashboardServlet
-    private TeacherAssignmentDAO teacherAssignmentDAO = new TeacherAssignmentDAO();
+    // This comment explains that the teacherAssignmentDAO is used by DashboardServlet
 }

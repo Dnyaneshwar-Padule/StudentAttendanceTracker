@@ -30,6 +30,58 @@ public class AttendanceDaoImpl implements AttendanceDao {
     }
     
     /**
+     * Calculate attendance percentage for a student in a subject
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param semester The semester
+     * @param academicYear The academic year
+     * @return Attendance percentage (0-100)
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public double calculateAttendancePercentage(int studentId, String subjectCode, String semester, String academicYear) throws SQLException {
+        String sql = "SELECT COUNT(*) AS total, " +
+                     "SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present, " +
+                     "SUM(CASE WHEN status = 'On Leave' THEN 1 ELSE 0 END) AS on_leave " +
+                     "FROM Attendance " +
+                     "WHERE student_id = ? AND subject_code = ? " +
+                     "AND semester = ? AND academic_year = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setString(2, subjectCode);
+            stmt.setString(3, semester);
+            stmt.setString(4, academicYear);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int total = rs.getInt("total");
+                    int present = rs.getInt("present");
+                    int onLeave = rs.getInt("on_leave");
+                    
+                    // Don't count "On Leave" days in the total when calculating attendance percentage
+                    int effectiveTotal = total - onLeave;
+                    
+                    if (effectiveTotal > 0) {
+                        return (double) present / effectiveTotal * 100;
+                    } else if (total > 0 && effectiveTotal == 0) {
+                        // If all days are marked as "On Leave"
+                        return 100.0;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error calculating attendance percentage for student ID: " + 
+                       studentId + ", subject: " + subjectCode, e);
+            throw e;
+        }
+        
+        return 0.0;
+    }
+    
+    /**
      * Mark attendance for multiple students in a subject
      * 
      * @param subjectCode The subject code
@@ -923,5 +975,436 @@ public class AttendanceDaoImpl implements AttendanceDao {
         }
         
         return semesterTrend;
+    }
+    
+    /**
+     * Find attendance records by class and date
+     * @param classId The class ID
+     * @param date The attendance date
+     * @return List of attendance records for the specified class and date
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findByClassAndDate(int classId, Date date) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT a.* FROM Attendance a " +
+                    "JOIN StudentEnrollment se ON a.student_id = se.student_id " +
+                    "WHERE se.class_id = ? AND a.attendance_date = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            stmt.setDate(2, date);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by class and date: " + classId + ", " + date, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Find attendance records by class, subject, and date
+     * @param classId The class ID
+     * @param subjectCode The subject code
+     * @param date The attendance date
+     * @return List of attendance records for the specified class, subject, and date
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findByClassAndSubjectAndDate(int classId, String subjectCode, Date date) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT a.* FROM Attendance a " +
+                    "JOIN StudentEnrollment se ON a.student_id = se.student_id " +
+                    "WHERE se.class_id = ? AND a.subject_code = ? AND a.attendance_date = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            stmt.setString(2, subjectCode);
+            stmt.setDate(3, date);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by class, subject, and date: " + 
+                      classId + ", " + subjectCode + ", " + date, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Find recent attendance records for a student
+     * @param studentId The student ID
+     * @param limit Maximum number of records to return
+     * @return List of recent attendance records for the student
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findRecentByStudent(int studentId, int limit) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE student_id = ? " +
+                    "ORDER BY attendance_date DESC LIMIT ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setInt(2, limit);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding recent attendance for student ID: " + studentId, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Find attendance records by student, subject, semester, and academic year
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param semester The semester (e.g., "1", "2")
+     * @param academicYear The academic year (e.g., "2024-2025")
+     * @return List of attendance records for the specified student, subject, semester, and academic year
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findByStudentSubjectSemesterAndYear(int studentId, String subjectCode, 
+                                                           String semester, String academicYear) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT a.* FROM Attendance a " +
+                    "JOIN StudentEnrollment se ON a.student_id = se.student_id " +
+                    "JOIN Class c ON se.class_id = c.class_id " +
+                    "WHERE a.student_id = ? AND a.subject_code = ? " +
+                    "AND c.semester = ? AND se.academic_year = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setString(2, subjectCode);
+            stmt.setString(3, semester);
+            stmt.setString(4, academicYear);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by student, subject, semester, and year: " + 
+                      studentId + ", " + subjectCode + ", " + semester + ", " + academicYear, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Find attendance records by student and subject
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @return List of attendance records for the specified student and subject
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findByStudentAndSubject(int studentId, String subjectCode) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE student_id = ? AND subject_code = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setString(2, subjectCode);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by student and subject: " + 
+                      studentId + ", " + subjectCode, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Find attendance records by student and subject with filters for academic year, semester, and month
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param academicYear The academic year (e.g., "2024-2025")
+     * @param semester The semester (e.g., "1", "2")
+     * @param month The month (e.g., "01" for January)
+     * @return List of attendance records for the specified criteria
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findByStudentAndSubject(int studentId, String subjectCode, 
+                                               String academicYear, String semester, String month) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT a.* FROM Attendance a ")
+                 .append("JOIN StudentEnrollment se ON a.student_id = se.student_id ")
+                 .append("JOIN Class c ON se.class_id = c.class_id ")
+                 .append("WHERE a.student_id = ? AND a.subject_code = ?");
+        
+        // Add optional filters
+        if (academicYear != null && !academicYear.isEmpty()) {
+            sqlBuilder.append(" AND se.academic_year = ?");
+        }
+        if (semester != null && !semester.isEmpty()) {
+            sqlBuilder.append(" AND c.semester = ?");
+        }
+        if (month != null && !month.isEmpty()) {
+            sqlBuilder.append(" AND EXTRACT(MONTH FROM a.attendance_date) = ?");
+        }
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlBuilder.toString())) {
+            
+            int paramIndex = 1;
+            stmt.setInt(paramIndex++, studentId);
+            stmt.setString(paramIndex++, subjectCode);
+            
+            if (academicYear != null && !academicYear.isEmpty()) {
+                stmt.setString(paramIndex++, academicYear);
+            }
+            if (semester != null && !semester.isEmpty()) {
+                stmt.setString(paramIndex++, semester);
+            }
+            if (month != null && !month.isEmpty()) {
+                stmt.setInt(paramIndex++, Integer.parseInt(month));
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by student and subject with filters: " + 
+                      studentId + ", " + subjectCode + ", " + academicYear + ", " + semester + ", " + month, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Find attendance records by student, subject, and semester
+     * @param studentId The student ID
+     * @param subjectCode The subject code
+     * @param semester The semester (e.g., "1", "2")
+     * @return List of attendance records for the specified student, subject, and semester
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findByStudentSubjectAndSemester(int studentId, String subjectCode, String semester) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT a.* FROM Attendance a " +
+                    "JOIN StudentEnrollment se ON a.student_id = se.student_id " +
+                    "JOIN Class c ON se.class_id = c.class_id " +
+                    "WHERE a.student_id = ? AND a.subject_code = ? AND c.semester = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setString(2, subjectCode);
+            stmt.setString(3, semester);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by student, subject, and semester: " + 
+                      studentId + ", " + subjectCode + ", " + semester, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Find attendance records by subject, date, and semester
+     * @param subjectCode The subject code
+     * @param date The attendance date
+     * @param semester The semester (e.g., "1", "2")
+     * @return List of attendance records for the specified subject, date, and semester
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public List<Attendance> findBySubjectDateAndSemester(String subjectCode, Date date, String semester) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT a.* FROM Attendance a " +
+                    "JOIN StudentEnrollment se ON a.student_id = se.student_id " +
+                    "JOIN Class c ON se.class_id = c.class_id " +
+                    "WHERE a.subject_code = ? AND a.attendance_date = ? AND c.semester = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, subjectCode);
+            stmt.setDate(2, date);
+            stmt.setString(3, semester);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by subject, date, and semester: " + 
+                      subjectCode + ", " + date + ", " + semester, e);
+            throw e;
+        }
+        
+        return attendanceList;
+    }
+    
+    /**
+     * Get weekly attendance summary for a teacher's classes
+     * @param teacherId The teacher ID
+     * @return Map summarizing weekly attendance
+     * @throws SQLException If a database error occurs
+     */
+    @Override
+    public Map<String, Object> getWeeklyAttendanceSummary(int teacherId) throws SQLException {
+        Map<String, Object> summary = new HashMap<>();
+        
+        // Get current date and calculate date for a week ago
+        LocalDate currentDate = LocalDate.now();
+        LocalDate weekAgoDate = currentDate.minusDays(7);
+        
+        // Convert to SQL dates
+        Date currentSqlDate = Date.valueOf(currentDate);
+        Date weekAgoSqlDate = Date.valueOf(weekAgoDate);
+        
+        String sql = "SELECT c.class_name, s.subject_code, s.subject_name, " +
+                    "COUNT(*) AS total_records, " +
+                    "SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present_count, " +
+                    "SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count, " +
+                    "SUM(CASE WHEN a.status = 'Leave' THEN 1 ELSE 0 END) AS leave_count " +
+                    "FROM Attendance a " +
+                    "JOIN TeacherAssignment ta ON a.subject_code = ta.subject_code " +
+                    "JOIN Subject s ON a.subject_code = s.subject_code " +
+                    "JOIN Class c ON ta.class_id = c.class_id " +
+                    "WHERE ta.teacher_id = ? " +
+                    "AND a.attendance_date BETWEEN ? AND ? " +
+                    "GROUP BY c.class_name, s.subject_code, s.subject_name";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, teacherId);
+            stmt.setDate(2, weekAgoSqlDate);
+            stmt.setDate(3, currentSqlDate);
+            
+            List<Map<String, Object>> classSummaries = new ArrayList<>();
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> classSummary = new HashMap<>();
+                    
+                    String className = rs.getString("class_name");
+                    String subjectCode = rs.getString("subject_code");
+                    String subjectName = rs.getString("subject_name");
+                    int totalRecords = rs.getInt("total_records");
+                    int presentCount = rs.getInt("present_count");
+                    int absentCount = rs.getInt("absent_count");
+                    int leaveCount = rs.getInt("leave_count");
+                    
+                    // Calculate percentage (accounting for leave)
+                    double presentPercentage = 0;
+                    if (totalRecords > 0) {
+                        // Don't count leave in total for percentage calculation
+                        int effectiveTotal = totalRecords - leaveCount;
+                        if (effectiveTotal > 0) {
+                            presentPercentage = (double) presentCount / effectiveTotal * 100;
+                        } else if (leaveCount == totalRecords) {
+                            // If all are leave, consider 100%
+                            presentPercentage = 100;
+                        }
+                    }
+                    
+                    classSummary.put("className", className);
+                    classSummary.put("subjectCode", subjectCode);
+                    classSummary.put("subjectName", subjectName);
+                    classSummary.put("totalRecords", totalRecords);
+                    classSummary.put("presentCount", presentCount);
+                    classSummary.put("absentCount", absentCount);
+                    classSummary.put("leaveCount", leaveCount);
+                    classSummary.put("presentPercentage", presentPercentage);
+                    
+                    classSummaries.add(classSummary);
+                }
+            }
+            
+            // Get total statistics
+            int totalRecords = 0;
+            int totalPresent = 0;
+            int totalAbsent = 0;
+            int totalLeave = 0;
+            
+            for (Map<String, Object> classSummary : classSummaries) {
+                totalRecords += (int) classSummary.get("totalRecords");
+                totalPresent += (int) classSummary.get("presentCount");
+                totalAbsent += (int) classSummary.get("absentCount");
+                totalLeave += (int) classSummary.get("leaveCount");
+            }
+            
+            // Calculate overall percentage
+            double overallPercentage = 0;
+            if (totalRecords > 0) {
+                // Don't count leave in total for percentage calculation
+                int effectiveTotal = totalRecords - totalLeave;
+                if (effectiveTotal > 0) {
+                    overallPercentage = (double) totalPresent / effectiveTotal * 100;
+                } else if (totalLeave == totalRecords) {
+                    // If all are leave, consider 100%
+                    overallPercentage = 100;
+                }
+            }
+            
+            summary.put("classSummaries", classSummaries);
+            summary.put("totalRecords", totalRecords);
+            summary.put("totalPresent", totalPresent);
+            summary.put("totalAbsent", totalAbsent);
+            summary.put("totalLeave", totalLeave);
+            summary.put("overallPercentage", overallPercentage);
+            summary.put("startDate", weekAgoDate);
+            summary.put("endDate", currentDate);
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting weekly attendance summary for teacher ID: " + teacherId, e);
+            throw e;
+        }
+        
+        return summary;
     }
 }

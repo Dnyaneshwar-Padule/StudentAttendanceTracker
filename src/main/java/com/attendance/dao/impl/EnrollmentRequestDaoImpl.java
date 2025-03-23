@@ -488,12 +488,7 @@ public class EnrollmentRequestDaoImpl implements EnrollmentRequestDao, Enrollmen
     
     @Override
     public boolean approveEnrollmentRequest(int requestId, int approverUserId) {
-        try {
-            return updateRequestStatus(requestId, "Approved", approverUserId);
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error approving enrollment request with ID: " + requestId, e);
-            return false;
-        }
+        return updateRequestStatus(requestId, "Approved", approverUserId);
     }
     
     @Override

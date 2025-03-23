@@ -179,7 +179,7 @@ public class AttendanceController extends HttpServlet {
                     attendance.setSubjectCode(subjectCode);
                     attendance.setAttendanceDate(attendanceDate);
                     attendance.setStatus(status);
-                    attendance.setSemester(semester);
+                    attendance.setSemester(Integer.parseInt(semester));
                     attendance.setAcademicYear(academicYear);
                     
                     emailService.sendAttendanceNotification(student, attendance, subjectCode);
