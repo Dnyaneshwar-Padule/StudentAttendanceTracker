@@ -22,6 +22,9 @@ public class Class {
     private LocalDate startDate; // Class start date
     private LocalDate endDate; // Class end date
     
+    // Reference to Department object for proper relationship handling
+    private Department department;
+    
     /**
      * Default constructor
      */
