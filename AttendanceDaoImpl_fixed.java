@@ -4,7 +4,6 @@ import com.attendance.dao.AttendanceDao;
 import com.attendance.dao.LeaveApplicationDao;
 import com.attendance.models.Attendance;
 import com.attendance.utils.DatabaseConnection;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,21 +12,15 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Implementation of AttendanceDao interface for database operations
- */
 public class AttendanceDaoImpl implements AttendanceDao {
     private static final Logger LOGGER = Logger.getLogger(AttendanceDaoImpl.class.getName());
-    
+
     private LeaveApplicationDao leaveApplicationDao;
-    
-    /**
-     * Default constructor
-     */
+
     public AttendanceDaoImpl() {
         leaveApplicationDao = new LeaveApplicationDaoImpl();
     }
-    
+
     @Override
     public Map<String, Double> getMonthlyAttendanceTrend(String academicYear) throws SQLException {
         Map<String, Double> monthlyTrend = new HashMap<>();
@@ -241,9 +234,31 @@ public class AttendanceDaoImpl implements AttendanceDao {
         }
     }
 
-    // Rest of the methods in the class
+    @Override
+    public List<Attendance> findByStudentSubjectAndSemester(int studentId, String subjectCode, String semester) throws SQLException {
+        List<Attendance> attendanceList = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE student_id = ? AND subject_code = ? AND semester = ?";
 
-    // The mapResultSetToAttendance method
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, studentId);
+            stmt.setString(2, subjectCode);
+            stmt.setString(3, semester);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    attendanceList.add(mapResultSetToAttendance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding attendance by student, subject, and semester", e);
+            throw e;
+        }
+
+        return attendanceList;
+    }
+
     private Attendance mapResultSetToAttendance(ResultSet rs) throws SQLException {
         Attendance attendance = new Attendance();
         attendance.setAttendanceId(rs.getInt("attendance_id"));
