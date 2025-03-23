@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 
 import org.apache.catalina.LifecycleException;
 
-import com.attendance.dao.impl.DatabaseConnection;
+import com.attendance.utils.DatabaseConnection;
 
 /**
  * Main application server for the Student Attendance Management System.
