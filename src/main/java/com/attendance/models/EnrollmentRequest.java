@@ -22,6 +22,8 @@ public class EnrollmentRequest {
     private LocalDateTime approvalDate; // When the request was approved/rejected
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String requestedRole; // Role requested by the user
+    private String enrollmentNumber; // Student enrollment number
     
     /**
      * Default constructor
@@ -215,12 +217,64 @@ public class EnrollmentRequest {
         this.requestDate = requestDate;
     }
     
+    /**
+     * Gets the request date as a java.sql.Date for database operations
+     * 
+     * @return The request date as a java.sql.Date
+     */
+    public java.sql.Date getRequestDate_SqlDate() {
+        if (this.requestDate == null) {
+            return null;
+        }
+        return java.sql.Date.valueOf(this.requestDate.toLocalDate());
+    }
+    
+    /**
+     * Sets the request date from a java.sql.Date
+     * 
+     * @param requestDate The request date as a java.sql.Date
+     */
+    public void setRequestDate(java.sql.Date requestDate) {
+        if (requestDate != null) {
+            // Set time to current time, as Date doesn't have time info
+            this.requestDate = requestDate.toLocalDate().atStartOfDay();
+        } else {
+            this.requestDate = null;
+        }
+    }
+    
     public LocalDateTime getApprovalDate() {
         return approvalDate;
     }
     
     public void setApprovalDate(LocalDateTime approvalDate) {
         this.approvalDate = approvalDate;
+    }
+    
+    /**
+     * Gets the approval date as a java.sql.Date for database operations
+     * 
+     * @return The approval date as a java.sql.Date
+     */
+    public java.sql.Date getApprovalDate_SqlDate() {
+        if (this.approvalDate == null) {
+            return null;
+        }
+        return java.sql.Date.valueOf(this.approvalDate.toLocalDate());
+    }
+    
+    /**
+     * Sets the approval date from a java.sql.Date
+     * 
+     * @param approvalDate The approval date as a java.sql.Date
+     */
+    public void setApprovalDate(java.sql.Date approvalDate) {
+        if (approvalDate != null) {
+            // Set time to current time, as Date doesn't have time info
+            this.approvalDate = approvalDate.toLocalDate().atStartOfDay();
+        } else {
+            this.approvalDate = null;
+        }
     }
     
     /**
@@ -264,6 +318,42 @@ public class EnrollmentRequest {
      */
     public void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
+    }
+    
+    /**
+     * Get the requested role
+     * 
+     * @return The requested role
+     */
+    public String getRequestedRole() {
+        return requestedRole;
+    }
+    
+    /**
+     * Set the requested role
+     * 
+     * @param requestedRole The requested role
+     */
+    public void setRequestedRole(String requestedRole) {
+        this.requestedRole = requestedRole;
+    }
+    
+    /**
+     * Get the enrollment number
+     * 
+     * @return The enrollment number
+     */
+    public String getEnrollmentNumber() {
+        return enrollmentNumber;
+    }
+    
+    /**
+     * Set the enrollment number
+     * 
+     * @param enrollmentNumber The enrollment number
+     */
+    public void setEnrollmentNumber(String enrollmentNumber) {
+        this.enrollmentNumber = enrollmentNumber;
     }
     
     @Override

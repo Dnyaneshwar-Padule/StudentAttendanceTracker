@@ -266,7 +266,8 @@ public class BiometricAttendanceController extends HttpServlet {
             attendance.setSubjectCode(subjectCode);
             attendance.setAttendanceDate(Date.valueOf(LocalDate.now()));
             attendance.setStatus("Present");  // Present since face is verified
-            attendance.setSemester(semester);
+            // Convert semester string to integer
+            attendance.setSemester(Integer.parseInt(semester));
             attendance.setAcademicYear(academicYear);
             attendance.setMarkedBy("Biometric System");
             attendance.setRemarks("Attendance marked via face recognition");

@@ -132,6 +132,15 @@ public class Subject {
     public String getSubjectCode() {
         return code;
     }
+    
+    /**
+     * Alias for setCode() to maintain compatibility with existing code
+     * 
+     * @param subjectCode The subject code
+     */
+    public void setSubjectCode(String subjectCode) {
+        this.code = subjectCode;
+    }
 
     public String getDescription() {
         return description;

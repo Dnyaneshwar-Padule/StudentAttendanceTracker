@@ -78,7 +78,7 @@ public class SubjectDaoImpl implements SubjectDao {
             stmt = conn.prepareStatement(sqlSubject);
             stmt.setString(1, subject.getSubjectCode());
             stmt.setString(2, subject.getSubjectName());
-            stmt.setString(3, subject.getSemester());
+            stmt.setString(3, String.valueOf(subject.getSemester()));
             stmt.setInt(4, subject.getCredits());
             
             int rowsAffected = stmt.executeUpdate();
@@ -135,7 +135,7 @@ public class SubjectDaoImpl implements SubjectDao {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, subject.getSubjectName());
-            stmt.setString(2, subject.getSemester());
+            stmt.setString(2, String.valueOf(subject.getSemester()));
             stmt.setInt(3, subject.getCredits());
             stmt.setString(4, subject.getSubjectCode());
             
@@ -331,7 +331,7 @@ public class SubjectDaoImpl implements SubjectDao {
         Subject subject = new Subject();
         subject.setSubjectCode(rs.getString("subject_code"));
         subject.setSubjectName(rs.getString("subject_name"));
-        subject.setSemester(rs.getString("semester"));
+        subject.setSemester(Integer.parseInt(rs.getString("semester")));
         subject.setCredits(rs.getInt("credits"));
         
         // Try to map departmentId if the column exists

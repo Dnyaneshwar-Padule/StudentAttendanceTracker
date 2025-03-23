@@ -67,4 +67,16 @@ public interface EnrollmentRequestDao extends BaseDao<EnrollmentRequest, Integer
      * @throws SQLException If a database error occurs
      */
     boolean updateStatus(int requestId, String status, int approverId, String comments) throws SQLException;
+    
+    /**
+     * Update enrollment request status (alias for updateStatus with empty comments)
+     * @param requestId The request ID
+     * @param status The new status
+     * @param approverId The approver user ID
+     * @return true if updated, false otherwise
+     * @throws SQLException If a database error occurs
+     */
+    default boolean updateRequestStatus(int requestId, String status, int approverId) throws SQLException {
+        return updateStatus(requestId, status, approverId, "");
+    }
 }

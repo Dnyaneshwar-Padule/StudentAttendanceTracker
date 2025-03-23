@@ -71,7 +71,7 @@ public class EnrollmentRequestDaoImpl implements EnrollmentRequestDao {
             stmt.setInt(2, request.getClassId());
             stmt.setString(3, request.getAcademicYear());
             stmt.setInt(4, request.getDepartmentId());
-            stmt.setDate(5, request.getRequestDate());
+            stmt.setDate(5, request.getRequestDate_SqlDate());
             stmt.setString(6, request.getStatus());
             
             if (request.getApproverId() != 0) {
@@ -81,7 +81,7 @@ public class EnrollmentRequestDaoImpl implements EnrollmentRequestDao {
             }
             
             if (request.getApprovalDate() != null) {
-                stmt.setDate(8, request.getApprovalDate());
+                stmt.setDate(8, request.getApprovalDate_SqlDate());
             } else {
                 stmt.setNull(8, java.sql.Types.DATE);
             }
@@ -115,7 +115,7 @@ public class EnrollmentRequestDaoImpl implements EnrollmentRequestDao {
             stmt.setInt(2, request.getClassId());
             stmt.setString(3, request.getAcademicYear());
             stmt.setInt(4, request.getDepartmentId());
-            stmt.setDate(5, request.getRequestDate());
+            stmt.setDate(5, request.getRequestDate_SqlDate());
             stmt.setString(6, request.getStatus());
             
             if (request.getApproverId() != 0) {
@@ -125,7 +125,7 @@ public class EnrollmentRequestDaoImpl implements EnrollmentRequestDao {
             }
             
             if (request.getApprovalDate() != null) {
-                stmt.setDate(8, request.getApprovalDate());
+                stmt.setDate(8, request.getApprovalDate_SqlDate());
             } else {
                 stmt.setNull(8, java.sql.Types.DATE);
             }

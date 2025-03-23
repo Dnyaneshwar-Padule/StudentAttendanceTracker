@@ -1,6 +1,7 @@
 package com.attendance.controllers;
 
 import com.attendance.dao.*;
+import com.attendance.dao.impl.*;
 import com.attendance.models.*;
 import com.attendance.utils.SessionUtil;
 
@@ -19,9 +20,9 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SubjectServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private SubjectDAO subjectDAO = new SubjectDAO();
-    private DepartmentDAO departmentDAO = new DepartmentDAO();
-    private ClassDAO classDAO = new ClassDAO();
+    private SubjectDAO subjectDAO = new SubjectDAOImpl();
+    private DepartmentDAO departmentDAO = new DepartmentDAOImpl();
+    private ClassDAO classDAO = new ClassDAOImpl();
     
     /**
      * Handles the HTTP GET request
@@ -162,10 +163,10 @@ public class SubjectServlet extends HttpServlet {
         }
         
         // Create new subject
-        Subject subject = new Subject(subjectCode, subjectName);
-        boolean created = subjectDAO.createSubject(subject);
+        Subject subject = new Subject(subjectName, subjectCode);
+        int subjectId = subjectDAO.createSubject(subject);
         
-        if (created) {
+        if (subjectId > 0) {
             request.setAttribute("success", "Subject added successfully");
             response.sendRedirect(request.getContextPath() + "/subjects/");
         } else {

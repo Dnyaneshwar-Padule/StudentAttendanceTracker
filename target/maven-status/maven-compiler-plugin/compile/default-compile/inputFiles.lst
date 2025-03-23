@@ -65,6 +65,7 @@
 /home/runner/workspace/src/main/java/com/attendance/controllers/BiometricAttendanceController.java
 /home/runner/workspace/src/main/java/com/attendance/utils/DateUtils.java
 /home/runner/workspace/src/main/java/com/attendance/dao/impl/StudentEnrollmentDaoImpl.java
+/home/runner/workspace/src/main/java/com/attendance/dao/impl/SubjectDAOImpl.java
 /home/runner/workspace/src/main/java/com/attendance/utils/SessionUtil.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/StudentController.java
 /home/runner/workspace/src/main/java/com/attendance/dao/AttendanceDao.java

@@ -61,6 +61,15 @@ public class Department {
     public int getDepartmentId() {
         return id;
     }
+    
+    /**
+     * Alias for setId() to maintain compatibility with existing code
+     * 
+     * @param departmentId The department ID
+     */
+    public void setDepartmentId(int departmentId) {
+        this.id = departmentId;
+    }
 
     public String getName() {
         return name;

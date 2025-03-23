@@ -1,5 +1,6 @@
 package com.attendance.models;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -17,6 +18,9 @@ public class Class {
     private String academicYear; // e.g., "2023-24"
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String description; // Class description
+    private LocalDate startDate; // Class start date
+    private LocalDate endDate; // Class end date
     
     /**
      * Default constructor
@@ -172,6 +176,60 @@ public class Class {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    /**
+     * Get the class description
+     * 
+     * @return The class description
+     */
+    public String getDescription() {
+        return description;
+    }
+    
+    /**
+     * Set the class description
+     * 
+     * @param description The class description
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    /**
+     * Get the class start date
+     * 
+     * @return The class start date
+     */
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+    
+    /**
+     * Set the class start date
+     * 
+     * @param startDate The class start date
+     */
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+    
+    /**
+     * Get the class end date
+     * 
+     * @return The class end date
+     */
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+    
+    /**
+     * Set the class end date
+     * 
+     * @param endDate The class end date
+     */
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
     }
     
     /**

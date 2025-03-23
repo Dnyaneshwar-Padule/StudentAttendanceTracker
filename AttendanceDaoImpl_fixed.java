@@ -6,7 +6,6 @@ import com.attendance.models.Attendance;
 import com.attendance.utils.DatabaseConnection;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -176,12 +175,10 @@ public class AttendanceDaoImpl implements AttendanceDao {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            // Fix: Convert LocalDate to java.sql.Date
             stmt.setDate(1, java.sql.Date.valueOf(attendance.getAttendanceDate()));
             stmt.setString(2, attendance.getSubjectCode());
             stmt.setInt(3, attendance.getStudentId());
-            // Fix: Convert int to String for semester
-            stmt.setString(4, String.valueOf(attendance.getSemester()));
+            stmt.setInt(4, attendance.getSemester());
             stmt.setString(5, attendance.getAcademicYear());
             stmt.setString(6, attendance.getStatus());
             
@@ -207,12 +204,10 @@ public class AttendanceDaoImpl implements AttendanceDao {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            // Fix: Convert LocalDate to java.sql.Date
             stmt.setDate(1, java.sql.Date.valueOf(attendance.getAttendanceDate()));
             stmt.setString(2, attendance.getSubjectCode());
             stmt.setInt(3, attendance.getStudentId());
-            // Fix: Convert int to String for semester
-            stmt.setString(4, String.valueOf(attendance.getSemester()));
+            stmt.setInt(4, attendance.getSemester());
             stmt.setString(5, attendance.getAcademicYear());
             stmt.setString(6, attendance.getStatus());
             stmt.setInt(7, attendance.getAttendanceId());
@@ -246,133 +241,15 @@ public class AttendanceDaoImpl implements AttendanceDao {
         }
     }
 
-    @Override
-    public List<Attendance> findByStudent(int studentId) throws SQLException {
-        List<Attendance> attendanceList = new ArrayList<>();
-        String sql = "SELECT * FROM Attendance WHERE student_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setInt(1, studentId);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    attendanceList.add(mapResultSetToAttendance(rs));
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error finding attendance by student ID: " + studentId, e);
-            throw e;
-        }
-        
-        return attendanceList;
-    }
-    
-    @Override
-    public List<Attendance> findByStudent(int studentId, String academicYear, String semester, String month) throws SQLException {
-        List<Attendance> attendanceList = new ArrayList<>();
-        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM Attendance WHERE student_id = ?");
-        
-        if (academicYear != null && !academicYear.isEmpty()) {
-            sqlBuilder.append(" AND academic_year = ?");
-        }
-        
-        if (semester != null && !semester.isEmpty()) {
-            sqlBuilder.append(" AND semester = ?");
-        }
-        
-        if (month != null && !month.isEmpty()) {
-            sqlBuilder.append(" AND EXTRACT(MONTH FROM attendance_date) = ?");
-        }
-        
-        sqlBuilder.append(" ORDER BY attendance_date DESC");
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sqlBuilder.toString())) {
-            
-            int paramIndex = 1;
-            stmt.setInt(paramIndex++, studentId);
-            
-            if (academicYear != null && !academicYear.isEmpty()) {
-                stmt.setString(paramIndex++, academicYear);
-            }
-            
-            if (semester != null && !semester.isEmpty()) {
-                stmt.setString(paramIndex++, semester);
-            }
-            
-            if (month != null && !month.isEmpty()) {
-                stmt.setInt(paramIndex++, Integer.parseInt(month));
-            }
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    attendanceList.add(mapResultSetToAttendance(rs));
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error finding attendance by student ID with filters", e);
-            throw e;
-        }
-        
-        return attendanceList;
-    }
+    // Rest of the methods in the class
 
-    @Override
-    public List<Attendance> findBySubject(String subjectCode) throws SQLException {
-        List<Attendance> attendanceList = new ArrayList<>();
-        String sql = "SELECT * FROM Attendance WHERE subject_code = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, subjectCode);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    attendanceList.add(mapResultSetToAttendance(rs));
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error finding attendance by subject code: " + subjectCode, e);
-            throw e;
-        }
-        
-        return attendanceList;
-    }
-
-    @Override
-    public List<Attendance> findByDate(Date date) throws SQLException {
-        List<Attendance> attendanceList = new ArrayList<>();
-        String sql = "SELECT * FROM Attendance WHERE attendance_date = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setDate(1, date);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    attendanceList.add(mapResultSetToAttendance(rs));
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error finding attendance by date: " + date, e);
-            throw e;
-        }
-        
-        return attendanceList;
-    }
-
-    // Helper method to map ResultSet to Attendance object
+    // The mapResultSetToAttendance method
     private Attendance mapResultSetToAttendance(ResultSet rs) throws SQLException {
         Attendance attendance = new Attendance();
         attendance.setAttendanceId(rs.getInt("attendance_id"));
         attendance.setStudentId(rs.getInt("student_id"));
         attendance.setSubjectCode(rs.getString("subject_code"));
-        // Fix: Convert String to int for semester
-        attendance.setSemester(Integer.parseInt(rs.getString("semester")));
+        attendance.setSemester(rs.getInt("semester"));
         attendance.setAcademicYear(rs.getString("academic_year"));
         attendance.setAttendanceDate(rs.getDate("attendance_date"));
         attendance.setStatus(rs.getString("status"));

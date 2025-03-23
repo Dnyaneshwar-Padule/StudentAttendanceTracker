@@ -148,4 +148,33 @@ public interface UserDao extends BaseDao<User, Integer> {
      * @throws SQLException If a database error occurs
      */
     int countUsersByStatus(String status) throws SQLException;
+    
+    /**
+     * Authenticate a user with email and password, returning an empty optional if not found
+     * @param email The email address
+     * @param password The plain text password
+     * @return Optional containing the authenticated user, empty if authentication fails
+     * @throws SQLException If a database error occurs
+     */
+    java.util.Optional<User> authenticateOptional(String email, String password) throws SQLException;
+    
+    /**
+     * Find a user by email address (alias for findByEmail to maintain compatibility)
+     * @param email The email address
+     * @return The user or null if not found
+     * @throws SQLException If a database error occurs
+     */
+    default User getByEmail(String email) throws SQLException {
+        return findByEmail(email);
+    }
+    
+    /**
+     * Create a new user (alias for registerUser to maintain compatibility)
+     * @param user The user to create
+     * @return The created user with ID populated
+     * @throws SQLException If a database error occurs
+     */
+    default User create(User user) throws SQLException {
+        return registerUser(user);
+    }
 }
