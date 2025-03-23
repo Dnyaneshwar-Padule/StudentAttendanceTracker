@@ -1,105 +1,163 @@
 package com.attendance.models;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
- * Model class for Department
+ * Represents a department in the attendance management system
  */
 public class Department {
-    private int departmentId;
-    private String departmentName;
-    private String departmentCode;
-    private int hodId;  // Head of Department user ID
+    private int id;
+    private String name;
+    private int hodId; // Head of Department ID (references users.id)
     private String description;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     
-    // Constructor with required fields
-    public Department(String departmentName, String departmentCode) {
-        this.departmentName = departmentName;
-        this.departmentCode = departmentCode;
+    /**
+     * Default constructor
+     */
+    public Department() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
     
-    // Full constructor
-    public Department(int departmentId, String departmentName, String departmentCode, 
-                     int hodId, String description, Timestamp createdAt, Timestamp updatedAt) {
-        this.departmentId = departmentId;
-        this.departmentName = departmentName;
-        this.departmentCode = departmentCode;
+    /**
+     * Constructor with essential fields
+     */
+    public Department(String name, int hodId) {
+        this();
+        this.name = name;
+        this.hodId = hodId;
+    }
+    
+    /**
+     * Full constructor
+     */
+    public Department(int id, String name, int hodId, String description, 
+                      LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.name = name;
         this.hodId = hodId;
         this.description = description;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-    
-    // Default constructor
-    public Department() {
-    }
-    
+
     // Getters and Setters
+    
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    
+    /**
+     * Alias for getId() to maintain compatibility with existing code
+     * 
+     * @return The department ID
+     */
     public int getDepartmentId() {
-        return departmentId;
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
     
-    public void setDepartmentId(int departmentId) {
-        this.departmentId = departmentId;
-    }
-    
+    /**
+     * Alias for getName() to maintain compatibility with existing code
+     * 
+     * @return The department name
+     */
     public String getDepartmentName() {
-        return departmentName;
+        return name;
     }
     
+    /**
+     * Alias for setName() to maintain compatibility with existing code
+     * 
+     * @param departmentName The department name
+     */
     public void setDepartmentName(String departmentName) {
-        this.departmentName = departmentName;
+        this.name = departmentName;
     }
     
+    // Department code field and accessors (needed by DepartmentController)
+    private String code;
+    
+    public String getCode() {
+        return code;
+    }
+    
+    public void setCode(String code) {
+        this.code = code;
+    }
+    
+    /**
+     * Alias for getCode() to maintain compatibility with existing code
+     * 
+     * @return The department code
+     */
     public String getDepartmentCode() {
-        return departmentCode;
+        return code;
     }
     
+    /**
+     * Alias for setCode() to maintain compatibility with existing code
+     * 
+     * @param departmentCode The department code
+     */
     public void setDepartmentCode(String departmentCode) {
-        this.departmentCode = departmentCode;
+        this.code = departmentCode;
     }
-    
+
     public int getHodId() {
         return hodId;
     }
-    
+
     public void setHodId(int hodId) {
         this.hodId = hodId;
     }
-    
+
     public String getDescription() {
         return description;
     }
-    
+
     public void setDescription(String description) {
         this.description = description;
     }
-    
-    public Timestamp getCreatedAt() {
+
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-    
-    public void setCreatedAt(Timestamp createdAt) {
+
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
-    
-    public Timestamp getUpdatedAt() {
+
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
-    
-    public void setUpdatedAt(Timestamp updatedAt) {
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    /**
+     * Update the updatedAt timestamp to the current time
+     */
+    public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
     }
     
     @Override
     public String toString() {
-        return "Department{" +
-                "departmentId=" + departmentId +
-                ", departmentName='" + departmentName + '\'' +
-                ", departmentCode='" + departmentCode + '\'' +
-                ", hodId=" + hodId +
-                '}';
+        return "Department [id=" + id + ", name=" + name + ", hodId=" + hodId + "]";
     }
 }

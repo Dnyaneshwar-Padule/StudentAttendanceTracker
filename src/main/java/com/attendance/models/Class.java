@@ -1,190 +1,198 @@
 package com.attendance.models;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
- * Model class for Class
+ * Represents a class in the attendance management system
+ * (Named Class despite potential conflict with java.lang.Class because the DAO layer
+ * and existing code references expect this naming)
  */
 public class Class {
-    private int classId;
-    private String className;
+    private int id;
+    private String name;
+    private String year; // FY, SY, TY
+    private int semester; // 1-6
     private int departmentId;
-    private int classTeacherId;
-    private int maxStudents;
-    private String description;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
-    private String course;
-    private String year;
-    private String semester;
-    private Department department; // Reference to Department object
+    private int classTeacherId; // References user ID
+    private String academicYear; // e.g., "2023-24"
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     
-    // Constructor with required fields
-    public Class(String className, int departmentId) {
-        this.className = className;
-        this.departmentId = departmentId;
-    }
-    
-    // Full constructor
-    public Class(int classId, String className, int departmentId, int classTeacherId,
-               int maxStudents, String description, Timestamp createdAt, Timestamp updatedAt) {
-        this.classId = classId;
-        this.className = className;
-        this.departmentId = departmentId;
-        this.classTeacherId = classTeacherId;
-        this.maxStudents = maxStudents;
-        this.description = description;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-    
-    // Default constructor
+    /**
+     * Default constructor
+     */
     public Class() {
-    }
-    
-    // Getters and Setters
-    public int getClassId() {
-        return classId;
-    }
-    
-    public void setClassId(int classId) {
-        this.classId = classId;
-    }
-    
-    public String getClassName() {
-        return className;
-    }
-    
-    public void setClassName(String className) {
-        this.className = className;
-    }
-    
-    public int getDepartmentId() {
-        return departmentId;
-    }
-    
-    public void setDepartmentId(int departmentId) {
-        this.departmentId = departmentId;
-    }
-    
-    public int getClassTeacherId() {
-        return classTeacherId;
-    }
-    
-    public void setClassTeacherId(int classTeacherId) {
-        this.classTeacherId = classTeacherId;
-    }
-    
-    public int getMaxStudents() {
-        return maxStudents;
-    }
-    
-    public void setMaxStudents(int maxStudents) {
-        this.maxStudents = maxStudents;
-    }
-    
-    public String getDescription() {
-        return description;
-    }
-    
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
     
     /**
-     * Get the course name
-     * @return The course name
+     * Constructor with essential fields
+     */
+    public Class(String name, String year, int semester, int departmentId, int classTeacherId, String academicYear) {
+        this();
+        this.name = name;
+        this.year = year;
+        this.semester = semester;
+        this.departmentId = departmentId;
+        this.classTeacherId = classTeacherId;
+        this.academicYear = academicYear;
+    }
+    
+    /**
+     * Full constructor
+     */
+    public Class(int id, String name, String year, int semester, int departmentId, 
+                  int classTeacherId, String academicYear, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.year = year;
+        this.semester = semester;
+        this.departmentId = departmentId;
+        this.classTeacherId = classTeacherId;
+        this.academicYear = academicYear;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // Getters and Setters
+    
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    
+    /**
+     * Alias for getId() to maintain compatibility with existing code
+     * 
+     * @return The class ID
+     */
+    public int getClassId() {
+        return id;
+    }
+    
+    /**
+     * Alias for setId() to maintain compatibility with existing code
+     * 
+     * @param classId The class ID
+     */
+    public void setClassId(int classId) {
+        this.id = classId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    /**
+     * Alias for getName() to maintain compatibility with existing code
+     * 
+     * @return The class name
+     */
+    public String getClassName() {
+        return name;
+    }
+    
+    /**
+     * Alias for getName() to maintain compatibility with existing code
+     * 
+     * @return The course name (class name)
      */
     public String getCourse() {
-        return course;
+        return name;
     }
     
     /**
-     * Set the course name
-     * @param course The course name to set
+     * Alias for setName() to maintain compatibility with existing code
+     * 
+     * @param course The course name (class name)
      */
     public void setCourse(String course) {
-        this.course = course;
+        this.name = course;
     }
-    
-    /**
-     * Get the class year (e.g., "FY", "SY", "TY")
-     * @return The class year
-     */
+
     public String getYear() {
         return year;
     }
-    
-    /**
-     * Set the class year
-     * @param year The class year to set
-     */
+
     public void setYear(String year) {
         this.year = year;
     }
-    
-    /**
-     * Get the semester
-     * @return The semester
-     */
-    public String getSemester() {
+
+    public int getSemester() {
         return semester;
     }
-    
-    /**
-     * Set the semester
-     * @param semester The semester to set
-     */
-    public void setSemester(String semester) {
+
+    public void setSemester(int semester) {
         this.semester = semester;
     }
-    
-    /**
-     * Get the department object
-     * @return The department object
-     */
-    public Department getDepartment() {
-        return department;
+
+    public int getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(int departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public int getClassTeacherId() {
+        return classTeacherId;
+    }
+
+    public void setClassTeacherId(int classTeacherId) {
+        this.classTeacherId = classTeacherId;
+    }
+
+    public String getAcademicYear() {
+        return academicYear;
+    }
+
+    public void setAcademicYear(String academicYear) {
+        this.academicYear = academicYear;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
     /**
-     * Set the department object
-     * @param department The department object to set
+     * Update the updatedAt timestamp to the current time
      */
-    public void setDepartment(Department department) {
-        this.department = department;
-        // Also update the departmentId for consistency
-        if (department != null) {
-            this.departmentId = department.getDepartmentId();
-        }
+    public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    /**
+     * Get a human-readable display name for the class
+     * 
+     * @return A formatted string like "FY BCA (2023-24)"
+     */
+    public String getDisplayName() {
+        return year + " " + name + " (" + academicYear + ")";
     }
     
     @Override
     public String toString() {
-        return "Class{" +
-                "classId=" + classId +
-                ", className='" + className + '\'' +
-                ", departmentId=" + departmentId +
-                ", classTeacherId=" + classTeacherId +
-                ", course='" + course + '\'' +
-                ", year='" + year + '\'' +
-                ", semester='" + semester + '\'' +
-                '}';
+        return "Class [id=" + id + ", name=" + name + ", year=" + year + ", semester=" + semester 
+                + ", departmentId=" + departmentId + ", academicYear=" + academicYear + "]";
     }
 }

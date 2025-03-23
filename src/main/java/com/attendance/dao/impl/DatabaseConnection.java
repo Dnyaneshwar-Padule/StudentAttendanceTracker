@@ -7,144 +7,164 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Database connection utility class
+ * Utility class for database connections
  */
 public class DatabaseConnection {
+    
     private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
     
-    private static final String JDBC_DRIVER = "org.postgresql.Driver";
-    
-    // Database credentials - load from environment variables
-    // Use individual parameters first, as they are in the correct format
-    private static final String DB_HOST = System.getenv("PGHOST");
-    private static final String DB_PORT = System.getenv("PGPORT");
-    private static final String DB_NAME = System.getenv("PGDATABASE");
-    private static final String DB_USER = System.getenv("PGUSER");
-    private static final String DB_PASSWORD = System.getenv("PGPASSWORD");
-    // DATABASE_URL is a fallback
-    private static final String DATABASE_URL = System.getenv("DATABASE_URL");
-    
-    // Connection pool attributes
+    // Connection pool settings
     private static final int MAX_CONNECTIONS = 10;
+    private static final int INITIAL_CONNECTIONS = 2;
     private static final long CONNECTION_TIMEOUT = 30000; // 30 seconds
     
+    private static String jdbcUrl = null;
+    private static String username = null;
+    private static String password = null;
+    
+    // Initialize database connection parameters
     static {
-        // Print environment variables for debugging
-        LOGGER.info("Environment variables for PostgreSQL:");
-        LOGGER.info("PGHOST: " + (DB_HOST != null ? DB_HOST : "not set"));
-        LOGGER.info("PGPORT: " + (DB_PORT != null ? DB_PORT : "not set"));
-        LOGGER.info("PGDATABASE: " + (DB_NAME != null ? DB_NAME : "not set"));
-        LOGGER.info("PGUSER: " + (DB_USER != null ? "is set" : "not set"));
-        LOGGER.info("DATABASE_URL: " + (DATABASE_URL != null ? "is set (starts with: " + 
-                 (DATABASE_URL.length() > 10 ? DATABASE_URL.substring(0, 10) + "...)" : DATABASE_URL + ")") : "not set"));
-        
-        // Try to load the PostgreSQL JDBC driver
         try {
-            Class.forName(JDBC_DRIVER);
+            // Load the JDBC driver
+            Class.forName("org.postgresql.Driver");
             LOGGER.info("PostgreSQL JDBC Driver loaded successfully");
             
-            // Test the connection - but don't fail if it doesn't work yet
-            Connection testConnection = null;
-            try {
-                testConnection = getConnection();
-                LOGGER.info("Database connection test successful");
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Database connection test failed: " + e.getMessage(), e);
-                // Don't throw exception here, let the application start anyway
-                // We'll handle connection errors on-demand in the DAO implementations
-            } finally {
-                if (testConnection != null) {
+            // Parse connection details from environment variables
+            String dbUrlEnv = System.getenv("DATABASE_URL");
+            String pgHost = System.getenv("PGHOST");
+            String pgPort = System.getenv("PGPORT");
+            String pgDatabase = System.getenv("PGDATABASE");
+            String pgUser = System.getenv("PGUSER");
+            String pgPassword = System.getenv("PGPASSWORD");
+            
+            // Use DATABASE_URL if available, otherwise use individual params
+            if (dbUrlEnv != null) {
+                LOGGER.info("Processing DATABASE_URL environment variable");
+                
+                // Convert standard postgres URL to JDBC format if needed
+                if (dbUrlEnv.startsWith("postgresql://")) {
+                    // Parse the URL to extract components for JDBC format
                     try {
-                        testConnection.close();
-                    } catch (SQLException e) {
-                        LOGGER.log(Level.WARNING, "Error closing test connection", e);
+                        // Example: postgresql://username:password@hostname:port/database?params
+                        String urlWithoutProtocol = dbUrlEnv.substring("postgresql://".length());
+                        
+                        // Extract credentials if present
+                        String hostPart;
+                        if (urlWithoutProtocol.contains("@")) {
+                            String[] credentialAndHost = urlWithoutProtocol.split("@", 2);
+                            String credentialPart = credentialAndHost[0];
+                            hostPart = credentialAndHost[1];
+                            
+                            // Extract username and password
+                            if (credentialPart.contains(":")) {
+                                String[] userAndPass = credentialPart.split(":", 2);
+                                username = userAndPass[0];
+                                password = userAndPass[1];
+                            } else {
+                                username = credentialPart;
+                            }
+                        } else {
+                            hostPart = urlWithoutProtocol;
+                        }
+                        
+                        // Now build the JDBC URL
+                        jdbcUrl = "jdbc:postgresql://" + hostPart;
+                        
+                        LOGGER.info("Successfully parsed DATABASE_URL into JDBC format");
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Failed to parse postgresql:// URL format", e);
+                        throw new SQLException("Failed to parse database connection parameters", e);
                     }
+                } else if (dbUrlEnv.startsWith("jdbc:postgresql://")) {
+                    // Already in JDBC format
+                    jdbcUrl = dbUrlEnv;
+                    LOGGER.info("DATABASE_URL already in JDBC format");
+                } else {
+                    throw new SQLException("Unrecognized DATABASE_URL format. Expected postgresql:// or jdbc:postgresql://");
                 }
+            } else if (pgHost != null && pgPort != null && pgDatabase != null && pgUser != null && pgPassword != null) {
+                jdbcUrl = "jdbc:postgresql://" + pgHost + ":" + pgPort + "/" + pgDatabase;
+                username = pgUser;
+                password = pgPassword;
+                LOGGER.info("Built connection URL from individual parameters");
+            } else {
+                throw new SQLException("Missing database connection parameters");
             }
+            
+            LOGGER.info("Database connection parameters initialized successfully");
             
         } catch (ClassNotFoundException e) {
             LOGGER.log(Level.SEVERE, "PostgreSQL JDBC Driver not found", e);
-            // Don't throw runtime exception to allow context to start even without DB
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize database connection parameters", e);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error initializing database connection", e);
         }
-    }
-    
-    /**
-     * Private constructor to prevent instantiation
-     */
-    private DatabaseConnection() {
     }
     
     /**
      * Get a database connection
      * 
-     * @return a new database connection
-     * @throws SQLException if a database access error occurs
+     * @return Connection to the database
+     * @throws SQLException if connection fails
      */
     public static Connection getConnection() throws SQLException {
-        // First try using the individual parameters (most reliable approach)
-        if (DB_HOST != null && DB_NAME != null && DB_USER != null && DB_PASSWORD != null) {
-            try {
-                // Ensure the port is numeric
-                int port = 5432; // Default PostgreSQL port
-                if (DB_PORT != null && !DB_PORT.isEmpty()) {
-                    try {
-                        port = Integer.parseInt(DB_PORT);
-                    } catch (NumberFormatException e) {
-                        LOGGER.warning("Invalid port number: " + DB_PORT + ". Using default port 5432.");
-                    }
-                }
-                
-                String jdbcUrl = "jdbc:postgresql://" + DB_HOST + ":" + port + "/" + DB_NAME;
-                LOGGER.info("Attempting to connect with PGHOST/PGDATABASE env variables: " + jdbcUrl);
-                
-                return DriverManager.getConnection(jdbcUrl, DB_USER, DB_PASSWORD);
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Failed to connect using individual parameters: " + e.getMessage());
-                // Fall through to try DATABASE_URL if this fails
-            }
-        } else {
-            LOGGER.info("Some individual database parameters are not set. Trying other methods.");
+        if (jdbcUrl == null) {
+            throw new SQLException("Database connection parameters not initialized");
         }
         
-        // Second, try using DATABASE_URL directly
-        if (DATABASE_URL != null && !DATABASE_URL.isEmpty()) {
-            try {
-                // Basic URL conversion
-                String jdbcUrl = DATABASE_URL;
-                
-                // For postgres:// or postgresql:// protocol formats
-                if (jdbcUrl.startsWith("postgres://")) {
-                    jdbcUrl = "jdbc:postgresql://" + jdbcUrl.substring(11);
-                } else if (jdbcUrl.startsWith("postgresql://")) {
-                    jdbcUrl = "jdbc:postgresql://" + jdbcUrl.substring(14);
-                } else if (!jdbcUrl.startsWith("jdbc:")) {
-                    jdbcUrl = "jdbc:postgresql://" + jdbcUrl;
-                }
-                
-                // Log the sanitized URL
-                LOGGER.info("Attempting to connect with DATABASE_URL: " + 
-                           jdbcUrl.replaceAll(":[^:]*@", ":***@"));
-                
-                return DriverManager.getConnection(jdbcUrl);
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Failed to connect using DATABASE_URL: " + e.getMessage());
-                // Fall through to next method if this fails
-            }
-        } else {
-            LOGGER.info("DATABASE_URL environment variable is not set.");
-        }
-        
-        // Last resort - try a hard-coded connection to the Replit PostgreSQL instance
         try {
-            LOGGER.info("Attempting to connect with hardcoded Replit PostgreSQL connection");
-            return DriverManager.getConnection(
-                "jdbc:postgresql://localhost:5432/" + System.getenv("REPL_SLUG"),
-                "postgres", 
-                "postgres"
-            );
+            Connection conn;
+            if (username != null && password != null) {
+                conn = DriverManager.getConnection(jdbcUrl, username, password);
+            } else {
+                conn = DriverManager.getConnection(jdbcUrl);
+            }
+            
+            if (conn != null) {
+                conn.setAutoCommit(true); // Set auto-commit mode
+                return conn;
+            } else {
+                throw new SQLException("Failed to establish database connection");
+            }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "All connection attempts failed", e);
-            throw new SQLException("Could not establish database connection after multiple attempts", e);
+            LOGGER.log(Level.SEVERE, "Error connecting to database", e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Close a database connection safely
+     * 
+     * @param connection The connection to close
+     */
+    public static void closeConnection(Connection connection) {
+        if (connection != null) {
+            try {
+                if (!connection.isClosed()) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Error closing database connection", e);
+            }
+        }
+    }
+    
+    /**
+     * Test the database connection
+     * 
+     * @return true if the connection is successful, false otherwise
+     */
+    public static boolean testConnection() {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            return conn != null && !conn.isClosed();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database connection test failed", e);
+            return false;
+        } finally {
+            closeConnection(conn);
         }
     }
 }

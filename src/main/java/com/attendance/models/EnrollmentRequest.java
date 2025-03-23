@@ -1,175 +1,186 @@
 package com.attendance.models;
 
-import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
- * EnrollmentRequest model class representing EnrollmentRequest table
+ * Represents an enrollment request in the attendance management system
  */
 public class EnrollmentRequest {
-    private int requestId;
-    private int userId;
-    private String requestedRole;
-    private Integer classId; // Can be null for non-student roles
-    private String enrollmentNumber;
-    private Timestamp submittedOn;
-    private String status;
-    private Integer verifiedBy;
-    private Timestamp verifiedOn;
+    private int id;
+    private int studentId; // User ID of the student
+    private int userId; // Alias for studentId for compatibility
+    private int classId;
+    private String status; // "Pending", "Approved", "Rejected"
+    private String requestReason;
+    private String rejectionReason;
+    private String comments; // Additional comments
+    private int departmentId; // Department ID
+    private String academicYear; // Academic year (e.g., "2023-24")
+    private int approverUserId; // User ID of the approver
+    private int approverId; // Alias for approverUserId for compatibility
+    private LocalDateTime requestDate; // When the request was made
+    private LocalDateTime approvalDate; // When the request was approved/rejected
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     
-    // Additional required fields
-    private String academicYear;
-    private int departmentId;
-    private Date requestDate;
-    private Integer approverId;
-    private Date approvalDate;
-    private String comments;
-    
-    // Additional fields for joining
-    private User user;
-    private User verifier;
-    private com.attendance.models.Class classObj;
-    
-    // Constructors
+    /**
+     * Default constructor
+     */
     public EnrollmentRequest() {
+        this.status = "Pending";
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.requestDate = LocalDateTime.now();
     }
     
-    public EnrollmentRequest(int requestId, int userId, String requestedRole, Integer classId, 
-                            String enrollmentNumber, Timestamp submittedOn, String status, 
-                            Integer verifiedBy, Timestamp verifiedOn) {
-        this.requestId = requestId;
-        this.userId = userId;
-        this.requestedRole = requestedRole;
+    /**
+     * Constructor with essential fields
+     */
+    public EnrollmentRequest(int studentId, int classId, String requestReason) {
+        this();
+        this.studentId = studentId;
         this.classId = classId;
-        this.enrollmentNumber = enrollmentNumber;
-        this.submittedOn = submittedOn;
+        this.requestReason = requestReason;
+    }
+    
+    /**
+     * Full constructor
+     */
+    public EnrollmentRequest(int id, int studentId, int classId, String status, 
+                             String requestReason, String rejectionReason, int approverUserId,
+                             LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.studentId = studentId;
+        this.classId = classId;
         this.status = status;
-        this.verifiedBy = verifiedBy;
-        this.verifiedOn = verifiedOn;
+        this.requestReason = requestReason;
+        this.rejectionReason = rejectionReason;
+        this.approverUserId = approverUserId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // Getters and Setters
+    
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
     
-    // Getters and setters
+    /**
+     * Alias for getId() to maintain compatibility with existing code
+     * 
+     * @return The enrollment request ID
+     */
     public int getRequestId() {
-        return requestId;
+        return id;
+    }
+
+    public int getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(int studentId) {
+        this.studentId = studentId;
+        this.userId = studentId; // Update userId to match studentId
     }
     
-    public void setRequestId(int requestId) {
-        this.requestId = requestId;
-    }
-    
+    /**
+     * Alias for getStudentId() to maintain compatibility with existing code
+     * 
+     * @return The user ID
+     */
     public int getUserId() {
-        return userId;
+        return studentId;
     }
     
+    /**
+     * Alias for setStudentId() to maintain compatibility with existing code
+     * 
+     * @param userId The user ID
+     */
     public void setUserId(int userId) {
         this.userId = userId;
+        this.studentId = userId; // Update studentId to match userId
     }
-    
-    public String getRequestedRole() {
-        return requestedRole;
-    }
-    
-    public void setRequestedRole(String requestedRole) {
-        this.requestedRole = requestedRole;
-    }
-    
-    public Integer getClassId() {
+
+    public int getClassId() {
         return classId;
     }
-    
-    public void setClassId(Integer classId) {
+
+    public void setClassId(int classId) {
         this.classId = classId;
     }
-    
-    public String getEnrollmentNumber() {
-        return enrollmentNumber;
-    }
-    
-    public void setEnrollmentNumber(String enrollmentNumber) {
-        this.enrollmentNumber = enrollmentNumber;
-    }
-    
-    public Timestamp getSubmittedOn() {
-        return submittedOn;
-    }
-    
-    public void setSubmittedOn(Timestamp submittedOn) {
-        this.submittedOn = submittedOn;
-    }
-    
+
     public String getStatus() {
         return status;
     }
-    
+
     public void setStatus(String status) {
         this.status = status;
     }
-    
-    public Integer getVerifiedBy() {
-        return verifiedBy;
+
+    public String getRequestReason() {
+        return requestReason;
+    }
+
+    public void setRequestReason(String requestReason) {
+        this.requestReason = requestReason;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public int getApproverUserId() {
+        return approverUserId;
+    }
+
+    public void setApproverUserId(int approverUserId) {
+        this.approverUserId = approverUserId;
+        this.approverId = approverUserId; // Update approverId to match approverUserId
     }
     
-    public void setVerifiedBy(Integer verifiedBy) {
-        this.verifiedBy = verifiedBy;
+    /**
+     * Alias for getApproverUserId() to maintain compatibility with existing code
+     * 
+     * @return The approver ID
+     */
+    public int getApproverId() {
+        return approverUserId;
     }
     
-    public Timestamp getVerifiedOn() {
-        return verifiedOn;
-    }
-    
-    public void setVerifiedOn(Timestamp verifiedOn) {
-        this.verifiedOn = verifiedOn;
-    }
-    
-    public User getUser() {
-        return user;
-    }
-    
-    public void setUser(User user) {
-        this.user = user;
-        if (user != null) {
-            this.userId = user.getUserId();
-        }
-    }
-    
-    public String getAcademicYear() {
-        return academicYear;
-    }
-    
-    public void setAcademicYear(String academicYear) {
-        this.academicYear = academicYear;
-    }
-    
-    public int getDepartmentId() {
-        return departmentId;
-    }
-    
-    public void setDepartmentId(int departmentId) {
-        this.departmentId = departmentId;
-    }
-    
-    public Date getRequestDate() {
-        return requestDate;
-    }
-    
-    public void setRequestDate(Date requestDate) {
-        this.requestDate = requestDate;
-    }
-    
-    public Integer getApproverId() {
-        return approverId;
-    }
-    
-    public void setApproverId(Integer approverId) {
+    /**
+     * Alias for setApproverUserId() to maintain compatibility with existing code
+     * 
+     * @param approverId The approver ID
+     */
+    public void setApproverId(int approverId) {
         this.approverId = approverId;
+        this.approverUserId = approverId; // Update approverUserId to match approverId
     }
-    
-    public Date getApprovalDate() {
-        return approvalDate;
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
-    
-    public void setApprovalDate(Date approvalDate) {
-        this.approvalDate = approvalDate;
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
     
     public String getComments() {
@@ -180,38 +191,84 @@ public class EnrollmentRequest {
         this.comments = comments;
     }
     
-    public User getVerifier() {
-        return verifier;
+    public int getDepartmentId() {
+        return departmentId;
     }
     
-    public void setVerifier(User verifier) {
-        this.verifier = verifier;
-        if (verifier != null) {
-            this.verifiedBy = verifier.getUserId();
-        }
+    public void setDepartmentId(int departmentId) {
+        this.departmentId = departmentId;
     }
     
-    public com.attendance.models.Class getClassObj() {
-        return classObj;
+    public String getAcademicYear() {
+        return academicYear;
     }
     
-    public void setClassObj(com.attendance.models.Class classObj) {
-        this.classObj = classObj;
-        if (classObj != null) {
-            this.classId = classObj.getClassId();
-        }
+    public void setAcademicYear(String academicYear) {
+        this.academicYear = academicYear;
+    }
+    
+    public LocalDateTime getRequestDate() {
+        return requestDate;
+    }
+    
+    public void setRequestDate(LocalDateTime requestDate) {
+        this.requestDate = requestDate;
+    }
+    
+    public LocalDateTime getApprovalDate() {
+        return approvalDate;
+    }
+    
+    public void setApprovalDate(LocalDateTime approvalDate) {
+        this.approvalDate = approvalDate;
+    }
+    
+    /**
+     * Alias for setId() to maintain compatibility with existing code
+     * 
+     * @param requestId The request ID
+     */
+    public void setRequestId(int requestId) {
+        this.id = requestId;
+    }
+    
+    /**
+     * Check if the request is pending
+     * 
+     * @return true if pending, false otherwise
+     */
+    public boolean isPending() {
+        return "Pending".equalsIgnoreCase(status);
+    }
+    
+    /**
+     * Check if the request is approved
+     * 
+     * @return true if approved, false otherwise
+     */
+    public boolean isApproved() {
+        return "Approved".equalsIgnoreCase(status);
+    }
+    
+    /**
+     * Check if the request is rejected
+     * 
+     * @return true if rejected, false otherwise
+     */
+    public boolean isRejected() {
+        return "Rejected".equalsIgnoreCase(status);
+    }
+    
+    /**
+     * Update the updatedAt timestamp to the current time
+     */
+    public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
     }
     
     @Override
     public String toString() {
-        return "EnrollmentRequest{" +
-                "requestId=" + requestId +
-                ", userId=" + userId +
-                ", requestedRole='" + requestedRole + '\'' +
-                ", status='" + status + '\'' +
-                ", submittedOn=" + submittedOn +
-                ", academicYear='" + academicYear + '\'' +
-                ", departmentId=" + departmentId +
-                '}';
+        return "EnrollmentRequest [id=" + id + ", studentId=" + studentId + ", classId=" + classId 
+                + ", status=" + status + "]";
     }
 }

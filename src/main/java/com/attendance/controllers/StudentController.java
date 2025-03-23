@@ -1211,7 +1211,7 @@ public class StudentController extends HttpServlet {
                 LocalDate fromDate = DateUtils.parseDate(fromDateStr);
                 if (fromDate != null) {
                     attendanceRecords.removeIf(record -> 
-                        record.getAttendanceDate().toLocalDate().isBefore(fromDate));
+                        record.getAttendanceDate().isBefore(fromDate));
                 }
             }
             
@@ -1219,7 +1219,7 @@ public class StudentController extends HttpServlet {
                 LocalDate toDate = DateUtils.parseDate(toDateStr);
                 if (toDate != null) {
                     attendanceRecords.removeIf(record -> 
-                        record.getAttendanceDate().toLocalDate().isAfter(toDate));
+                        record.getAttendanceDate().isAfter(toDate));
                 }
             }
             
@@ -1706,7 +1706,7 @@ public class StudentController extends HttpServlet {
                 LocalDate fromDate = DateUtils.parseDate(fromDateStr);
                 if (fromDate != null) {
                     attendanceRecords.removeIf(record -> 
-                        record.getAttendanceDate().toLocalDate().isBefore(fromDate));
+                        record.getAttendanceDate().isBefore(fromDate));
                 }
             }
             
@@ -1714,7 +1714,7 @@ public class StudentController extends HttpServlet {
                 LocalDate toDate = DateUtils.parseDate(toDateStr);
                 if (toDate != null) {
                     attendanceRecords.removeIf(record -> 
-                        record.getAttendanceDate().toLocalDate().isAfter(toDate));
+                        record.getAttendanceDate().isAfter(toDate));
                 }
             }
             
@@ -2175,7 +2175,7 @@ public class StudentController extends HttpServlet {
                 LocalDate fromDate = DateUtils.parseDate(fromDateStr);
                 if (fromDate != null) {
                     attendanceRecords.removeIf(record -> 
-                        record.getAttendanceDate().toLocalDate().isBefore(fromDate));
+                        record.getAttendanceDate().isBefore(fromDate));
                 }
             }
             
@@ -2183,7 +2183,7 @@ public class StudentController extends HttpServlet {
                 LocalDate toDate = DateUtils.parseDate(toDateStr);
                 if (toDate != null) {
                     attendanceRecords.removeIf(record -> 
-                        record.getAttendanceDate().toLocalDate().isAfter(toDate));
+                        record.getAttendanceDate().isAfter(toDate));
                 }
             }
             

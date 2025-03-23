@@ -1,316 +1,308 @@
 package com.attendance.models;
 
-import java.sql.Date;
-import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
- * Model class for Attendance
+ * Represents an attendance record in the attendance management system
  */
 public class Attendance {
-    private int attendanceId;
+    private int id;
     private int studentId;
-    private String subjectCode;
-    private Date attendanceDate;
-    private String status; // Present, Absent, Leave
-    private String semester;
-    private String academicYear;
-    private String markedBy;
+    private int classId;
+    private int subjectId;
+    private String subjectCode; // Subject code for reference
+    private int semester; // Semester value
+    private String academicYear; // Academic year
+    private LocalDate date;
+    private String status; // Present, Absent, Late, Leave
     private String remarks;
-    private Timestamp timeIn;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+    private int markedById; // ID of the faculty who marked attendance
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String attendanceSession; // Morning, Afternoon
+    private Integer leaveApplicationId; // Optional reference to a leave application if status is "Leave"
     
-    // Additional fields for display purposes (not stored in database)
-    private String studentName;
-    private String subjectName;
-
     /**
      * Default constructor
      */
     public Attendance() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
-
+    
     /**
-     * Constructor with main fields
-     * 
-     * @param studentId the student ID
-     * @param subjectCode the subject code
-     * @param attendanceDate the attendance date
-     * @param status the attendance status
-     * @param semester the semester
-     * @param academicYear the academic year
-     * @param markedBy who marked the attendance
+     * Constructor with essential fields
      */
-    public Attendance(int studentId, String subjectCode, Date attendanceDate, String status, 
-                    String semester, String academicYear, String markedBy) {
+    public Attendance(int studentId, int classId, int subjectId, LocalDate date, String status) {
+        this();
         this.studentId = studentId;
-        this.subjectCode = subjectCode;
-        this.attendanceDate = attendanceDate;
+        this.classId = classId;
+        this.subjectId = subjectId;
+        this.date = date;
         this.status = status;
-        this.semester = semester;
-        this.academicYear = academicYear;
-        this.markedBy = markedBy;
     }
-
+    
     /**
      * Full constructor
-     * 
-     * @param attendanceId the attendance ID
-     * @param studentId the student ID
-     * @param subjectCode the subject code
-     * @param attendanceDate the attendance date
-     * @param status the attendance status
-     * @param semester the semester
-     * @param academicYear the academic year
-     * @param markedBy who marked the attendance
-     * @param remarks additional remarks
-     * @param createdAt when the record was created
-     * @param updatedAt when the record was last updated
      */
-    public Attendance(int attendanceId, int studentId, String subjectCode, Date attendanceDate, 
-                    String status, String semester, String academicYear, String markedBy, 
-                    String remarks, Timestamp createdAt, Timestamp updatedAt) {
-        this.attendanceId = attendanceId;
+    public Attendance(int id, int studentId, int classId, int subjectId, String subjectCode,
+                      int semester, String academicYear, LocalDate date, 
+                      String status, String remarks, int markedById, LocalDateTime createdAt, 
+                      LocalDateTime updatedAt, String attendanceSession, Integer leaveApplicationId) {
+        this.id = id;
         this.studentId = studentId;
+        this.classId = classId;
+        this.subjectId = subjectId;
         this.subjectCode = subjectCode;
-        this.attendanceDate = attendanceDate;
-        this.status = status;
         this.semester = semester;
         this.academicYear = academicYear;
-        this.markedBy = markedBy;
+        this.date = date;
+        this.status = status;
         this.remarks = remarks;
+        this.markedById = markedById;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.attendanceSession = attendanceSession;
+        this.leaveApplicationId = leaveApplicationId;
     }
 
+    // Getters and Setters
+    
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    
     /**
-     * @return the attendanceId
+     * Alias for getId() to maintain compatibility with existing code
+     * 
+     * @return The attendance ID
      */
     public int getAttendanceId() {
-        return attendanceId;
+        return id;
     }
-
+    
     /**
-     * @param attendanceId the attendanceId to set
+     * Alias for setId() to maintain compatibility with existing code
+     * 
+     * @param attendanceId The attendance ID
      */
     public void setAttendanceId(int attendanceId) {
-        this.attendanceId = attendanceId;
+        this.id = attendanceId;
     }
 
-    /**
-     * @return the studentId
-     */
     public int getStudentId() {
         return studentId;
     }
 
-    /**
-     * @param studentId the studentId to set
-     */
     public void setStudentId(int studentId) {
         this.studentId = studentId;
     }
 
-    /**
-     * @return the subjectCode
-     */
+    public int getClassId() {
+        return classId;
+    }
+
+    public void setClassId(int classId) {
+        this.classId = classId;
+    }
+
+    public int getSubjectId() {
+        return subjectId;
+    }
+
+    public void setSubjectId(int subjectId) {
+        this.subjectId = subjectId;
+    }
+    
     public String getSubjectCode() {
         return subjectCode;
     }
-
-    /**
-     * @param subjectCode the subjectCode to set
-     */
+    
     public void setSubjectCode(String subjectCode) {
         this.subjectCode = subjectCode;
     }
-
-    /**
-     * @return the attendanceDate
-     */
-    public Date getAttendanceDate() {
-        return attendanceDate;
-    }
-
-    /**
-     * @param attendanceDate the attendanceDate to set
-     */
-    public void setAttendanceDate(Date attendanceDate) {
-        this.attendanceDate = attendanceDate;
-    }
-
-    /**
-     * @return the status
-     */
-    public String getStatus() {
-        return status;
-    }
-
-    /**
-     * @param status the status to set
-     */
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    /**
-     * @return the semester
-     */
-    public String getSemester() {
+    
+    public int getSemester() {
         return semester;
     }
-
-    /**
-     * @param semester the semester to set
-     */
-    public void setSemester(String semester) {
+    
+    public void setSemester(int semester) {
         this.semester = semester;
     }
-
-    /**
-     * @return the academicYear
-     */
+    
     public String getAcademicYear() {
         return academicYear;
     }
-
-    /**
-     * @param academicYear the academicYear to set
-     */
+    
     public void setAcademicYear(String academicYear) {
         this.academicYear = academicYear;
     }
 
-    /**
-     * @return the markedBy
-     */
-    public String getMarkedBy() {
-        return markedBy;
+    public LocalDate getDate() {
+        return date;
     }
 
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+    
     /**
-     * @param markedBy the markedBy to set
+     * Alias for getDate() to maintain compatibility with existing code
+     * Returns the attendance date
+     * 
+     * @return The attendance date
      */
-    public void setMarkedBy(String markedBy) {
-        this.markedBy = markedBy;
+    public LocalDate getAttendanceDate() {
+        return date;
+    }
+    
+    /**
+     * Alias for setDate() to maintain compatibility with existing code
+     * Sets the attendance date
+     * 
+     * @param attendanceDate The attendance date
+     */
+    public void setAttendanceDate(java.sql.Date attendanceDate) {
+        if (attendanceDate != null) {
+            this.date = attendanceDate.toLocalDate();
+        } else {
+            this.date = null;
+        }
     }
 
-    /**
-     * @return the remarks
-     */
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getRemarks() {
         return remarks;
     }
 
-    /**
-     * @param remarks the remarks to set
-     */
     public void setRemarks(String remarks) {
         this.remarks = remarks;
     }
 
-    /**
-     * @return the timeIn timestamp
-     */
-    public Timestamp getTimeIn() {
-        return timeIn;
+    public int getMarkedById() {
+        return markedById;
     }
 
-    /**
-     * @param timeIn the timeIn timestamp to set
-     */
-    public void setTimeIn(Timestamp timeIn) {
-        this.timeIn = timeIn;
-    }
-
-    /**
-     * @return the createdAt
-     */
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-
-    /**
-     * @param createdAt the createdAt to set
-     */
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    /**
-     * @return the updatedAt
-     */
-    public Timestamp getUpdatedAt() {
-        return updatedAt;
-    }
-
-    /**
-     * @param updatedAt the updatedAt to set
-     */
-    public void setUpdatedAt(Timestamp updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    /**
-     * @return the studentName
-     */
-    public String getStudentName() {
-        return studentName;
-    }
-
-    /**
-     * @param studentName the studentName to set
-     */
-    public void setStudentName(String studentName) {
-        this.studentName = studentName;
-    }
-
-    /**
-     * @return the subjectName
-     */
-    public String getSubjectName() {
-        return subjectName;
-    }
-
-    /**
-     * @param subjectName the subjectName to set
-     */
-    public void setSubjectName(String subjectName) {
-        this.subjectName = subjectName;
+    public void setMarkedById(int markedById) {
+        this.markedById = markedById;
     }
     
     /**
-     * Check if the status is "Present"
+     * Alias for setMarkedById() that accepts a String 
+     * to maintain compatibility with existing code
      * 
-     * @return true if the status is "Present"
+     * @param markedBy The ID of the user who marked attendance, as a String
+     */
+    public void setMarkedBy(String markedBy) {
+        if (markedBy != null && !markedBy.isEmpty()) {
+            try {
+                this.markedById = Integer.parseInt(markedBy);
+            } catch (NumberFormatException e) {
+                // Handle case where markedBy is not a valid integer
+                this.markedById = 0;
+            }
+        }
+    }
+    
+    /**
+     * Alias for getMarkedById() to maintain compatibility with existing code
+     * 
+     * @return The ID of the user who marked attendance
+     */
+    public String getMarkedBy() {
+        return String.valueOf(markedById);
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getAttendanceSession() {
+        return attendanceSession;
+    }
+
+    public void setAttendanceSession(String attendanceSession) {
+        this.attendanceSession = attendanceSession;
+    }
+
+    public Integer getLeaveApplicationId() {
+        return leaveApplicationId;
+    }
+
+    public void setLeaveApplicationId(Integer leaveApplicationId) {
+        this.leaveApplicationId = leaveApplicationId;
+    }
+    
+    /**
+     * Check if this attendance record indicates the student is present
+     * 
+     * @return true if the status is "Present", false otherwise
      */
     public boolean isPresent() {
         return "Present".equalsIgnoreCase(status);
     }
     
     /**
-     * Check if the status is "Absent"
+     * Check if this attendance record indicates the student is absent
      * 
-     * @return true if the status is "Absent"
+     * @return true if the status is "Absent", false otherwise
      */
     public boolean isAbsent() {
         return "Absent".equalsIgnoreCase(status);
     }
     
     /**
-     * Check if the status is "Leave"
+     * Check if this attendance record indicates the student is late
      * 
-     * @return true if the status is "Leave"
+     * @return true if the status is "Late", false otherwise
+     */
+    public boolean isLate() {
+        return "Late".equalsIgnoreCase(status);
+    }
+    
+    /**
+     * Check if this attendance record indicates the student is on leave
+     * 
+     * @return true if the status is "Leave", false otherwise
      */
     public boolean isOnLeave() {
         return "Leave".equalsIgnoreCase(status);
     }
-
+    
+    /**
+     * Update the updatedAt timestamp to the current time
+     */
+    public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
+    }
+    
     @Override
     public String toString() {
-        return "Attendance{" + "attendanceId=" + attendanceId + ", studentId=" + studentId + 
-               ", subjectCode=" + subjectCode + ", attendanceDate=" + attendanceDate + 
-               ", status=" + status + ", semester=" + semester + ", academicYear=" + academicYear + 
-               ", markedBy=" + markedBy + '}';
+        return "Attendance [id=" + id + ", studentId=" + studentId + ", classId=" + classId + ", subjectId=" + subjectId
+                + ", date=" + date + ", status=" + status + ", attendanceSession=" + attendanceSession + "]";
     }
 }

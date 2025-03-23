@@ -1,238 +1,143 @@
 package com.attendance.dao;
 
 import com.attendance.models.Subject;
-import com.attendance.utils.DatabaseConnection;
-
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data Access Object for Subject-related database operations
+ * Data Access Object interface for Subject entity
  */
-public class SubjectDAO {
-
+public interface SubjectDAO {
+    
     /**
-     * Create a new subject
+     * Create a new subject in the database
+     * 
      * @param subject The subject to create
+     * @return The ID of the created subject
+     */
+    int createSubject(Subject subject);
+    
+    /**
+     * Get a subject by ID
+     * 
+     * @param subjectId The ID of the subject
+     * @return The subject, or null if not found
+     */
+    Subject getSubjectById(int subjectId);
+    
+    /**
+     * Get subjects by department ID
+     * 
+     * @param departmentId The ID of the department
+     * @return List of subjects in the specified department
+     */
+    List<Subject> getSubjectsByDepartmentId(int departmentId);
+    
+    /**
+     * Get subjects by class ID
+     * 
+     * @param classId The ID of the class
+     * @return List of subjects for the specified class
+     */
+    List<Subject> getSubjectsByClassId(int classId);
+    
+    /**
+     * Alias for getSubjectsByClassId() to maintain compatibility with existing code
+     * 
+     * @param classId The ID of the class
+     * @return List of subjects for the specified class
+     */
+    List<Subject> getSubjectsByClass(int classId);
+    
+    /**
+     * Get subjects by teacher ID
+     * 
+     * @param teacherId The ID of the teacher
+     * @return List of subjects taught by the specified teacher
+     */
+    List<Subject> getSubjectsByTeacherId(int teacherId);
+    
+    /**
+     * Get subjects by semester
+     * 
+     * @param semester The semester (1-6)
+     * @return List of subjects for the specified semester
+     */
+    List<Subject> getSubjectsBySemester(int semester);
+    
+    /**
+     * Update an existing subject
+     * 
+     * @param subject The subject with updated information
      * @return true if successful, false otherwise
      */
-    public boolean createSubject(Subject subject) {
-        String sql = "INSERT INTO Subject (subject_code, subject_name) VALUES (?, ?)";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, subject.getSubjectCode());
-            pstmt.setString(2, subject.getSubjectName());
-            
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
+    boolean updateSubject(Subject subject);
+    
     /**
-     * Get a subject by code
-     * @param subjectCode The subject code
-     * @return Subject object if found, null otherwise
+     * Delete a subject by ID
+     * 
+     * @param subjectId The ID of the subject to delete
+     * @return true if successful, false otherwise
      */
-    public Subject getSubjectByCode(String subjectCode) {
-        String sql = "SELECT * FROM Subject WHERE subject_code = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, subjectCode);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    Subject subject = new Subject();
-                    subject.setSubjectCode(rs.getString("subject_code"));
-                    subject.setSubjectName(rs.getString("subject_name"));
-                    return subject;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return null;
-    }
-
+    boolean deleteSubject(int subjectId);
+    
     /**
      * Get all subjects
+     * 
      * @return List of all subjects
      */
-    public List<Subject> getAllSubjects() {
-        List<Subject> subjects = new ArrayList<>();
-        String sql = "SELECT * FROM Subject";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
-            while (rs.next()) {
-                Subject subject = new Subject();
-                subject.setSubjectCode(rs.getString("subject_code"));
-                subject.setSubjectName(rs.getString("subject_name"));
-                subjects.add(subject);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return subjects;
-    }
-
+    List<Subject> getAllSubjects();
+    
     /**
-     * Update a subject
-     * @param subject The subject to update
+     * Get subjects by teacher ID and class ID
+     * 
+     * @param teacherId The ID of the teacher
+     * @param classId The ID of the class
+     * @return List of subjects taught by the specified teacher for the specified class
+     */
+    List<Subject> getSubjectsByTeacherIdAndClassId(int teacherId, int classId);
+    
+    /**
+     * Assign a teacher to a subject
+     * 
+     * @param subjectId The ID of the subject
+     * @param teacherId The ID of the teacher
      * @return true if successful, false otherwise
      */
-    public boolean updateSubject(Subject subject) {
-        String sql = "UPDATE Subject SET subject_name = ? WHERE subject_code = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, subject.getSubjectName());
-            pstmt.setString(2, subject.getSubjectCode());
-            
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
+    boolean assignTeacherToSubject(int subjectId, int teacherId);
+    
     /**
-     * Delete a subject
-     * @param subjectCode The code of the subject to delete
-     * @return true if successful, false otherwise
+     * Get a subject by code
+     * 
+     * @param code The code of the subject
+     * @return The subject, or null if not found
      */
-    public boolean deleteSubject(String subjectCode) {
-        String sql = "DELETE FROM Subject WHERE subject_code = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, subjectCode);
-            
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
+    Subject getSubjectByCode(String code);
+    
     /**
-     * Assign a subject to a department and class
-     * @param departmentId The department ID
-     * @param classId The class ID
-     * @param subjectCode The subject code
-     * @return true if successful, false otherwise
-     */
-    public boolean assignSubjectToDepartmentClass(int departmentId, int classId, String subjectCode) {
-        String sql = "INSERT INTO Department_Subject (department_id, class_id, subject_code) VALUES (?, ?, ?)";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, departmentId);
-            pstmt.setInt(2, classId);
-            pstmt.setString(3, subjectCode);
-            
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Get subjects assigned to a specific department and class
-     * @param departmentId The department ID
-     * @param classId The class ID
-     * @return List of subjects
-     */
-    public List<Subject> getSubjectsByDepartmentAndClass(int departmentId, int classId) {
-        List<Subject> subjects = new ArrayList<>();
-        
-        String sql = "SELECT s.* FROM Subject s " +
-                    "JOIN Department_Subject ds ON s.subject_code = ds.subject_code " +
-                    "WHERE ds.department_id = ? AND ds.class_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, departmentId);
-            pstmt.setInt(2, classId);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    Subject subject = new Subject();
-                    subject.setSubjectCode(rs.getString("subject_code"));
-                    subject.setSubjectName(rs.getString("subject_name"));
-                    subjects.add(subject);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return subjects;
-    }
-
-    /**
-     * Remove a subject assignment from a department and class
-     * @param departmentId The department ID
-     * @param classId The class ID
-     * @param subjectCode The subject code
-     * @return true if successful, false otherwise
-     */
-    public boolean removeSubjectFromDepartmentClass(int departmentId, int classId, String subjectCode) {
-        String sql = "DELETE FROM Department_Subject WHERE department_id = ? AND class_id = ? AND subject_code = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, departmentId);
-            pstmt.setInt(2, classId);
-            pstmt.setString(3, subjectCode);
-            
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Check if a subject exists by code
-     * @param subjectCode The subject code to check
+     * Check if a subject with the given code exists
+     * 
+     * @param code The code to check
      * @return true if subject exists, false otherwise
      */
-    public boolean subjectExistsByCode(String subjectCode) {
-        String sql = "SELECT 1 FROM Subject WHERE subject_code = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, subjectCode);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+    boolean subjectExistsByCode(String code);
+    
+    /**
+     * Assign a subject to a department and class
+     * 
+     * @param departmentId The ID of the department
+     * @param classId The ID of the class
+     * @param academicYear The academic year
+     * @return true if successful, false otherwise
+     */
+    boolean assignSubjectToDepartmentClass(int departmentId, int classId, String academicYear);
+    
+    /**
+     * Remove a subject from a department and class
+     * 
+     * @param departmentId The ID of the department
+     * @param classId The ID of the class
+     * @param academicYear The academic year
+     * @return true if successful, false otherwise
+     */
+    boolean removeSubjectFromDepartmentClass(int departmentId, int classId, String academicYear);
 }

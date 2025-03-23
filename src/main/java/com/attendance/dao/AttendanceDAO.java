@@ -1,163 +1,150 @@
 package com.attendance.dao;
 
 import com.attendance.models.Attendance;
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 /**
- * Data Access Object Interface for Attendance
+ * Data Access Object interface for Attendance entity
  */
 public interface AttendanceDAO {
     
     /**
      * Create a new attendance record
      * 
-     * @param attendance the attendance record to create
-     * @return the created attendance record with generated ID
-     * @throws Exception if an error occurs
+     * @param attendance The attendance record to create
+     * @return The ID of the created attendance record
      */
-    Attendance create(Attendance attendance) throws Exception;
+    int createAttendance(Attendance attendance);
     
     /**
      * Get an attendance record by ID
      * 
-     * @param attendanceId the attendance ID
-     * @return an Optional containing the attendance record if found
-     * @throws Exception if an error occurs
+     * @param attendanceId The ID of the attendance record
+     * @return The attendance record, or null if not found
      */
-    Optional<Attendance> getById(int attendanceId) throws Exception;
+    Attendance getAttendanceById(int attendanceId);
+    
+    /**
+     * Get attendance records by student ID
+     * 
+     * @param studentId The ID of the student
+     * @return List of attendance records for the student
+     */
+    List<Attendance> getAttendanceByStudentId(int studentId);
+    
+    /**
+     * Get attendance records by student ID and date range
+     * 
+     * @param studentId The ID of the student
+     * @param startDate The start date (inclusive)
+     * @param endDate The end date (inclusive)
+     * @return List of attendance records for the student within the date range
+     */
+    List<Attendance> getAttendanceByStudentIdAndDateRange(int studentId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * Get attendance records by class ID
+     * 
+     * @param classId The ID of the class
+     * @return List of attendance records for the class
+     */
+    List<Attendance> getAttendanceByClassId(int classId);
+    
+    /**
+     * Get attendance records by class ID and date
+     * 
+     * @param classId The ID of the class
+     * @param date The date
+     * @return List of attendance records for the class on the specified date
+     */
+    List<Attendance> getAttendanceByClassIdAndDate(int classId, LocalDate date);
+    
+    /**
+     * Get attendance records by subject ID
+     * 
+     * @param subjectId The ID of the subject
+     * @return List of attendance records for the subject
+     */
+    List<Attendance> getAttendanceBySubjectId(int subjectId);
+    
+    /**
+     * Get attendance records by date
+     * 
+     * @param date The date
+     * @return List of attendance records for the specified date
+     */
+    List<Attendance> getAttendanceByDate(LocalDate date);
     
     /**
      * Update an existing attendance record
      * 
-     * @param attendance the attendance record to update
-     * @return the updated attendance record
-     * @throws Exception if an error occurs
+     * @param attendance The attendance record with updated information
+     * @return true if successful, false otherwise
      */
-    Attendance update(Attendance attendance) throws Exception;
+    boolean updateAttendance(Attendance attendance);
     
     /**
-     * Delete an attendance record
+     * Delete an attendance record by ID
      * 
-     * @param attendanceId the ID of the attendance record to delete
-     * @return true if deletion was successful
-     * @throws Exception if an error occurs
+     * @param attendanceId The ID of the attendance record to delete
+     * @return true if successful, false otherwise
      */
-    boolean delete(int attendanceId) throws Exception;
+    boolean deleteAttendance(int attendanceId);
     
     /**
-     * Get all attendance records
+     * Get attendance records by class ID and date range
      * 
-     * @return list of all attendance records
-     * @throws Exception if an error occurs
+     * @param classId The ID of the class
+     * @param startDate The start date (inclusive)
+     * @param endDate The end date (inclusive)
+     * @return List of attendance records for the class within the date range
      */
-    List<Attendance> getAll() throws Exception;
+    List<Attendance> getAttendanceByClassIdAndDateRange(int classId, LocalDate startDate, LocalDate endDate);
     
     /**
-     * Get attendance records for a student
+     * Get attendance summary by student ID
      * 
-     * @param studentId the student ID
-     * @return list of attendance records for the student
-     * @throws Exception if an error occurs
+     * @param studentId The ID of the student
+     * @return Map containing attendance summary (present, absent, leave, total)
      */
-    List<Attendance> getByStudent(int studentId) throws Exception;
+    Map<String, Integer> getAttendanceSummaryByStudentId(int studentId);
     
     /**
-     * Get attendance records for a subject
+     * Get attendance summary by student ID and date range
      * 
-     * @param subjectCode the subject code
-     * @return list of attendance records for the subject
-     * @throws Exception if an error occurs
+     * @param studentId The ID of the student
+     * @param startDate The start date (inclusive)
+     * @param endDate The end date (inclusive)
+     * @return Map containing attendance summary (present, absent, leave, total)
      */
-    List<Attendance> getBySubject(String subjectCode) throws Exception;
+    Map<String, Integer> getAttendanceSummaryByStudentIdAndDateRange(int studentId, LocalDate startDate, LocalDate endDate);
     
     /**
-     * Get attendance records for a date
+     * Get attendance summary by class ID
      * 
-     * @param date the date
-     * @return list of attendance records for the date
-     * @throws Exception if an error occurs
+     * @param classId The ID of the class
+     * @return Map containing attendance summary (present, absent, leave, total)
      */
-    List<Attendance> getByDate(Date date) throws Exception;
+    Map<String, Integer> getAttendanceSummaryByClassId(int classId);
     
     /**
-     * Get attendance records for a student and subject
+     * Get attendance summary by class ID and date range
      * 
-     * @param studentId the student ID
-     * @param subjectCode the subject code
-     * @return list of attendance records for the student and subject
-     * @throws Exception if an error occurs
+     * @param classId The ID of the class
+     * @param startDate The start date (inclusive)
+     * @param endDate The end date (inclusive)
+     * @return Map containing attendance summary (present, absent, leave, total)
      */
-    List<Attendance> getByStudentAndSubject(int studentId, String subjectCode) throws Exception;
+    Map<String, Integer> getAttendanceSummaryByClassIdAndDateRange(int classId, LocalDate startDate, LocalDate endDate);
     
     /**
-     * Get attendance records for a student, subject, and semester
+     * Check if an attendance record exists for a student on a specific date
      * 
-     * @param studentId the student ID
-     * @param subjectCode the subject code
-     * @param semester the semester
-     * @return list of attendance records for the student, subject, and semester
-     * @throws Exception if an error occurs
+     * @param studentId The ID of the student
+     * @param date The date
+     * @return true if an attendance record exists, false otherwise
      */
-    List<Attendance> getByStudentSubjectAndSemester(int studentId, String subjectCode, String semester) throws Exception;
-    
-    /**
-     * Get attendance records for a student in a semester
-     * 
-     * @param studentId the student ID
-     * @param semester the semester
-     * @param academicYear the academic year
-     * @return list of attendance records for the student in the semester
-     * @throws Exception if an error occurs
-     */
-    List<Attendance> getByStudentSemesterAndYear(int studentId, String semester, String academicYear) throws Exception;
-    
-    /**
-     * Get attendance records for a specific status
-     * 
-     * @param status the attendance status (Present, Absent, Leave)
-     * @return list of attendance records with the specified status
-     * @throws Exception if an error occurs
-     */
-    List<Attendance> getByStatus(String status) throws Exception;
-    
-    /**
-     * Get attendance by student, subject, and date (to check if already marked)
-     * 
-     * @param studentId the student ID
-     * @param subjectCode the subject code
-     * @param date the date
-     * @return an Optional containing the attendance record if found
-     * @throws Exception if an error occurs
-     */
-    Optional<Attendance> getByStudentSubjectAndDate(int studentId, String subjectCode, Date date) throws Exception;
-    
-    /**
-     * Get attendance percentage for a student in a subject
-     * 
-     * @param studentId the student ID
-     * @param subjectCode the subject code
-     * @param semester the semester
-     * @param academicYear the academic year
-     * @return the attendance percentage (0-100)
-     * @throws Exception if an error occurs
-     */
-    double getAttendancePercentage(int studentId, String subjectCode, String semester, String academicYear) throws Exception;
-    
-    /**
-     * Mark attendance for multiple students
-     * 
-     * @param studentIds list of student IDs
-     * @param subjectCode the subject code
-     * @param date the date
-     * @param status the attendance status
-     * @param semester the semester
-     * @param academicYear the academic year
-     * @param markedBy who marked the attendance
-     * @return number of records created
-     * @throws Exception if an error occurs
-     */
-    int markAttendanceBulk(List<Integer> studentIds, String subjectCode, Date date, 
-                         String status, String semester, String academicYear, String markedBy) throws Exception;
+    boolean attendanceExists(int studentId, LocalDate date);
 }

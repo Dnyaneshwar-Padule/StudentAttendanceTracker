@@ -1,8 +1,7 @@
 package com.attendance.dao;
 
-import java.util.List;
-import java.util.Optional;
 import com.attendance.models.User;
+import java.util.List;
 
 /**
  * Data Access Object interface for User entity
@@ -10,144 +9,74 @@ import com.attendance.models.User;
 public interface UserDAO {
     
     /**
-     * Find a user by their ID
-     * @param userId The user ID
-     * @return The user if found, null otherwise
-     */
-    User findById(int userId);
-    
-    /**
-     * Find a user by their ID with Optional
-     * @param userId The user ID
-     * @return Optional containing the user if found, empty Optional otherwise
-     */
-    default Optional<User> findOptionalById(int userId) {
-        return Optional.ofNullable(findById(userId));
-    }
-    
-    /**
-     * Find a user by their ID (alternative name)
-     * @param userId The user ID
-     * @return Optional containing the user if found, empty Optional otherwise
-     */
-    default Optional<User> getById(int userId) {
-        return findOptionalById(userId);
-    }
-    
-    /**
-     * Find a user by their email
-     * @param email The user's email
-     * @return The user if found, null otherwise
-     */
-    User findByEmail(String email);
-    
-    /**
-     * Find a user by their email with Optional
-     * @param email The user's email
-     * @return Optional containing the user if found, empty Optional otherwise
-     */
-    default Optional<User> findOptionalByEmail(String email) {
-        return Optional.ofNullable(findByEmail(email));
-    }
-    
-    /**
-     * Find a user by their email (alternative name)
-     * @param email The user's email
-     * @return Optional containing the user if found, empty Optional otherwise
-     */
-    default Optional<User> getByEmail(String email) {
-        return findOptionalByEmail(email);
-    }
-    
-    /**
-     * Authenticate a user with email and password
-     * @param email The user's email
-     * @param password The user's password
-     * @return The authenticated user if credentials are valid, null otherwise
-     */
-    User authenticate(String email, String password);
-    
-    /**
-     * Authenticate a user with email and password returning Optional
-     * @param email The user's email
-     * @param password The user's password
-     * @return Optional containing the authenticated user if credentials are valid, empty Optional otherwise
-     */
-    default Optional<User> authenticateOptional(String email, String password) {
-        return Optional.ofNullable(authenticate(email, password));
-    }
-    
-    /**
-     * Insert a new user into the database
-     * @param user The user to insert
-     * @return The ID of the newly inserted user, or -1 if the operation failed
-     */
-    int insert(User user);
-    
-    /**
-     * Create a new user and return the ID
+     * Create a new user in the database
+     * 
      * @param user The user to create
-     * @return The ID of the newly created user, or -1 if the operation failed
+     * @return The ID of the created user
      */
-    default int createAndGetId(User user) {
-        return insert(user);
-    }
+    int createUser(User user);
     
     /**
-     * Create a new user and return the created user object
-     * @param user The user to create
-     * @return The created user object with ID set
+     * Get a user by ID
+     * 
+     * @param userId The ID of the user
+     * @return The user, or null if not found
      */
-    default User create(User user) {
-        int userId = insert(user);
-        if (userId > 0) {
-            // Set the ID on the user object
-            user.setUserId(userId);
-            return user;
-        }
-        return null;
-    }
+    User getUserById(int userId);
+    
+    /**
+     * Get a user by username
+     * 
+     * @param username The username to search for
+     * @return The user, or null if not found
+     */
+    User getUserByUsername(String username);
+    
+    /**
+     * Get a user by email
+     * 
+     * @param email The email to search for
+     * @return The user, or null if not found
+     */
+    User getUserByEmail(String email);
     
     /**
      * Update an existing user
-     * @param user The user to update
-     * @return true if the update was successful, false otherwise
+     * 
+     * @param user The user with updated information
+     * @return true if successful, false otherwise
      */
-    boolean update(User user);
+    boolean updateUser(User user);
     
     /**
-     * Delete a user
+     * Delete a user by ID
+     * 
      * @param userId The ID of the user to delete
-     * @return true if the deletion was successful, false otherwise
+     * @return true if successful, false otherwise
      */
-    boolean delete(int userId);
+    boolean deleteUser(int userId);
     
     /**
      * Get all users
-     * @return A list of all users
+     * 
+     * @return List of all users
      */
-    List<User> findAll();
+    List<User> getAllUsers();
     
     /**
-     * Find users by role
-     * @param role The role to search for
-     * @return A list of users with the specified role
+     * Get users by role
+     * 
+     * @param role The role to filter by
+     * @return List of users with the specified role
      */
-    List<User> findByRole(String role);
+    List<User> getUsersByRole(String role);
     
     /**
-     * Find users by role (alternative name)
-     * @param role The role to search for
-     * @return A list of users with the specified role
+     * Authenticate a user with username and password
+     * 
+     * @param username The username
+     * @param password The password (should be hashed before comparing)
+     * @return The authenticated user, or null if authentication failed
      */
-    default List<User> getByRole(String role) {
-        return findByRole(role);
-    }
-    
-    /**
-     * Find users by department
-     * @param departmentId The department ID
-     * @return A list of users in the specified department
-     */
-    List<User> findByDepartment(int departmentId);
+    User authenticateUser(String username, String password);
 }

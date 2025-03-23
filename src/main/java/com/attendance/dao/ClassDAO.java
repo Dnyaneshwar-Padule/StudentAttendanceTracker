@@ -1,214 +1,106 @@
 package com.attendance.dao;
 
 import com.attendance.models.Class;
-import com.attendance.models.Department;
-import com.attendance.utils.DatabaseConnection;
-
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Data Access Object for Class-related database operations
+ * Data Access Object interface for Class entity
  */
-public class ClassDAO {
-
-    private DepartmentDAO departmentDAO = new DepartmentDAO();
-
+public interface ClassDAO {
+    
     /**
-     * Create a new class
-     * @param classObj The class object to create
-     * @return The class ID if successful, -1 otherwise
+     * Create a new class in the database
+     * 
+     * @param classObj The class to create
+     * @return The ID of the created class
      */
-    public int createClass(Class classObj) {
-        String sql = "INSERT INTO Classes (class_name, department_id) VALUES (?, ?)";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
-            pstmt.setString(1, classObj.getClassName());
-            pstmt.setInt(2, classObj.getDepartmentId());
-            
-            int affectedRows = pstmt.executeUpdate();
-            
-            if (affectedRows > 0) {
-                try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        return rs.getInt(1);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return -1;
-    }
-
+    int createClass(Class classObj);
+    
     /**
      * Get a class by ID
-     * @param classId The class ID
-     * @return Class object if found, null otherwise
+     * 
+     * @param classId The ID of the class
+     * @return The class, or null if not found
      */
-    public Class getClassById(int classId) {
-        String sql = "SELECT * FROM Classes WHERE class_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, classId);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    Class classObj = new Class();
-                    classObj.setClassId(rs.getInt("class_id"));
-                    classObj.setClassName(rs.getString("class_name"));
-                    classObj.setDepartmentId(rs.getInt("department_id"));
-                    
-                    // Fetch the department details
-                    Department department = departmentDAO.getDepartmentById(classObj.getDepartmentId());
-                    classObj.setDepartment(department);
-                    
-                    return classObj;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return null;
-    }
-
-    /**
-     * Get all classes
-     * @return List of all classes with their departments
-     */
-    public List<Class> getAllClasses() {
-        List<Class> classes = new ArrayList<>();
-        String sql = "SELECT c.*, d.department_name FROM Classes c " +
-                     "JOIN Department d ON c.department_id = d.department_id";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
-            while (rs.next()) {
-                Class classObj = new Class();
-                classObj.setClassId(rs.getInt("class_id"));
-                classObj.setClassName(rs.getString("class_name"));
-                classObj.setDepartmentId(rs.getInt("department_id"));
-                
-                // Set department details
-                Department department = new Department();
-                department.setDepartmentId(rs.getInt("department_id"));
-                department.setDepartmentName(rs.getString("department_name"));
-                classObj.setDepartment(department);
-                
-                classes.add(classObj);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return classes;
-    }
-
+    Class getClassById(int classId);
+    
     /**
      * Get classes by department ID
-     * @param departmentId The department ID
-     * @return List of classes in the department
+     * 
+     * @param departmentId The ID of the department
+     * @return List of classes in the specified department
      */
-    public List<Class> getClassesByDepartment(int departmentId) {
-        List<Class> classes = new ArrayList<>();
-        String sql = "SELECT * FROM Classes WHERE department_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, departmentId);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    Class classObj = new Class();
-                    classObj.setClassId(rs.getInt("class_id"));
-                    classObj.setClassName(rs.getString("class_name"));
-                    classObj.setDepartmentId(rs.getInt("department_id"));
-                    
-                    classes.add(classObj);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return classes;
-    }
-
+    List<Class> getClassesByDepartmentId(int departmentId);
+    
     /**
-     * Update a class
-     * @param classObj The class to update
+     * Alias for getClassesByDepartmentId() to maintain compatibility with existing code
+     * 
+     * @param departmentId The ID of the department
+     * @return List of classes in the specified department
+     */
+    List<Class> getClassesByDepartment(int departmentId);
+    
+    /**
+     * Get classes by class teacher ID
+     * 
+     * @param classTeacherId The ID of the class teacher
+     * @return List of classes taught by the specified teacher
+     */
+    List<Class> getClassesByClassTeacherId(int classTeacherId);
+    
+    /**
+     * Get classes by academic year
+     * 
+     * @param academicYear The academic year (e.g., "2023-24")
+     * @return List of classes for the specified academic year
+     */
+    List<Class> getClassesByAcademicYear(String academicYear);
+    
+    /**
+     * Get classes by year
+     * 
+     * @param year The year (e.g., "FY", "SY", "TY")
+     * @return List of classes for the specified year
+     */
+    List<Class> getClassesByYear(String year);
+    
+    /**
+     * Get classes by semester
+     * 
+     * @param semester The semester (1-6)
+     * @return List of classes for the specified semester
+     */
+    List<Class> getClassesBySemester(int semester);
+    
+    /**
+     * Update an existing class
+     * 
+     * @param classObj The class with updated information
      * @return true if successful, false otherwise
      */
-    public boolean updateClass(Class classObj) {
-        String sql = "UPDATE Classes SET class_name = ?, department_id = ? WHERE class_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, classObj.getClassName());
-            pstmt.setInt(2, classObj.getDepartmentId());
-            pstmt.setInt(3, classObj.getClassId());
-            
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
+    boolean updateClass(Class classObj);
+    
     /**
-     * Delete a class
+     * Delete a class by ID
+     * 
      * @param classId The ID of the class to delete
      * @return true if successful, false otherwise
      */
-    public boolean deleteClass(int classId) {
-        String sql = "DELETE FROM Classes WHERE class_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, classId);
-            
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
+    boolean deleteClass(int classId);
+    
     /**
-     * Check if a class exists for a department
-     * @param className The class name (FY, SY, TY)
-     * @param departmentId The department ID
-     * @return true if class exists, false otherwise
+     * Get all classes
+     * 
+     * @return List of all classes
      */
-    public boolean classExistsForDepartment(String className, int departmentId) {
-        String sql = "SELECT 1 FROM Classes WHERE class_name = ? AND department_id = ?";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setString(1, className);
-            pstmt.setInt(2, departmentId);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+    List<Class> getAllClasses();
+    
+    /**
+     * Get classes by department ID and academic year
+     * 
+     * @param departmentId The ID of the department
+     * @param academicYear The academic year (e.g., "2023-24")
+     * @return List of classes in the specified department for the specified academic year
+     */
+    List<Class> getClassesByDepartmentIdAndAcademicYear(int departmentId, String academicYear);
 }
