@@ -8,6 +8,7 @@
 /home/runner/workspace/src/main/java/com/attendance/models/Department.java
 /home/runner/workspace/src/main/java/com/attendance/utils/FaceRecognitionService.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/EnrollmentRequestServlet.java
+/home/runner/workspace/src/main/java/com/attendance/controllers/HomeServlet.java
 /home/runner/workspace/src/main/java/com/attendance/dao/DepartmentDAO.java
 /home/runner/workspace/src/main/java/com/attendance/dao/impl/DepartmentDaoImpl.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/LogoutServlet.java

@@ -72,10 +72,12 @@ public class DatabaseConnection {
         // Try connecting with DATABASE_URL directly
         if (DATABASE_URL != null && !DATABASE_URL.isEmpty()) {
             try {
-                // If URL starts with postgres://, convert to jdbc:postgresql://
+                // Convert URL format to JDBC URL format if needed
                 String jdbcUrl = DATABASE_URL;
                 if (jdbcUrl.startsWith("postgres://")) {
                     jdbcUrl = "jdbc:postgresql://" + jdbcUrl.substring(11);
+                } else if (jdbcUrl.startsWith("postgresql://")) {
+                    jdbcUrl = "jdbc:postgresql://" + jdbcUrl.substring(14);
                 }
                 
                 LOGGER.info("Attempting to connect with URL: " + jdbcUrl.replaceAll(":[^:]*@", ":***@"));
