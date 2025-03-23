@@ -72,6 +72,7 @@
 /home/runner/workspace/src/main/java/com/attendance/dao/AttendanceDao.java
 /home/runner/workspace/src/main/java/com/attendance/dao/impl/ClassDaoImpl.java
 /home/runner/workspace/src/main/java/com/attendance/dao/TeacherAssignmentDao.java
+/home/runner/workspace/src/main/java/com/attendance/tests/SimpleAttendanceTest.java
 /home/runner/workspace/src/main/java/com/attendance/dao/ClassDAO.java
 /home/runner/workspace/src/main/java/com/attendance/models/DepartmentSubject.java
 /home/runner/workspace/src/main/java/com/attendance/tests/AttendanceDaoTest.java

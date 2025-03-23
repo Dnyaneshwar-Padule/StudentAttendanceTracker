@@ -11,6 +11,7 @@ com/attendance/controllers/TestServlet.class
 com/attendance/dao/BaseDao.class
 com/attendance/dao/impl/AttendanceDaoImpl.class
 com/attendance/dao/DepartmentDAO.class
+com/attendance/tests/SimpleAttendanceTest.class
 com/attendance/utils/DatabaseConnection.class
 com/attendance/controllers/DashboardServlet.class
 com/attendance/dao/StudentEnrollmentDAO.class
