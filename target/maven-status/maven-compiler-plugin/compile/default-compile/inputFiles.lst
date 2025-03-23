@@ -37,6 +37,7 @@
 /home/runner/workspace/src/main/java/com/attendance/models/TeacherAssignment.java
 /home/runner/workspace/src/main/java/com/attendance/models/User.java
 /home/runner/workspace/src/main/java/com/attendance/dao/AttendanceDAO.java
+/home/runner/workspace/src/main/java/com/attendance/AppServer.java
 /home/runner/workspace/src/main/java/com/attendance/dao/LeaveApplicationDao.java
 /home/runner/workspace/src/main/java/com/attendance/dao/TeacherAssignmentDAO.java
 /home/runner/workspace/src/main/java/com/attendance/dao/SubjectDao.java
@@ -45,10 +46,11 @@
 /home/runner/workspace/src/main/java/com/attendance/dao/ClassDao.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/AttendanceFilterController.java
 /home/runner/workspace/src/main/java/com/attendance/dao/EnrollmentRequestDAO.java
-/home/runner/workspace/src/main/java/com/attendance/utils/DatabaseConnection.java
 /home/runner/workspace/src/main/java/com/attendance/utils/PasswordUtils.java
+/home/runner/workspace/src/main/java/com/attendance/utils/DatabaseConnection.java
 /home/runner/workspace/src/main/java/com/attendance/dao/StudentEnrollmentDAO.java
 /home/runner/workspace/src/main/java/com/attendance/dao/DepartmentSubjectDao.java
+/home/runner/workspace/src/main/java/com/attendance/SimpleApp.java
 /home/runner/workspace/src/main/java/com/attendance/models/StudentEnrollment.java
 /home/runner/workspace/src/main/java/com/attendance/dao/impl/AttendanceDaoImpl.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/BiometricAttendanceController.java

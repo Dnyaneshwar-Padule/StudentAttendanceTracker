@@ -5,6 +5,7 @@ import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.catalina.webresources.StandardRoot;
+import org.apache.tomcat.util.scan.StandardJarScanFilter;
 
 import java.io.File;
 import java.sql.Connection;
@@ -37,13 +38,32 @@ public class AppServer {
             int port = 5000;
             String webappDirLocation = "src/main/webapp/";
             
+            // Set Tomcat home directory for temporary files
+            String catalinaHome = System.getProperty("java.io.tmpdir");
+            System.setProperty("catalina.home", catalinaHome);
+            
             Tomcat tomcat = new Tomcat();
+            tomcat.setBaseDir(catalinaHome);
             tomcat.setPort(port);
+            
+            // Initialize the connector explicitly
+            tomcat.getConnector();
             tomcat.getConnector().setProperty("address", "0.0.0.0");
             
-            // Add the web application context
-            Context context = tomcat.addWebapp("", new File(webappDirLocation).getAbsolutePath());
-            LOGGER.info("Configuring app with basedir: " + new File(webappDirLocation).getAbsolutePath());
+            // Add the web application context at root path
+            String contextPath = "";
+            File docBase = new File(webappDirLocation);
+            LOGGER.info("Configuring app with basedir: " + docBase.getAbsolutePath());
+            
+            Context context = tomcat.addWebapp(contextPath, docBase.getAbsolutePath());
+            context.setConfigFile(null);
+            context.setCreateUploadTargets(true);
+            
+            // Disable JAR scanning to improve startup time
+            StandardJarScanFilter jarScanFilter = new StandardJarScanFilter();
+            jarScanFilter.setDefaultPluggabilityScan(false);
+            jarScanFilter.setDefaultTldScan(false);
+            context.getJarScanner().setJarScanFilter(jarScanFilter);
             
             // Add WEB-INF/classes directory for compiled classes
             File additionWebInfClasses = new File("target/classes");

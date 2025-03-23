@@ -8,10 +8,13 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
 /**
- * Utility class to initialize the database schema
+ * ServletContextListener to initialize the database schema when the application starts
  */
-public class DatabaseInitializer {
+public class DatabaseInitializer implements ServletContextListener {
     
     private static final Logger LOGGER = Logger.getLogger(DatabaseInitializer.class.getName());
     
@@ -220,5 +223,23 @@ public class DatabaseInitializer {
                 }
             }
         }
+    }
+    
+    /**
+     * Called when the context is initialized (application starts)
+     */
+    @Override
+    public void contextInitialized(ServletContextEvent sce) {
+        LOGGER.info("ServletContextListener initialized - initializing database");
+        initialize();
+    }
+    
+    /**
+     * Called when the context is destroyed (application stops)
+     */
+    @Override
+    public void contextDestroyed(ServletContextEvent sce) {
+        LOGGER.info("ServletContextListener destroyed");
+        // No cleanup needed
     }
 }
