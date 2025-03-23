@@ -69,29 +69,60 @@ public class DatabaseConnection {
      * @throws SQLException if a database access error occurs
      */
     public static Connection getConnection() throws SQLException {
-        // First try the full DATABASE_URL environment variable if present
+        // Try connecting with DATABASE_URL directly
         if (DATABASE_URL != null && !DATABASE_URL.isEmpty()) {
             try {
-                return DriverManager.getConnection(DATABASE_URL);
+                // If URL starts with postgres://, convert to jdbc:postgresql://
+                String jdbcUrl = DATABASE_URL;
+                if (jdbcUrl.startsWith("postgres://")) {
+                    jdbcUrl = "jdbc:postgresql://" + jdbcUrl.substring(11);
+                }
+                
+                LOGGER.info("Attempting to connect with URL: " + jdbcUrl.replaceAll(":[^:]*@", ":***@"));
+                return DriverManager.getConnection(jdbcUrl);
             } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Failed to connect using DATABASE_URL, trying individual parameters", e);
+                LOGGER.log(Level.WARNING, "Failed to connect using DATABASE_URL: " + e.getMessage(), e);
                 // Fall through to next method if this fails
             }
+        } else {
+            LOGGER.warning("DATABASE_URL environment variable is not set");
         }
         
-        // Fallback to individual parameters if DATABASE_URL fails or is not set
+        // Fallback to individual parameters
         if (DB_HOST != null && DB_PORT != null && DB_NAME != null && DB_USER != null && DB_PASSWORD != null) {
-            String jdbcUrl = "jdbc:postgresql://" + DB_HOST + ":" + DB_PORT + "/" + DB_NAME;
-            
             try {
+                // Ensure the port is numeric
+                int port;
+                try {
+                    port = Integer.parseInt(DB_PORT);
+                } catch (NumberFormatException e) {
+                    LOGGER.warning("Invalid port number: " + DB_PORT + ". Using default port 5432.");
+                    port = 5432;
+                }
+                
+                String jdbcUrl = "jdbc:postgresql://" + DB_HOST + ":" + port + "/" + DB_NAME;
+                LOGGER.info("Attempting to connect with constructed URL: " + jdbcUrl);
+                
                 return DriverManager.getConnection(jdbcUrl, DB_USER, DB_PASSWORD);
             } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Failed to connect to the database using individual parameters", e);
+                LOGGER.log(Level.SEVERE, "Failed to connect using individual parameters: " + e.getMessage(), e);
                 throw e;
             }
+        } else {
+            LOGGER.warning("Individual database parameters are not properly set");
         }
         
-        // If both methods fail, throw an exception
-        throw new SQLException("Database connection parameters not properly set");
+        // Last resort - try a hard-coded connection to the Replit PostgreSQL instance
+        try {
+            LOGGER.info("Attempting to connect with hardcoded Replit PostgreSQL connection");
+            return DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/" + System.getenv("REPL_SLUG"),
+                "postgres", 
+                "postgres"
+            );
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "All connection attempts failed", e);
+            throw new SQLException("Could not establish database connection after multiple attempts", e);
+        }
     }
 }

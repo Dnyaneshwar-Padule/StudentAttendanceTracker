@@ -11,6 +11,8 @@ import java.util.logging.Logger;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import com.attendance.dao.impl.DatabaseConnection;
+
 /**
  * ServletContextListener to initialize the database schema when the application starts
  */

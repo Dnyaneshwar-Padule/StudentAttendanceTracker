@@ -29,6 +29,7 @@ com/attendance/dao/AttendanceDAO.class
 com/attendance/controllers/SubjectController.class
 com/attendance/dao/impl/DepartmentDaoImpl.class
 com/attendance/models/DepartmentSubject.class
+com/attendance/controllers/HomeServlet.class
 com/attendance/controllers/DepartmentController.class
 com/attendance/AppServer.class
 com/attendance/utils/PasswordHashing.class

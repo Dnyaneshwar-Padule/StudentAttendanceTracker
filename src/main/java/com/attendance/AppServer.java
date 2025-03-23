@@ -15,7 +15,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.attendance.utils.DatabaseConnection;
+import com.attendance.dao.impl.DatabaseConnection;
 
 /**
  * Main application server for the Student Attendance Management System.
