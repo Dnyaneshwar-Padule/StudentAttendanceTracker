@@ -141,25 +141,42 @@ public class BasicDbTestServer {
                     throw new SQLException("Missing database connection parameters");
                 }
                 
-                // Test connection
+                // Test connection using our DatabaseConnection utility
                 String logUrl = jdbcUrl.replaceAll(":[^:@/]+@", ":****@");
                 LOGGER.info("Attempting to connect to: " + logUrl);
                 
-                Connection connection;
-                if (username != null && password != null) {
-                    connection = DriverManager.getConnection(jdbcUrl, username, password);
-                    LOGGER.info("Connected with username and password");
-                } else {
-                    connection = DriverManager.getConnection(jdbcUrl);
-                    LOGGER.info("Connected with connection string only");
-                }
-                
-                if (connection != null) {
-                    dbConnected = true;
-                    connection.close();
-                    LOGGER.info("Database connection test successful");
-                } else {
-                    throw new SQLException("Failed to establish database connection");
+                try {
+                    // Try using our utility class for better consistency
+                    Connection connection = DatabaseConnection.getConnection();
+                    
+                    if (connection != null) {
+                        dbConnected = true;
+                        // Use the utility's close method to ensure proper tracking
+                        DatabaseConnection.closeConnection(connection);
+                        LOGGER.info("Database connection test successful");
+                    } else {
+                        throw new SQLException("Failed to establish database connection");
+                    }
+                } catch (SQLException e) {
+                    // If our utility fails, fall back to direct connection as before
+                    LOGGER.log(Level.WARNING, "DatabaseConnection utility failed, falling back to direct connection", e);
+                    
+                    Connection connection;
+                    if (username != null && password != null) {
+                        connection = DriverManager.getConnection(jdbcUrl, username, password);
+                        LOGGER.info("Connected with username and password");
+                    } else {
+                        connection = DriverManager.getConnection(jdbcUrl);
+                        LOGGER.info("Connected with connection string only");
+                    }
+                    
+                    if (connection != null) {
+                        dbConnected = true;
+                        connection.close();
+                        LOGGER.info("Database connection test successful");
+                    } else {
+                        throw new SQLException("Failed to establish database connection");
+                    }
                 }
                 
             } catch (ClassNotFoundException e) {
@@ -190,7 +207,7 @@ public class BasicDbTestServer {
 
     public static void main(String[] args) {
         try {
-            Tomcat tomcat = new Tomcat();
+            final Tomcat tomcat = new Tomcat();
             tomcat.setPort(5000);
 
             // Configure connector for external access
@@ -215,6 +232,32 @@ public class BasicDbTestServer {
             tomcat.start();
             LOGGER.info("Database Test Server started on port 5000");
             LOGGER.info("Visit http://0.0.0.0:5000/ to view");
+            
+            // Add shutdown hook to clean up resources
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    LOGGER.info("Server shutdown initiated");
+                    
+                    // Close all database connections
+                    try {
+                        DatabaseConnection.closeAllConnections();
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, "Error during database connection cleanup", e);
+                    }
+                    
+                    // Stop Tomcat if it's running
+                    try {
+                        tomcat.stop();
+                        tomcat.destroy();
+                        LOGGER.info("Tomcat server stopped");
+                    } catch (LifecycleException e) {
+                        LOGGER.log(Level.WARNING, "Error stopping Tomcat", e);
+                    }
+                    
+                    LOGGER.info("Server shutdown complete");
+                }
+            });
             
             tomcat.getServer().await();
             

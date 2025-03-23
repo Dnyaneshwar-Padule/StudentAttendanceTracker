@@ -67,6 +67,7 @@ com/attendance/controllers/UserController.class
 com/attendance/controllers/TeacherAssignmentServlet.class
 com/attendance/dao/impl/DatabaseConnection.class
 com/attendance/models/BiometricData.class
+com/attendance/BasicDbTestServer$1.class
 com/attendance/dao/EnrollmentRequestDAO.class
 com/attendance/models/User.class
 com/attendance/dao/StudentEnrollmentDao.class

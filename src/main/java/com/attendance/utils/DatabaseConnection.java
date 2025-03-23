@@ -56,19 +56,63 @@ public class DatabaseConnection {
         if (DB_URL != null && !DB_URL.isEmpty()) {
             try {
                 // Database URL format may need fixing if it doesn't start with jdbc:
-                String jdbcUrl = DB_URL;
-                if (!jdbcUrl.startsWith("jdbc:")) {
-                    // If URL starts with postgres://, convert it to the JDBC format
-                    if (jdbcUrl.startsWith("postgres://")) {
-                        jdbcUrl = jdbcUrl.replace("postgres://", "jdbc:postgresql://");
-                    } else if (jdbcUrl.startsWith("postgresql://")) {
-                        jdbcUrl = "jdbc:postgresql://" + jdbcUrl.substring(14);
-                    } else {
-                        jdbcUrl = "jdbc:postgresql://" + jdbcUrl;
+                // Parse the DATABASE_URL to extract components
+                String jdbcUrl;
+                String username = null;
+                String password = null;
+                
+                if (DB_URL.startsWith("postgres://") || DB_URL.startsWith("postgresql://")) {
+                    // Format: postgresql://username:password@hostname:port/database
+                    try {
+                        String prefix = DB_URL.startsWith("postgres://") ? "postgres://" : "postgresql://";
+                        String urlWithoutProtocol = DB_URL.substring(prefix.length());
+                        
+                        // Extract credentials if present
+                        String hostPart;
+                        if (urlWithoutProtocol.contains("@")) {
+                            String[] credentialAndHost = urlWithoutProtocol.split("@", 2);
+                            String credentialPart = credentialAndHost[0];
+                            hostPart = credentialAndHost[1];
+                            
+                            // Extract username and password
+                            if (credentialPart.contains(":")) {
+                                String[] userAndPass = credentialPart.split(":", 2);
+                                username = userAndPass[0];
+                                password = userAndPass[1];
+                            } else {
+                                username = credentialPart;
+                            }
+                        } else {
+                            hostPart = urlWithoutProtocol;
+                        }
+                        
+                        // Build JDBC URL without embedding credentials
+                        jdbcUrl = "jdbc:postgresql://" + hostPart;
+                        LOGGER.info("Successfully parsed DATABASE_URL into JDBC format");
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, "Error parsing DATABASE_URL, will use as-is", e);
+                        // Fall back to simple replacement if parsing fails
+                        String fallbackPrefix = DB_URL.startsWith("postgres://") ? "postgres://" : "postgresql://";
+                        jdbcUrl = "jdbc:postgresql://" + DB_URL.substring(fallbackPrefix.length());
                     }
+                } else if (DB_URL.startsWith("jdbc:postgresql://")) {
+                    // Already in JDBC format
+                    jdbcUrl = DB_URL;
+                } else {
+                    // Unknown format, attempt to prepend JDBC prefix
+                    jdbcUrl = "jdbc:postgresql://" + DB_URL;
                 }
-                LOGGER.info("Attempting to connect using DATABASE_URL: " + jdbcUrl.replaceAll("password=[^&]*", "password=****"));
-                conn = DriverManager.getConnection(jdbcUrl);
+                
+                // Log URL (without credentials)
+                String logUrl = jdbcUrl.replaceAll(":[^:@/]+@", ":****@");
+                LOGGER.info("Attempting to connect using DATABASE_URL: " + logUrl);
+                
+                // Connect with or without credentials
+                if (username != null && password != null) {
+                    conn = DriverManager.getConnection(jdbcUrl, username, password);
+                } else {
+                    conn = DriverManager.getConnection(jdbcUrl);
+                }
                 LOGGER.info("Database connection established successfully using DATABASE_URL");
             } catch (SQLException e) {
                 LOGGER.log(Level.WARNING, "Failed to connect using DATABASE_URL, will try individual components", e);
