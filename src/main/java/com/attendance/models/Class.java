@@ -251,6 +251,28 @@ public class Class {
         return year + " " + name + " (" + academicYear + ")";
     }
     
+    /**
+     * Get the associated Department object
+     * 
+     * @return The Department object
+     */
+    public Department getDepartment() {
+        return department;
+    }
+    
+    /**
+     * Set the associated Department object
+     * 
+     * @param department The Department object
+     */
+    public void setDepartment(Department department) {
+        this.department = department;
+        // Keep departmentId in sync with the Department object
+        if (department != null) {
+            this.departmentId = department.getDepartmentId();
+        }
+    }
+    
     @Override
     public String toString() {
         return "Class [id=" + id + ", name=" + name + ", year=" + year + ", semester=" + semester 

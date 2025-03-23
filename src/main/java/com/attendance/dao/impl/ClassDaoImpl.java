@@ -1,7 +1,10 @@
 package com.attendance.dao.impl;
 
 import com.attendance.dao.ClassDao;
+import com.attendance.dao.DepartmentDao;
+import com.attendance.dao.impl.DepartmentDaoImpl;
 import com.attendance.models.Class;
+import com.attendance.models.Department;
 import com.attendance.utils.DatabaseConnection;
 
 import java.sql.*;
@@ -15,6 +18,25 @@ import java.util.logging.Logger;
  */
 public class ClassDaoImpl implements ClassDao {
     private static final Logger LOGGER = Logger.getLogger(ClassDaoImpl.class.getName());
+    
+    // DepartmentDao for loading department details
+    private DepartmentDao departmentDao;
+    
+    /**
+     * Default constructor
+     */
+    public ClassDaoImpl() {
+        this.departmentDao = new DepartmentDaoImpl();
+    }
+    
+    /**
+     * Constructor with DepartmentDao
+     * 
+     * @param departmentDao The DepartmentDao implementation to use
+     */
+    public ClassDaoImpl(DepartmentDao departmentDao) {
+        this.departmentDao = departmentDao;
+    }
 
     @Override
     public Class findById(Integer id) throws SQLException {
@@ -226,6 +248,21 @@ public class ClassDaoImpl implements ClassDao {
         int classTeacherId = rs.getInt("class_teacher_id");
         if (!rs.wasNull()) {
             classObj.setClassTeacherId(classTeacherId);
+        }
+        
+        // Load the Department object to avoid JSP errors when accessing department properties
+        try {
+            if (departmentDao != null) {
+                Department department = departmentDao.findById(classObj.getDepartmentId());
+                if (department != null) {
+                    classObj.setDepartment(department);
+                } else {
+                    LOGGER.log(Level.WARNING, "Department not found for ID: " + classObj.getDepartmentId());
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error loading department for class: " + classObj.getClassId(), e);
+            // Don't throw this exception as it's not critical for class functionality
         }
         
         return classObj;
