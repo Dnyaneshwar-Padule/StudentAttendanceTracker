@@ -19,8 +19,8 @@
     <!-- Database initialization listener - Both annotation and XML configuration -->
     <listener>
         <description>Database Initialization Listener</description>
-        <display-name>DatabaseInitializer</display-name>
-        <listener-class>com.attendance.utils.DatabaseInitializer</listener-class>
+        <display-name>DatabaseInitializationListener</display-name>
+        <listener-class>com.attendance.listeners.DatabaseInitializationListener</listener-class>
     </listener>
     
     <!-- Add distributable tag to enable clustering (may help with initialization) -->
