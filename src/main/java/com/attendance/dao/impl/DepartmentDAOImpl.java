@@ -78,7 +78,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                 return mapResultSetToDepartment(rs);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving department by ID", e);
+            LOGGER.log(Level.SEVERE, "Error retrieving department by ID: " + departmentId, e);
         }
         return null;
     }
@@ -100,7 +100,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                 return mapResultSetToDepartment(rs);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving department by name", e);
+            LOGGER.log(Level.SEVERE, "Error retrieving department by name: " + name, e);
         }
         return null;
     }
@@ -126,7 +126,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating department", e);
+            LOGGER.log(Level.SEVERE, "Error updating department: " + department.getId(), e);
             return false;
         }
     }
@@ -145,7 +145,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
             int affectedRows = pstmt.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error deleting department", e);
+            LOGGER.log(Level.SEVERE, "Error deleting department: " + departmentId, e);
             return false;
         }
     }
@@ -189,7 +189,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
                 departments.add(mapResultSetToDepartment(rs));
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving departments by HOD ID", e);
+            LOGGER.log(Level.SEVERE, "Error retrieving departments by HOD ID: " + hodId, e);
         }
         return departments;
     }
@@ -201,9 +201,15 @@ public class DepartmentDAOImpl implements DepartmentDAO {
         Department department = new Department();
         department.setId(rs.getInt("id"));
         department.setName(rs.getString("name"));
-        department.setCode(rs.getString("code"));
         department.setHodId(rs.getInt("hod_id"));
         department.setDescription(rs.getString("description"));
+        
+        // Handle code if it exists in the database
+        try {
+            department.setCode(rs.getString("code"));
+        } catch (SQLException e) {
+            // Column may not exist, ignore
+        }
         
         Timestamp createdAt = rs.getTimestamp("created_at");
         Timestamp updatedAt = rs.getTimestamp("updated_at");
