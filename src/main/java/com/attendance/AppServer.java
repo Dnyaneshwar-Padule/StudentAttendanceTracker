@@ -6,6 +6,12 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.catalina.webresources.StandardRoot;
 import org.apache.tomcat.util.scan.StandardJarScanFilter;
+import org.apache.tomcat.util.scan.StandardJarScanner;
+import org.apache.tomcat.JarScanFilter;
+import org.apache.tomcat.JarScanType;
+import org.apache.tomcat.JarScannerCallback;
+
+import jakarta.servlet.ServletContext;
 
 import java.io.File;
 import java.sql.Connection;
@@ -31,6 +37,10 @@ public class AppServer {
             LOGGER.info("Java version: " + System.getProperty("java.version"));
             LOGGER.info("Current working directory: " + new File(".").getAbsolutePath());
             
+            // Display classpath information for debugging
+            String classpath = System.getProperty("java.class.path");
+            LOGGER.info("Classpath: " + classpath);
+            
             // Initialize the database
             initializeDatabase();
             
@@ -41,6 +51,7 @@ public class AppServer {
             // Set Tomcat home directory for temporary files
             String catalinaHome = System.getProperty("java.io.tmpdir");
             System.setProperty("catalina.home", catalinaHome);
+            LOGGER.info("Setting catalina.home to: " + catalinaHome);
             
             Tomcat tomcat = new Tomcat();
             tomcat.setBaseDir(catalinaHome);
@@ -55,24 +66,48 @@ public class AppServer {
             File docBase = new File(webappDirLocation);
             LOGGER.info("Configuring app with basedir: " + docBase.getAbsolutePath());
             
+            // Verify webapp directory exists
+            if (!docBase.exists()) {
+                LOGGER.severe("Webapp directory does not exist: " + docBase.getAbsolutePath());
+                throw new RuntimeException("Webapp directory does not exist");
+            }
+            
+            // Create context and configure
             Context context = tomcat.addWebapp(contextPath, docBase.getAbsolutePath());
             context.setConfigFile(null);
             context.setCreateUploadTargets(true);
             
-            // Disable JAR scanning to improve startup time
+            // Configure TLD scanning - be explicit about what to scan
             StandardJarScanFilter jarScanFilter = new StandardJarScanFilter();
             jarScanFilter.setDefaultPluggabilityScan(false);
-            jarScanFilter.setDefaultTldScan(false);
+            jarScanFilter.setDefaultTldScan(true); // Changed to true to ensure JSTL is found
             context.getJarScanner().setJarScanFilter(jarScanFilter);
             
-            // Add WEB-INF/classes directory for compiled classes
+            // Add TldSkipPatterns to context to improve startup time but ensure JSTL is loaded
+            context.setJarScanner(new StandardJarScanner() {
+                @Override
+                public void scan(JarScanType scanType, ServletContext context,
+                        JarScannerCallback callback) {
+                    LOGGER.info("Starting JAR scanning: " + scanType);
+                    super.scan(scanType, context, callback);
+                    LOGGER.info("JAR scanning completed: " + scanType);
+                }
+            });
+            
+            // Add class directories
             File additionWebInfClasses = new File("target/classes");
+            LOGGER.info("Adding WEB-INF/classes directory: " + additionWebInfClasses.getAbsolutePath());
+            if (!additionWebInfClasses.exists()) {
+                LOGGER.warning("Classes directory does not exist: " + additionWebInfClasses.getAbsolutePath());
+            }
+            
             WebResourceRoot resources = new StandardRoot(context);
             resources.addPreResources(new DirResourceSet(resources, "/WEB-INF/classes",
                     additionWebInfClasses.getAbsolutePath(), "/"));
             context.setResources(resources);
             
             // Start the server
+            LOGGER.info("Starting Tomcat server...");
             tomcat.start();
             LOGGER.info("Server started on port: " + port);
             LOGGER.info("Application available at http://0.0.0.0:" + port);

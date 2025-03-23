@@ -4,6 +4,7 @@ com/attendance/filters/AuthenticationFilter.class
 com/attendance/dao/impl/SubjectDaoImpl.class
 com/attendance/controllers/AttendanceFilterController.class
 com/attendance/dao/impl/UserDaoImpl.class
+com/attendance/AppServer$1.class
 com/attendance/controllers/TestServlet.class
 com/attendance/dao/BaseDao.class
 com/attendance/dao/impl/AttendanceDaoImpl.class
