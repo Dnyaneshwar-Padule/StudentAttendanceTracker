@@ -28,20 +28,12 @@ public class DepartmentDAOImpl implements DepartmentDAO {
      */
     @Override
     public int createDepartment(Department department) {
-        String sql = "INSERT INTO departments (name, code, hod_id, description, created_at, updated_at) " +
-                     "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Department (department_name) VALUES (?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
             pstmt.setString(1, department.getName());
-            pstmt.setString(2, department.getCode());
-            pstmt.setInt(3, department.getHodId());
-            pstmt.setString(4, department.getDescription());
-            pstmt.setTimestamp(5, Timestamp.valueOf(department.getCreatedAt() != null ? 
-                    department.getCreatedAt() : LocalDateTime.now()));
-            pstmt.setTimestamp(6, Timestamp.valueOf(department.getUpdatedAt() != null ? 
-                    department.getUpdatedAt() : LocalDateTime.now()));
             
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
@@ -66,7 +58,7 @@ public class DepartmentDAOImpl implements DepartmentDAO {
      */
     @Override
     public Department getDepartmentById(int departmentId) {
-        String sql = "SELECT * FROM departments WHERE id = ?";
+        String sql = "SELECT * FROM Department WHERE department_id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -75,7 +67,10 @@ public class DepartmentDAOImpl implements DepartmentDAO {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return mapResultSetToDepartment(rs);
+                Department department = new Department();
+                department.setId(rs.getInt("department_id"));
+                department.setName(rs.getString("department_name"));
+                return department;
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error retrieving department by ID: " + departmentId, e);

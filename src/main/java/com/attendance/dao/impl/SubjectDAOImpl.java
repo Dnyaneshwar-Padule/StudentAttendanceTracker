@@ -28,39 +28,22 @@ public class SubjectDAOImpl implements SubjectDAO {
      */
     @Override
     public int createSubject(Subject subject) {
-        String sql = "INSERT INTO subjects (name, code, description, department_id, class_id, teacher_id, " +
-                     "semester, credits, academic_year, created_at, updated_at) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Subject (subject_name, subject_code) VALUES (?, ?)";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
             pstmt.setString(1, subject.getName());
             pstmt.setString(2, subject.getCode());
-            pstmt.setString(3, subject.getDescription());
-            pstmt.setInt(4, subject.getDepartmentId());
-            pstmt.setInt(5, subject.getClassId());
-            pstmt.setInt(6, subject.getTeacherId());
-            pstmt.setInt(7, subject.getSemester());
-            pstmt.setInt(8, subject.getCredits());
-            pstmt.setString(9, subject.getAcademicYear());
-            pstmt.setTimestamp(10, Timestamp.valueOf(subject.getCreatedAt() != null ? 
-                    subject.getCreatedAt() : LocalDateTime.now()));
-            pstmt.setTimestamp(11, Timestamp.valueOf(subject.getUpdatedAt() != null ? 
-                    subject.getUpdatedAt() : LocalDateTime.now()));
             
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
                 throw new SQLException("Creating subject failed, no rows affected.");
             }
             
-            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    return generatedKeys.getInt(1);
-                } else {
-                    throw new SQLException("Creating subject failed, no ID obtained.");
-                }
-            }
+            // Since we're using subject_code as the primary key, return 1 to indicate success
+            // The actual implementation might need to be adjusted based on the application logic
+            return 1;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error creating subject", e);
         }
@@ -246,14 +229,17 @@ public class SubjectDAOImpl implements SubjectDAO {
     @Override
     public List<Subject> getAllSubjects() {
         List<Subject> subjects = new ArrayList<>();
-        String sql = "SELECT * FROM subjects ORDER BY name";
+        String sql = "SELECT * FROM Subject ORDER BY subject_name";
         
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                subjects.add(mapResultSetToSubject(rs));
+                Subject subject = new Subject();
+                subject.setCode(rs.getString("subject_code"));
+                subject.setName(rs.getString("subject_name"));
+                subjects.add(subject);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error retrieving all subjects", e);
@@ -312,7 +298,7 @@ public class SubjectDAOImpl implements SubjectDAO {
      */
     @Override
     public Subject getSubjectByCode(String code) {
-        String sql = "SELECT * FROM subjects WHERE code = ?";
+        String sql = "SELECT * FROM Subject WHERE subject_code = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -321,7 +307,10 @@ public class SubjectDAOImpl implements SubjectDAO {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return mapResultSetToSubject(rs);
+                Subject subject = new Subject();
+                subject.setCode(rs.getString("subject_code"));
+                subject.setName(rs.getString("subject_name"));
+                return subject;
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error retrieving subject by code", e);
@@ -334,7 +323,7 @@ public class SubjectDAOImpl implements SubjectDAO {
      */
     @Override
     public boolean subjectExistsByCode(String code) {
-        String sql = "SELECT COUNT(*) FROM subjects WHERE code = ?";
+        String sql = "SELECT COUNT(*) FROM Subject WHERE subject_code = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
