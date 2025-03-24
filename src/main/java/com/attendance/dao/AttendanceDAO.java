@@ -6,7 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Data Access Object interface for Attendance entity
+ * Data Access Object interface for Attendance entity.
+ * 
+ * This interface provides core CRUD operations and basic queries for attendance data.
+ * It uses LocalDate for date parameters and doesn't throw checked exceptions.
+ * 
+ * NOTE: This interface is separate from AttendanceDao (which extends BaseDao and provides
+ * advanced analytics functionality). Both interfaces are maintained for different use cases.
+ * AttendanceDAO is primarily used by test classes and the BiometricAttendanceController.
  */
 public interface AttendanceDAO {
     

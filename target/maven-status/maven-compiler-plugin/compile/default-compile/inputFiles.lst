@@ -16,6 +16,7 @@
 /home/runner/workspace/src/main/java/com/attendance/UltraBasicServer.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/HelloServlet.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/DashboardServlet.java
+/home/runner/workspace/src/main/java/com/attendance/tests/StandaloneAttendanceTest.java
 /home/runner/workspace/src/main/java/com/attendance/utils/PasswordHashing.java
 /home/runner/workspace/src/main/java/com/attendance/MinimalServer.java
 /home/runner/workspace/src/main/java/com/attendance/models/EnrollmentRequest.java
@@ -41,6 +42,7 @@
 /home/runner/workspace/src/main/java/com/attendance/controllers/UserController.java
 /home/runner/workspace/src/main/java/com/attendance/controllers/TeacherAssignmentServlet.java
 /home/runner/workspace/src/main/java/com/attendance/models/TeacherAssignment.java
+/home/runner/workspace/src/main/java/com/attendance/dao/impl/TestAttendanceDAOImpl.java
 /home/runner/workspace/src/main/java/com/attendance/models/User.java
 /home/runner/workspace/src/main/java/com/attendance/dao/AttendanceDAO.java
 /home/runner/workspace/src/main/java/com/attendance/AppServer.java

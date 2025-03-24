@@ -3,6 +3,7 @@ com/attendance/dao/DepartmentSubjectDao.class
 com/attendance/filters/AuthenticationFilter.class
 com/attendance/dao/impl/SubjectDaoImpl.class
 com/attendance/controllers/AttendanceFilterController.class
+com/attendance/tests/StandaloneAttendanceTest.class
 com/attendance/tests/AttendanceDaoTest.class
 com/attendance/dao/impl/UserDaoImpl.class
 com/attendance/AppServer$1.class
@@ -70,6 +71,7 @@ com/attendance/controllers/TeacherAssignmentServlet.class
 com/attendance/dao/impl/DatabaseConnection.class
 com/attendance/models/BiometricData.class
 com/attendance/BasicDbTestServer$1.class
+com/attendance/dao/impl/TestAttendanceDAOImpl.class
 com/attendance/dao/EnrollmentRequestDAO.class
 com/attendance/models/User.class
 com/attendance/dao/StudentEnrollmentDao.class

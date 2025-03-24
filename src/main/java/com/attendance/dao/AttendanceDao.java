@@ -8,7 +8,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DAO interface for Attendance entities
+ * Advanced DAO interface for Attendance entities.
+ * 
+ * This interface extends BaseDao and provides comprehensive attendance analytics,
+ * reporting, and filtering capabilities. It uses java.sql.Date for date parameters
+ * and explicitly throws SQLException for error handling.
+ * 
+ * NOTE: This interface is separate from AttendanceDAO (uppercase, which provides
+ * core CRUD operations). Both interfaces are maintained for different use cases.
+ * AttendanceDao is primarily used by controller classes for main application functions.
  */
 public interface AttendanceDao extends BaseDao<Attendance, Integer> {
     

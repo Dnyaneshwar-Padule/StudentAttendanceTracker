@@ -11,12 +11,19 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test implementation of the AttendanceDAO interface.
  * This class provides methods to interact with the Attendance table in the database
  * without starting a server.
+ * 
+ * This implementation follows the AttendanceDAO (uppercase) interface pattern
+ * rather than the AttendanceDao (mixed case) interface. The two interfaces serve
+ * different purposes in the application - AttendanceDAO focuses on core operations,
+ * while AttendanceDao provides more advanced analytics capabilities.
  */
 public class TestAttendanceDAOImpl implements AttendanceDAO {
 
@@ -186,6 +193,275 @@ public class TestAttendanceDAOImpl implements AttendanceDAO {
             e.printStackTrace();
         }
         return false;
+    }
+    
+    // Implementing all required methods from AttendanceDAO interface
+    
+    @Override
+    public List<Attendance> getAttendanceByStudentIdAndDateRange(int studentId, LocalDate startDate, LocalDate endDate) {
+        List<Attendance> attendances = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE student_id = ? AND attendance_date BETWEEN ? AND ? ORDER BY attendance_date";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setObject(2, startDate);
+            stmt.setObject(3, endDate);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                attendances.add(extractAttendanceFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance by student ID and date range: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return attendances;
+    }
+    
+    @Override
+    public List<Attendance> getAttendanceByClassId(int classId) {
+        List<Attendance> attendances = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE semester = ? ORDER BY attendance_date DESC";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId); // Using class ID as semester for this implementation
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                attendances.add(extractAttendanceFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance by class ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return attendances;
+    }
+    
+    @Override
+    public List<Attendance> getAttendanceByClassIdAndDate(int classId, LocalDate date) {
+        List<Attendance> attendances = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE semester = ? AND attendance_date = ? ORDER BY student_id";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId); // Using class ID as semester
+            stmt.setObject(2, date);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                attendances.add(extractAttendanceFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance by class ID and date: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return attendances;
+    }
+    
+    @Override
+    public List<Attendance> getAttendanceBySubjectId(int subjectId) {
+        List<Attendance> attendances = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE subject_code = ? ORDER BY attendance_date DESC";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, subjectId); // This should be adjusted to use subject_code if needed
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                attendances.add(extractAttendanceFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance by subject ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return attendances;
+    }
+    
+    @Override
+    public List<Attendance> getAttendanceByDate(LocalDate date) {
+        List<Attendance> attendances = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE attendance_date = ? ORDER BY semester, student_id";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setObject(1, date);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                attendances.add(extractAttendanceFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance by date: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return attendances;
+    }
+    
+    @Override
+    public List<Attendance> getAttendanceByClassIdAndDateRange(int classId, LocalDate startDate, LocalDate endDate) {
+        List<Attendance> attendances = new ArrayList<>();
+        String sql = "SELECT * FROM Attendance WHERE semester = ? AND attendance_date BETWEEN ? AND ? ORDER BY attendance_date";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId); // Using class ID as semester
+            stmt.setObject(2, startDate);
+            stmt.setObject(3, endDate);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                attendances.add(extractAttendanceFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance by class ID and date range: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return attendances;
+    }
+    
+    @Override
+    public Map<String, Integer> getAttendanceSummaryByStudentId(int studentId) {
+        Map<String, Integer> summary = new HashMap<>();
+        String sql = "SELECT status, COUNT(*) as count FROM Attendance WHERE student_id = ? GROUP BY status";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String status = rs.getString("status");
+                int count = rs.getInt("count");
+                summary.put(status, count);
+            }
+            
+            // Set default values if not present
+            if (!summary.containsKey("Present")) summary.put("Present", 0);
+            if (!summary.containsKey("Absent")) summary.put("Absent", 0);
+            if (!summary.containsKey("Leave")) summary.put("Leave", 0);
+            
+            // Calculate total
+            int total = summary.values().stream().mapToInt(Integer::intValue).sum();
+            summary.put("Total", total);
+            
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance summary by student ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return summary;
+    }
+    
+    @Override
+    public Map<String, Integer> getAttendanceSummaryByStudentIdAndDateRange(int studentId, LocalDate startDate, LocalDate endDate) {
+        Map<String, Integer> summary = new HashMap<>();
+        String sql = "SELECT status, COUNT(*) as count FROM Attendance WHERE student_id = ? AND attendance_date BETWEEN ? AND ? GROUP BY status";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, studentId);
+            stmt.setObject(2, startDate);
+            stmt.setObject(3, endDate);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String status = rs.getString("status");
+                int count = rs.getInt("count");
+                summary.put(status, count);
+            }
+            
+            // Set default values if not present
+            if (!summary.containsKey("Present")) summary.put("Present", 0);
+            if (!summary.containsKey("Absent")) summary.put("Absent", 0);
+            if (!summary.containsKey("Leave")) summary.put("Leave", 0);
+            
+            // Calculate total
+            int total = summary.values().stream().mapToInt(Integer::intValue).sum();
+            summary.put("Total", total);
+            
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance summary by student ID and date range: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return summary;
+    }
+    
+    @Override
+    public Map<String, Integer> getAttendanceSummaryByClassId(int classId) {
+        Map<String, Integer> summary = new HashMap<>();
+        String sql = "SELECT status, COUNT(*) as count FROM Attendance WHERE semester = ? GROUP BY status";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId); // Using class ID as semester
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String status = rs.getString("status");
+                int count = rs.getInt("count");
+                summary.put(status, count);
+            }
+            
+            // Set default values if not present
+            if (!summary.containsKey("Present")) summary.put("Present", 0);
+            if (!summary.containsKey("Absent")) summary.put("Absent", 0);
+            if (!summary.containsKey("Leave")) summary.put("Leave", 0);
+            
+            // Calculate total
+            int total = summary.values().stream().mapToInt(Integer::intValue).sum();
+            summary.put("Total", total);
+            
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance summary by class ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return summary;
+    }
+    
+    @Override
+    public Map<String, Integer> getAttendanceSummaryByClassIdAndDateRange(int classId, LocalDate startDate, LocalDate endDate) {
+        Map<String, Integer> summary = new HashMap<>();
+        String sql = "SELECT status, COUNT(*) as count FROM Attendance WHERE semester = ? AND attendance_date BETWEEN ? AND ? GROUP BY status";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId); // Using class ID as semester
+            stmt.setObject(2, startDate);
+            stmt.setObject(3, endDate);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String status = rs.getString("status");
+                int count = rs.getInt("count");
+                summary.put(status, count);
+            }
+            
+            // Set default values if not present
+            if (!summary.containsKey("Present")) summary.put("Present", 0);
+            if (!summary.containsKey("Absent")) summary.put("Absent", 0);
+            if (!summary.containsKey("Leave")) summary.put("Leave", 0);
+            
+            // Calculate total
+            int total = summary.values().stream().mapToInt(Integer::intValue).sum();
+            summary.put("Total", total);
+            
+        } catch (SQLException e) {
+            System.err.println("Error retrieving attendance summary by class ID and date range: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return summary;
     }
 
     /**
