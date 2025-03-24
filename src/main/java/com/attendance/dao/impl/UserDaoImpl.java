@@ -222,6 +222,28 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
+    public User findByUsername(String username) throws SQLException {
+        String sql = "SELECT * FROM Users WHERE username = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, username);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding user by username: " + username, e);
+            throw e;
+        }
+        
+        return null;
+    }
+    
+    @Override
     public User findByEmail(String email) throws SQLException {
         String sql = "SELECT * FROM Users WHERE email = ?";
         

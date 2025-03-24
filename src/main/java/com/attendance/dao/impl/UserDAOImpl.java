@@ -2,6 +2,7 @@ package com.attendance.dao.impl;
 
 import com.attendance.dao.UserDAO;
 import com.attendance.models.User;
+import com.attendance.utils.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

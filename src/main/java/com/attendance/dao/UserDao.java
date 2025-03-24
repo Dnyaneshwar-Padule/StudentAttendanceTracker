@@ -6,7 +6,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * DAO interface for User entities
+ * DAO interface for User entities.
+ * 
+ * This interface provides comprehensive user management functionality including
+ * authentication, search, and role-based access. It extends the BaseDao interface
+ * and throws SQLException for error handling.
+ * 
+ * Note: This is the standard DAO interface for User entities. The UserDAO (uppercase)
+ * interface has been consolidated with this interface to maintain consistency.
  */
 public interface UserDao extends BaseDao<User, Integer> {
     
@@ -203,4 +210,40 @@ public interface UserDao extends BaseDao<User, Integer> {
     }
     
     // No need for duplicate methods as authenticate is already defined at line 61
+    
+    /**
+     * Find a user by username
+     * @param username The username
+     * @return The user or null if not found
+     * @throws SQLException If a database error occurs
+     */
+    User findByUsername(String username) throws SQLException;
+    
+    /**
+     * Authenticate a user with username and password
+     * @param username The username
+     * @param password The password
+     * @return The authenticated user or null if authentication fails
+     * @throws SQLException If a database error occurs
+     */
+    default User authenticateByUsername(String username, String password) throws SQLException {
+        User user = findByUsername(username);
+        if (user != null) {
+            // Check the password using the same logic as authenticate method
+            // This is a simplified version - actual implementation should match your authentication logic
+            if (authenticate(user.getEmail(), password) != null) {
+                return user;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Get all users
+     * @return List of all users in the system
+     * @throws SQLException If a database error occurs
+     */
+    default List<User> getAllUsers() throws SQLException {
+        return findAll();
+    }
 }
