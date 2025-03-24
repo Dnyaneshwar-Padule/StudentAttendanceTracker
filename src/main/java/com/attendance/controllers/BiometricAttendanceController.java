@@ -1,7 +1,7 @@
 package com.attendance.controllers;
 
-import com.attendance.dao.UserDAO;
-import com.attendance.dao.impl.UserDAOImpl;
+import com.attendance.dao.UserDao;
+import com.attendance.dao.impl.UserDaoImpl;
 import com.attendance.models.Attendance;
 import com.attendance.models.BiometricData;
 import com.attendance.models.User;
@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 public class BiometricAttendanceController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(BiometricAttendanceController.class.getName());
     
-    private final UserDAO userDAO = new UserDAOImpl();
+    private final UserDao userDao = new UserDaoImpl();
     private final FaceRecognitionService faceService = FaceRecognitionService.getInstance();
     private final EmailNotificationService emailService = EmailNotificationService.getInstance();
     
@@ -273,7 +273,7 @@ public class BiometricAttendanceController extends HttpServlet {
             attendance.setRemarks("Attendance marked via face recognition");
             
             // Attendance would be saved to the database here
-            // TODO: Implement AttendanceDAO and save the attendance
+            // TODO: Implement AttendanceDao and save the attendance
             
             // Send email notification
             // Since we don't have the subject details yet, we'll use the code
